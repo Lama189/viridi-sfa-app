@@ -6,7 +6,6 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Numeric,
-    String,
     Text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID

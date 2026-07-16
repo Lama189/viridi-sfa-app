@@ -8,7 +8,16 @@ dependencies = [
     "alembic>=1.18.5",
     "asyncpg>=0.31.0",
     "fastapi>=0.139.0",
+    "pip-audit>=2.10.1",
     "pydantic-settings>=2.14.2",
+    "ruff>=0.15.21",
     "sqlalchemy>=2.0.51",
     "uvicorn>=0.51.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.25",
+    "aiosqlite>=0.20",
 ]

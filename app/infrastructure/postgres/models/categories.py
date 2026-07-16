@@ -1,10 +1,14 @@
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import Boolean, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
+
+if TYPE_CHECKING:
+    from app.infrastructure.postgres.models.products import Product
 
 
 class Category(BaseModel):
@@ -25,4 +29,8 @@ class Category(BaseModel):
         Boolean,
         default=True,
         nullable=False,
+    )
+
+    products: Mapped[list["Product"]] = relationship(
+        back_populates="category",
     )

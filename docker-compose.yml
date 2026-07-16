@@ -1,0 +1,108 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: rag_db
+    environment:
+      POSTGRES_USER: ${APP__DB__USER}
+      POSTGRES_PASSWORD: ${APP__DB__PASSWORD}
+      POSTGRES_DB: ${APP__DB__NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APP__DB__USER} -d ${APP__DB__NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: viridi_migrations
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
+    command: uv run alembic upgrade head
+    volumes:
+      - .:/app
+      - venv_data:/app/.venv
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: viridi_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    container_name: viridi_minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: viridi_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - venv_data:/app/.venv
+      - ./models:/app/models
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - app_network
+
+volumes:
+  pg_data:
+  venv_data:
+  rabbitmq_data:
+  minio_data:
+
+networks:
+  app_network:
+    driver: bridge

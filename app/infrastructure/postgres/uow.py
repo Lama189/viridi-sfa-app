@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.postgres.database import async_session_maker
 from app.application.interfaces.uow import IUnitOfWork
 
+from app.infrastructure.postgres.repos.categories import PostgresCategoriesRepository
 from app.infrastructure.postgres.repos.warehouses import PostgresWarehousesRepository
 
 
@@ -16,6 +17,7 @@ class PostgresUnitOfWork(IUnitOfWork):
             self._session = async_session_maker()
 
         self.warehouses = PostgresWarehousesRepository(self._session)
+        self.categories = PostgresCategoriesRepository(self._session)
 
         return self
     

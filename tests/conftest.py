@@ -1,5 +1,6 @@
 import pytest_asyncio
-from sqlalchemy import Boolean, String
+from decimal import Decimal
+from sqlalchemy import Boolean, ForeignKey, Numeric, String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from uuid import UUID, uuid4
@@ -21,6 +22,28 @@ class _TestWarehouse(_TestBase):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     address: Mapped[str | None] = mapped_column(nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class _TestCategory(_TestBase):
+    __tablename__ = "categories"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class _TestProduct(_TestBase):
+    __tablename__ = "products"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    category_id: Mapped[UUID] = mapped_column(
+        ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False,
+    )
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    volume: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False, default=Decimal("0.000"))
+    weight: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False, default=Decimal("0.000"))
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -49,3 +72,29 @@ def warehouse_repo(session: AsyncSession):
         yield PostgresWarehousesRepository(session)
     finally:
         repo_mod.WarehouseModel = original
+
+
+@pytest_asyncio.fixture
+def category_repo(session: AsyncSession):
+    from app.infrastructure.postgres.repos.categories import PostgresCategoriesRepository
+    import app.infrastructure.postgres.repos.categories as repo_mod
+
+    original = repo_mod.CategoryModel
+    repo_mod.CategoryModel = _TestCategory
+    try:
+        yield PostgresCategoriesRepository(session)
+    finally:
+        repo_mod.CategoryModel = original
+
+
+@pytest_asyncio.fixture
+def product_repo(session: AsyncSession):
+    from app.infrastructure.postgres.repos.products import PostgresProductsRepository
+    import app.infrastructure.postgres.repos.products as repo_mod
+
+    original = repo_mod.ProductModel
+    repo_mod.ProductModel = _TestProduct
+    try:
+        yield PostgresProductsRepository(session)
+    finally:
+        repo_mod.ProductModel = original

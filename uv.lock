@@ -814,8 +814,8 @@ dependencies = [
     { name = "uvicorn" },
 ]
 
-[package.dev-dependencies]
-dev = [
+[package.optional-dependencies]
+test = [
     { name = "aiosqlite" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -823,19 +823,16 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiosqlite", marker = "extra == 'test'", specifier = ">=0.20" },
     { name = "alembic", specifier = ">=1.18.5" },
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "fastapi", specifier = ">=0.139.0" },
     { name = "pip-audit", specifier = ">=2.10.1" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.25" },
     { name = "ruff", specifier = ">=0.15.21" },
     { name = "sqlalchemy", specifier = ">=2.0.51" },
     { name = "uvicorn", specifier = ">=0.51.0" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "aiosqlite", specifier = ">=0.20" },
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-asyncio", specifier = ">=0.25" },
-]
+provides-extras = ["test"]

@@ -6,6 +6,8 @@ from app.application.interfaces.uow import IUnitOfWork
 
 from app.infrastructure.postgres.repos.categories import PostgresCategoriesRepository
 from app.infrastructure.postgres.repos.products import PostgresProductsRepository
+from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
+from app.infrastructure.postgres.repos.users import PostgresUserRepository
 from app.infrastructure.postgres.repos.warehouses import PostgresWarehousesRepository
 
 
@@ -20,6 +22,8 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.warehouses = PostgresWarehousesRepository(self._session)
         self.categories = PostgresCategoriesRepository(self._session)
         self.products = PostgresProductsRepository(self._session)
+        self.retail_points = PostgresRetailPointRepository(self._session)
+        self.users = PostgresUserRepository(self._session)
 
         return self
     

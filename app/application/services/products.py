@@ -5,7 +5,7 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.inventory import ProductCreate, ProductUpdate
 
 
-class ProductService:
+class ProductsService:
 
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow

@@ -1,6 +1,6 @@
 import pytest_asyncio
 from decimal import Decimal
-from sqlalchemy import Boolean, ForeignKey, Numeric, String
+from sqlalchemy import BigInteger, Boolean, ForeignKey, Numeric, String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from uuid import UUID, uuid4
@@ -98,3 +98,75 @@ def product_repo(session: AsyncSession):
         yield PostgresProductsRepository(session)
     finally:
         repo_mod.ProductModel = original
+
+
+class _TestUser(_TestBase):
+    __tablename__ = "users"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default="client")
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
+class _TestRetailPoint(_TestBase):
+    __tablename__ = "retail_points"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    address: Mapped[str] = mapped_column(nullable=False)
+    legal_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    client_type: Mapped[str] = mapped_column(String(1), nullable=False, default="C")
+    landmark: Mapped[str | None] = mapped_column(nullable=True)
+    contact_person: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    inn: Mapped[str | None] = mapped_column(String(9), nullable=True)
+    checking_account: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    bank_name: Mapped[str | None] = mapped_column(String(150), nullable=True)
+    mfo: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    oked: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
+    longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    visit_mon: Mapped[bool] = mapped_column(Boolean, default=False)
+    visit_tue: Mapped[bool] = mapped_column(Boolean, default=False)
+    visit_wed: Mapped[bool] = mapped_column(Boolean, default=False)
+    visit_thu: Mapped[bool] = mapped_column(Boolean, default=False)
+    visit_fri: Mapped[bool] = mapped_column(Boolean, default=False)
+    visit_sat: Mapped[bool] = mapped_column(Boolean, default=False)
+    visit_sun: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_by_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
+    )
+    owner_user_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+@pytest_asyncio.fixture
+def user_repo(session: AsyncSession):
+    from app.infrastructure.postgres.repos.users import PostgresUserRepository
+    import app.infrastructure.postgres.repos.users as repo_mod
+
+    original = repo_mod.UserModel
+    repo_mod.UserModel = _TestUser
+    try:
+        yield PostgresUserRepository(session)
+    finally:
+        repo_mod.UserModel = original
+
+
+@pytest_asyncio.fixture
+def retail_point_repo(session: AsyncSession):
+    from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
+    import app.infrastructure.postgres.repos.retail_points as repo_mod
+
+    original = repo_mod.RetailPointModel
+    repo_mod.RetailPointModel = _TestRetailPoint
+    try:
+        yield PostgresRetailPointRepository(session)
+    finally:
+        repo_mod.RetailPointModel = original

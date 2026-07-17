@@ -99,6 +99,15 @@ class RetailPoint(BaseModel):
         nullable=False,
     )
 
+    owner_user_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+    )
+
+    owner: Mapped["User | None"] = relationship(
+        foreign_keys=[owner_user_id]
+    )
+
     created_by: Mapped["User | None"] = relationship(
         back_populates="retail_points",
     )

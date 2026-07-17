@@ -1,0 +1,185 @@
+from decimal import Decimal
+from uuid import uuid4
+
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.domain.entities.retail_points import RetailPoint
+from app.domain.entities.users import User
+from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
+from app.infrastructure.postgres.repos.users import PostgresUserRepository
+
+
+@pytest.mark.asyncio
+async def test_add_and_get_by_id(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    rp = RetailPoint(name="Store-1", address="ul. Test 1")
+    await retail_point_repo.add(rp)
+    await session.commit()
+
+    found = await retail_point_repo.get_by_id(rp.id)
+    assert found is not None
+    assert found.name == "Store-1"
+    assert found.address == "ul. Test 1"
+    assert found.is_active is True
+
+
+@pytest.mark.asyncio
+async def test_get_by_id_not_found(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    found = await retail_point_repo.get_by_id(uuid4())
+    assert found is None
+
+
+@pytest.mark.asyncio
+async def test_exists_by_true(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    rp = RetailPoint(name="Exists-1", address="addr")
+    await retail_point_repo.add(rp)
+    await session.commit()
+
+    assert await retail_point_repo.exists_by(name="Exists-1") is True
+
+
+@pytest.mark.asyncio
+async def test_exists_by_false(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    assert await retail_point_repo.exists_by(name="Nonexistent") is False
+
+
+@pytest.mark.asyncio
+async def test_list_all_only_active(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    await retail_point_repo.add(RetailPoint(name="Active", address="a"))
+    await retail_point_repo.add(RetailPoint(name="Inactive", address="b", is_active=False))
+    await session.commit()
+
+    active = await retail_point_repo.list_all(only_active=True)
+    assert len(active) == 1
+    assert active[0].name == "Active"
+
+
+@pytest.mark.asyncio
+async def test_list_all_include_inactive(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    await retail_point_repo.add(RetailPoint(name="A", address="a"))
+    await retail_point_repo.add(RetailPoint(name="B", address="b", is_active=False))
+    await session.commit()
+
+    all_rp = await retail_point_repo.list_all(only_active=False)
+    assert len(all_rp) == 2
+
+
+@pytest.mark.asyncio
+async def test_list_all_empty(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    result = await retail_point_repo.list_all()
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_list_by_owner(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+    user_repo: PostgresUserRepository,
+):
+    user = User(phone="+998901111111", full_name="Agent")
+    await user_repo.add(user)
+    await session.flush()
+
+    await retail_point_repo.add(RetailPoint(
+        name="My-Store", address="a", owner_user_id=user.id,
+    ))
+    await retail_point_repo.add(RetailPoint(
+        name="Other-Store", address="b",
+    ))
+    await session.commit()
+
+    result = await retail_point_repo.list_by_owner(user.id)
+    assert len(result) == 1
+    assert result[0].name == "My-Store"
+
+
+@pytest.mark.asyncio
+async def test_list_by_owner_only_active(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+    user_repo: PostgresUserRepository,
+):
+    user = User(phone="+998902222222", full_name="Agent2")
+    await user_repo.add(user)
+    await session.flush()
+
+    await retail_point_repo.add(RetailPoint(
+        name="Active", address="a", owner_user_id=user.id,
+    ))
+    await retail_point_repo.add(RetailPoint(
+        name="Inactive", address="b", owner_user_id=user.id, is_active=False,
+    ))
+    await session.commit()
+
+    result = await retail_point_repo.list_by_owner(user.id, only_active=True)
+    assert len(result) == 1
+    assert result[0].name == "Active"
+
+
+@pytest.mark.asyncio
+async def test_list_by_owner_empty(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    result = await retail_point_repo.list_by_owner(uuid4())
+    assert result == []
+
+
+@pytest.mark.asyncio
+async def test_update(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    rp = RetailPoint(name="Old", address="Old Addr")
+    await retail_point_repo.add(rp)
+    await session.commit()
+
+    rp.name = "New"
+    rp.address = "New Addr"
+    rp.latitude = Decimal("41.311081")
+    rp.visit_mon = True
+    await retail_point_repo.update(rp)
+    await session.commit()
+
+    found = await retail_point_repo.get_by_id(rp.id)
+    assert found.name == "New"
+    assert found.address == "New Addr"
+    assert found.latitude == Decimal("41.311081")
+    assert found.visit_mon is True
+
+
+@pytest.mark.asyncio
+async def test_delete(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    rp = RetailPoint(name="ToDelete", address="D")
+    await retail_point_repo.add(rp)
+    await session.commit()
+
+    await retail_point_repo.delete(rp)
+    await session.commit()
+
+    found = await retail_point_repo.get_by_id(rp.id)
+    assert found is None

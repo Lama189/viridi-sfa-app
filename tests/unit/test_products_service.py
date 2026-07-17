@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from app.api.v1.schemas.inventory import ProductCreate, ProductUpdate
-from app.application.services.products import ProductService
+from app.application.services.products import ProductsService as ProductService
 from app.domain.entities.inventory import Category, Product
 
 

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pydantic import BaseModel, Field, UUID4
 
 
@@ -30,4 +31,73 @@ class WarehouseResponse(BaseModel):
 
     model_config = {
         "from_attributes": True  
+    }
+
+
+class ProductCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=150)
+    price: Decimal = Field(..., gt=0, description="Цена товара в сумах (UZS)", examples=[53000.00])
+    category_id: UUID4 = Field(..., description="ID существующей категории")
+    volume: Decimal = Field(default=Decimal("0.000"), description="Объем в м³")
+    weight: Decimal = Field(default=Decimal("0.000"), description="Вес в кг")
+
+
+class ProductUpdate(BaseModel):
+    name: str | None = Field(None, min_length=1, max_length=150)
+    price: Decimal | None = Field(None, gt=0, description="Цена товара в сумах (UZS)")
+    category_id: UUID4 | None = Field(None, description="ID существующей категории")
+    volume: Decimal | None = Field(None, description="Объем в м³")
+    weight: Decimal | None = Field(None, description="Вес в кг")
+    is_active: bool | None = None
+
+
+class ProductResponse(BaseModel):
+    id: UUID4
+    name: str
+    price: Decimal
+    category_id: UUID4
+    volume: Decimal
+    weight: Decimal
+    photo_url: str | None = Field(None, description="Относительный путь к фото в MinIO")
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class CategoryCreate(BaseModel):
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=100
+    )
+
+
+class CategoryUpdate(BaseModel):
+    name: str | None = Field(
+        None,
+        min_length=1,
+        max_length=100
+    )
+    is_active: bool | None = Field(
+        None,
+        description="Статус активности категории",
+    )
+
+
+class CategoryResponse(BaseModel):
+    id: UUID4
+    name: str
+    is_active: bool
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class ProductWithCategoryResponse(ProductResponse):
+    category: CategoryResponse
+
+    model_config = {
+        "from_attributes": True
     }

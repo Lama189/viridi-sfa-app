@@ -6,23 +6,19 @@ from sqlalchemy import (
     Boolean,
     BigInteger,
     DateTime,
-    Enum,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.domain.enums import UserRole
 
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.retail_points import RetailPoint
-    from app.infrastructure.postgres.models.visits import Visit
     from app.infrastructure.postgres.models.orders import Order
 
 
-class User(BaseModel):
-    __tablename__ = "users"
+class Client(BaseModel):
+    __tablename__ = "clients"
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -40,12 +36,6 @@ class User(BaseModel):
     password_hash: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
-    )
-
-    role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole, name="user_role"),
-        nullable=False,
-        default=UserRole.CLIENT,
     )
 
     full_name: Mapped[str] = mapped_column(
@@ -79,14 +69,6 @@ class User(BaseModel):
         nullable=False,
     )
 
-    retail_points: Mapped[list["RetailPoint"]] = relationship(
-        back_populates="created_by",
-    )
-
-    visits: Mapped[list["Visit"]] = relationship(
-        back_populates="agent",
-    )
-
     orders: Mapped[list["Order"]] = relationship(
-        back_populates="created_by",
+        back_populates="created_by", 
     )

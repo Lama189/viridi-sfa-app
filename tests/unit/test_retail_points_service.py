@@ -14,7 +14,7 @@ from app.domain.enums import ClientType
 def mock_uow():
     uow = AsyncMock()
     uow.retail_points = AsyncMock()
-    uow.users = AsyncMock()
+    uow.clients = AsyncMock()
     uow.commit = AsyncMock()
     return uow
 
@@ -23,8 +23,6 @@ def mock_uow():
 def service(mock_uow):
     return RetailPointsService(mock_uow)
 
-
-# --- create_retail_point ---
 
 @pytest.mark.asyncio
 async def test_create_retail_point_success(service, mock_uow):
@@ -35,7 +33,7 @@ async def test_create_retail_point_success(service, mock_uow):
 
     assert result.name == "Store-1"
     assert result.address == "ul. Test 1"
-    assert result.created_by_user_id == agent_id
+    assert result.created_by_employee_id == agent_id
     assert result.is_active is True
     mock_uow.retail_points.add.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
@@ -73,8 +71,6 @@ async def test_create_retail_point_with_optional_fields(service, mock_uow):
     assert result.visit_tue is False
 
 
-# --- get_by_id ---
-
 @pytest.mark.asyncio
 async def test_get_by_id_found(service, mock_uow):
     uid = uuid4()
@@ -95,22 +91,18 @@ async def test_get_by_id_not_found(service, mock_uow):
     assert result is None
 
 
-# --- get_by_owner ---
-
 @pytest.mark.asyncio
 async def test_get_by_owner(service, mock_uow):
     owner_id = uuid4()
     mock_uow.retail_points.list_by_owner.return_value = [
-        RetailPoint(name="A", address="a", owner_user_id=owner_id),
-        RetailPoint(name="B", address="b", owner_user_id=owner_id),
+        RetailPoint(name="A", address="a", owner_client_id=owner_id),
+        RetailPoint(name="B", address="b", owner_client_id=owner_id),
     ]
 
     result = await service.get_by_owner(owner_id, only_active=True)
     assert len(result) == 2
     mock_uow.retail_points.list_by_owner.assert_awaited_once_with(owner_id, True)
 
-
-# --- update_retail_point ---
 
 @pytest.mark.asyncio
 async def test_update_retail_point_success(service, mock_uow):
@@ -174,8 +166,6 @@ async def test_update_retail_point_not_found(service, mock_uow):
         await service.update_retail_point(uuid4(), dto)
 
 
-# --- delete_retail_point ---
-
 @pytest.mark.asyncio
 async def test_delete_retail_point_success(service, mock_uow):
     uid = uuid4()
@@ -199,38 +189,36 @@ async def test_delete_retail_point_not_found(service, mock_uow):
     mock_uow.retail_points.delete.assert_not_awaited()
 
 
-# --- connect_client_to_point ---
-
 @pytest.mark.asyncio
-async def test_connect_client_new_user(service, mock_uow):
+async def test_connect_client_new(service, mock_uow):
     uid = uuid4()
     point = RetailPoint(name="X", address="A", id=uid)
     mock_uow.retail_points.get_by_id.return_value = point
-    mock_uow.users.get_by_phone.return_value = None
+    mock_uow.clients.get_by_phone.return_value = None
 
     await service.connect_client_to_point(uid, "+998901234567", "New Client")
 
-    mock_uow.users.add.assert_awaited_once()
+    mock_uow.clients.add.assert_awaited_once()
     mock_uow.retail_points.update.assert_awaited_once()
-    assert point.owner_user_id is not None
+    assert point.owner_client_id is not None
 
 
 @pytest.mark.asyncio
-async def test_connect_client_existing_user(service, mock_uow):
+async def test_connect_client_existing(service, mock_uow):
     uid = uuid4()
-    user_id = uuid4()
+    client_id = uuid4()
     point = RetailPoint(name="X", address="A", id=uid)
     mock_uow.retail_points.get_by_id.return_value = point
 
-    from app.domain.entities.users import User
-    mock_uow.users.get_by_phone.return_value = User(
-        phone="+998901234567", full_name="Existing", id=user_id,
+    from app.domain.entities.clients import Client
+    mock_uow.clients.get_by_phone.return_value = Client(
+        phone="+998901234567", full_name="Existing", id=client_id,
     )
 
     await service.connect_client_to_point(uid, "+998901234567", "Existing")
 
-    mock_uow.users.add.assert_not_awaited()
-    assert point.owner_user_id == user_id
+    mock_uow.clients.add.assert_not_awaited()
+    assert point.owner_client_id == client_id
 
 
 @pytest.mark.asyncio

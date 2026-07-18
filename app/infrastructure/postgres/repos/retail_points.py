@@ -44,7 +44,7 @@ class PostgresRetailPointRepository(IRetailPointRepository):
 
     async def list_by_owner(self, owner_id: UUID, only_active: bool = True) -> list[RetailPoint]:
         stmt = select(RetailPointModel).where(
-            RetailPointModel.owner_user_id == owner_id
+            RetailPointModel.owner_client_id == owner_id
         )
         if only_active:
             stmt = stmt.where(RetailPointModel.is_active.is_(True))
@@ -79,7 +79,7 @@ class PostgresRetailPointRepository(IRetailPointRepository):
                 visit_fri=retail_point.visit_fri,
                 visit_sat=retail_point.visit_sat,
                 visit_sun=retail_point.visit_sun,
-                created_by_user_id=retail_point.created_by_user_id,
+                created_by_employee_id=retail_point.created_by_employee_id,
                 is_active=retail_point.is_active,
             )
         )
@@ -116,8 +116,8 @@ class PostgresRetailPointRepository(IRetailPointRepository):
             visit_fri=model.visit_fri,
             visit_sat=model.visit_sat,
             visit_sun=model.visit_sun,
-            created_by_user_id=model.created_by_user_id,
-            owner_user_id=model.owner_user_id,
+            created_by_employee_id=model.created_by_employee_id,
+            owner_client_id=model.owner_client_id,
             is_active=model.is_active,
         )
 
@@ -146,7 +146,7 @@ class PostgresRetailPointRepository(IRetailPointRepository):
             visit_fri=retail_point.visit_fri,
             visit_sat=retail_point.visit_sat,
             visit_sun=retail_point.visit_sun,
-            created_by_user_id=retail_point.created_by_user_id,
-            owner_user_id=retail_point.owner_user_id,
+            created_by_employee_id=retail_point.created_by_employee_id,
+            owner_client_id=retail_point.owner_client_id,
             is_active=retail_point.is_active,
         )

@@ -10,6 +10,7 @@ from app.domain.enums import ClientType
 class RetailPoint:
     name: str
     address: str
+    
     id: UUID = field(default_factory=uuid4)
     legal_name: str | None = None
     client_type: ClientType = ClientType.C
@@ -35,8 +36,9 @@ class RetailPoint:
     visit_sat: bool = field(default=False)
     visit_sun: bool = field(default=False)
 
-    created_by_user_id: UUID | None = None
-    owner_user_id: UUID | None = None
+    created_by_employee_id: UUID | None = None
+    owner_client_id: UUID | None = None
+    
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)

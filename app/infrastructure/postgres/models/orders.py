@@ -14,7 +14,7 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 from app.infrastructure.postgres.models.enums import OrderStatus
 
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.users import User
+    from app.infrastructure.postgres.models.clients import Client 
     from app.infrastructure.postgres.models.warehouses import Warehouse
     from app.infrastructure.postgres.models.retail_points import RetailPoint
     from app.infrastructure.postgres.models.visits import Visit
@@ -38,7 +38,7 @@ class Order(BaseModel):
 
     created_by_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
+        ForeignKey("clients.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
@@ -76,7 +76,7 @@ class Order(BaseModel):
         back_populates="orders",
     )
 
-    created_by: Mapped["User"] = relationship(
+    created_by: Mapped["Client"] = relationship(
         back_populates="orders",
     )
 

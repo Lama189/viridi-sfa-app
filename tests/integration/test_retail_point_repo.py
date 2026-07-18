@@ -5,9 +5,9 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.retail_points import RetailPoint
-from app.domain.entities.users import User
+from app.domain.entities.clients import Client
 from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
-from app.infrastructure.postgres.repos.users import PostgresUserRepository
+from app.infrastructure.postgres.repos.clients import PostgresClientRepository
 
 
 @pytest.mark.asyncio
@@ -95,21 +95,21 @@ async def test_list_all_empty(
 async def test_list_by_owner(
     session: AsyncSession,
     retail_point_repo: PostgresRetailPointRepository,
-    user_repo: PostgresUserRepository,
+    client_repo: PostgresClientRepository,
 ):
-    user = User(phone="+998901111111", full_name="Agent")
-    await user_repo.add(user)
+    client = Client(phone="+998901111111", full_name="Owner")
+    await client_repo.add(client)
     await session.flush()
 
     await retail_point_repo.add(RetailPoint(
-        name="My-Store", address="a", owner_user_id=user.id,
+        name="My-Store", address="a", owner_client_id=client.id,
     ))
     await retail_point_repo.add(RetailPoint(
         name="Other-Store", address="b",
     ))
     await session.commit()
 
-    result = await retail_point_repo.list_by_owner(user.id)
+    result = await retail_point_repo.list_by_owner(client.id)
     assert len(result) == 1
     assert result[0].name == "My-Store"
 
@@ -118,21 +118,21 @@ async def test_list_by_owner(
 async def test_list_by_owner_only_active(
     session: AsyncSession,
     retail_point_repo: PostgresRetailPointRepository,
-    user_repo: PostgresUserRepository,
+    client_repo: PostgresClientRepository,
 ):
-    user = User(phone="+998902222222", full_name="Agent2")
-    await user_repo.add(user)
+    client = Client(phone="+998902222222", full_name="Owner2")
+    await client_repo.add(client)
     await session.flush()
 
     await retail_point_repo.add(RetailPoint(
-        name="Active", address="a", owner_user_id=user.id,
+        name="Active", address="a", owner_client_id=client.id,
     ))
     await retail_point_repo.add(RetailPoint(
-        name="Inactive", address="b", owner_user_id=user.id, is_active=False,
+        name="Inactive", address="b", owner_client_id=client.id, is_active=False,
     ))
     await session.commit()
 
-    result = await retail_point_repo.list_by_owner(user.id, only_active=True)
+    result = await retail_point_repo.list_by_owner(client.id, only_active=True)
     assert len(result) == 1
     assert result[0].name == "Active"
 

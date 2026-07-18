@@ -18,7 +18,8 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 from app.infrastructure.postgres.models.enums import ClientType
 
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.users import User
+    from app.infrastructure.postgres.models.employees import Employee
+    from app.infrastructure.postgres.models.clients import Client
     from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.visits import Visit
 
@@ -88,28 +89,29 @@ class RetailPoint(BaseModel):
     visit_sat: Mapped[bool] = mapped_column(Boolean, default=False)
     visit_sun: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    created_by_user_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
-    )
-
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
         nullable=False,
     )
 
-    owner_user_id: Mapped[UUID | None] = mapped_column(
+    created_by_employee_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("employees.id", ondelete="SET NULL"),
     )
 
-    owner: Mapped["User | None"] = relationship(
-        foreign_keys=[owner_user_id]
+    owner_client_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("clients.id", ondelete="SET NULL"),
     )
 
-    created_by: Mapped["User | None"] = relationship(
+    owner: Mapped["Client | None"] = relationship(
+        foreign_keys=[owner_client_id]
+    )
+
+    created_by: Mapped["Employee | None"] = relationship(
         back_populates="retail_points",
+        foreign_keys=[created_by_employee_id]
     )
 
     visits: Mapped[list["Visit"]] = relationship(

@@ -111,6 +111,27 @@ class _TestUser(_TestBase):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
+class _TestClient(_TestBase):
+    __tablename__ = "clients"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
+class _TestEmployee(_TestBase):
+    __tablename__ = "employees"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default="agent")
+    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
 class _TestRetailPoint(_TestBase):
     __tablename__ = "retail_points"
 
@@ -137,11 +158,11 @@ class _TestRetailPoint(_TestBase):
     visit_fri: Mapped[bool] = mapped_column(Boolean, default=False)
     visit_sat: Mapped[bool] = mapped_column(Boolean, default=False)
     visit_sun: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_by_user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
+    created_by_employee_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("employees.id", ondelete="SET NULL"), nullable=True,
     )
-    owner_user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
+    owner_client_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("clients.id", ondelete="SET NULL"), nullable=True,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
@@ -157,6 +178,19 @@ def user_repo(session: AsyncSession):
         yield PostgresUserRepository(session)
     finally:
         repo_mod.UserModel = original
+
+
+@pytest_asyncio.fixture
+def client_repo(session: AsyncSession):
+    from app.infrastructure.postgres.repos.clients import PostgresClientRepository
+    import app.infrastructure.postgres.repos.clients as repo_mod
+
+    original = repo_mod.ClientModel
+    repo_mod.ClientModel = _TestClient
+    try:
+        yield PostgresClientRepository(session)
+    finally:
+        repo_mod.ClientModel = original
 
 
 @pytest_asyncio.fixture

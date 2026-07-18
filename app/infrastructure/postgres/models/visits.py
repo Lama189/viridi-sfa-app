@@ -15,7 +15,7 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 from app.infrastructure.postgres.models.enums import VisitStatus
 
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.users import User
+    from app.infrastructure.postgres.models.employees import Employee
     from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.retail_points import RetailPoint
     from app.infrastructure.postgres.models.visit_photos import VisitPhoto
@@ -32,7 +32,7 @@ class Visit(BaseModel):
 
     agent_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="RESTRICT"),
+        ForeignKey("employees.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
@@ -58,7 +58,7 @@ class Visit(BaseModel):
 
     comment: Mapped[str | None] = mapped_column(Text)
 
-    agent: Mapped["User"] = relationship(
+    agent: Mapped["Employee"] = relationship(
         back_populates="visits",
     )
 

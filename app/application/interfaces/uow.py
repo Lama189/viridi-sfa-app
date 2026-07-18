@@ -1,7 +1,7 @@
 from app.application.interfaces.categories import ICategoryRepository
+from app.application.interfaces.clients import IClientRepository
 from app.application.interfaces.products import IProductRepository
 from app.application.interfaces.retail_points import IRetailPointRepository
-from app.application.interfaces.users import IUserRepository
 from app.application.interfaces.warehouses import IWarehouseRepository
 
 
@@ -10,7 +10,7 @@ class IUnitOfWork:
     categories: ICategoryRepository
     products: IProductRepository
     retail_points: IRetailPointRepository
-    users: IUserRepository
+    clients: IClientRepository
 
     async def commit(self) -> None: ...
     async def rollback(self) -> None: ...

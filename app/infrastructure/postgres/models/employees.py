@@ -4,7 +4,6 @@ from uuid import UUID, uuid4
 from sqlalchemy import (
     String,
     Boolean,
-    BigInteger,
     DateTime,
     Enum,
     func,
@@ -13,16 +12,15 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.domain.enums import UserRole
+from app.infrastructure.postgres.models.enums import EmployeeRole 
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.retail_points import RetailPoint
     from app.infrastructure.postgres.models.visits import Visit
-    from app.infrastructure.postgres.models.orders import Order
 
 
-class User(BaseModel):
-    __tablename__ = "users"
+class Employee(BaseModel):
+    __tablename__ = "employees"
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -37,27 +35,20 @@ class User(BaseModel):
         index=True,
     )
 
-    password_hash: Mapped[str | None] = mapped_column(
+    password_hash: Mapped[str] = mapped_column(
         String(255),
-        nullable=True,
+        nullable=False, 
     )
 
-    role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole, name="user_role"),
+    role: Mapped[EmployeeRole] = mapped_column(
+        Enum(EmployeeRole, name="employee_role"),
         nullable=False,
-        default=UserRole.CLIENT,
+        default=EmployeeRole.AGENT,
     )
 
     full_name: Mapped[str] = mapped_column(
         String(100),
         nullable=False,
-    )
-
-    telegram_chat_id: Mapped[int | None] = mapped_column(
-        BigInteger,
-        unique=True,
-        nullable=True,
-        index=True,
     )
 
     is_active: Mapped[bool] = mapped_column(
@@ -80,13 +71,9 @@ class User(BaseModel):
     )
 
     retail_points: Mapped[list["RetailPoint"]] = relationship(
-        back_populates="created_by",
+        back_populates="created_by", 
     )
 
     visits: Mapped[list["Visit"]] = relationship(
-        back_populates="agent",
-    )
-
-    orders: Mapped[list["Order"]] = relationship(
-        back_populates="created_by",
+        back_populates="agent", 
     )

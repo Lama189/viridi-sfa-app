@@ -17,8 +17,8 @@ class CreateRetailPointRequest(BaseModel):
     contact_person: str | None = Field(default=None, max_length=100)
     phone_number: str | None = Field(default=None, max_length=20)
 
-    owner_user_phone: str | None = None 
-    owner_user_full_name: str | None = None
+    owner_client_phone: str | None = None 
+    owner_client_full_name: str | None = None
 
     inn: str | None = Field(default=None, max_length=9)
     checking_account: str | None = Field(default=None, max_length=20)
@@ -52,7 +52,7 @@ class UpdateRetailPointRequest(BaseModel):
     contact_person: str | None = None
     phone_number: str | None = None
 
-    owner_user_id: UUID | None = None
+    owner_client_id: UUID | None = None
 
     inn: str | None = None
     checking_account: str | None = None

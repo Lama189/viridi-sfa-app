@@ -1,8 +1,7 @@
 from uuid import UUID
 
 from app.domain.entities.retail_points import RetailPoint
-from app.domain.entities.users import User
-from app.domain.enums import UserRole
+from app.domain.entities.clients import Client
 
 from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
@@ -14,31 +13,31 @@ class RetailPointsService:
 
     async def create_retail_point(self, dto: CreateRetailPointRequest, agent_id: UUID) -> RetailPoint:
         point = RetailPoint(
-                name=dto.name,
-                address=dto.address,
-                legal_name=dto.legal_name,
-                client_type=dto.client_type,
-                landmark=dto.landmark,
-                contact_person=dto.contact_person,
-                phone_number=dto.phone_number,
-                inn=dto.inn,
-                checking_account=dto.checking_account,
-                bank_name=dto.bank_name,
-                mfo=dto.mfo,
-                oked=dto.oked,
-                latitude=dto.latitude,
-                longitude=dto.longitude,
-                photo_url=dto.photo_url,
-                visit_mon=dto.visit_mon,
-                visit_tue=dto.visit_tue,
-                visit_wed=dto.visit_wed,
-                visit_thu=dto.visit_thu,
-                visit_fri=dto.visit_fri,
-                visit_sat=dto.visit_sat,
-                visit_sun=dto.visit_sun,
-                created_by_user_id=agent_id,
-                is_active=True,
-            )
+            name=dto.name,
+            address=dto.address,
+            legal_name=dto.legal_name,
+            client_type=dto.client_type,
+            landmark=dto.landmark,
+            contact_person=dto.contact_person,
+            phone_number=dto.phone_number,
+            inn=dto.inn,
+            checking_account=dto.checking_account,
+            bank_name=dto.bank_name,
+            mfo=dto.mfo,
+            oked=dto.oked,
+            latitude=dto.latitude,
+            longitude=dto.longitude,
+            photo_url=dto.photo_url,
+            visit_mon=dto.visit_mon,
+            visit_tue=dto.visit_tue,
+            visit_wed=dto.visit_wed,
+            visit_thu=dto.visit_thu,
+            visit_fri=dto.visit_fri,
+            visit_sat=dto.visit_sat,
+            visit_sun=dto.visit_sun,
+            created_by_employee_id=agent_id,  
+            is_active=True,
+        )
         
         await self._uow.retail_points.add(point)
         await self._uow.commit()
@@ -49,19 +48,18 @@ class RetailPointsService:
         if not point:
             raise ValueError("Retail point not found")
         
-        user = await self._uow.users.get_by_phone(phone=phone)
+        client = await self._uow.clients.get_by_phone(phone=phone)
 
-        if not user:
-            user = User(
+        if not client:
+            client = Client(
                 phone=phone,
                 full_name=full_name,
-                role=UserRole.CLIENT,
-                telegram_chat_id=None
+                telegram_chat_id=None,
             )
-            
-            await self._uow.users.add(user)
 
-        point.owner_user_id = user.id
+            await self._uow.clients.add(client)
+
+        point.owner_client_id = client.id
         await self._uow.retail_points.update(point)
 
     async def update_retail_point(self, retail_point_id: UUID, dto: UpdateRetailPointRequest) -> RetailPoint:
@@ -83,8 +81,8 @@ class RetailPointsService:
             retail_point.contact_person = dto.contact_person
         if dto.phone_number is not None:
             retail_point.phone_number = dto.phone_number
-        if dto.owner_user_id is not None:
-            retail_point.owner_user_id = dto.owner_user_id
+        if dto.owner_client_id is not None:
+            retail_point.owner_client_id = dto.owner_client_id
         if dto.inn is not None:
             retail_point.inn = dto.inn
         if dto.checking_account is not None:

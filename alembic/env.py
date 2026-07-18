@@ -2,13 +2,13 @@ import asyncio
 import os
 from logging.config import fileConfig
 
-# Обратите внимание на асинхронный импорт движка:
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
 from alembic import context
 
-# Импортируем базовый класс ваших моделей для автогенерации
 from app.infrastructure.postgres.models.base_model import BaseModel
+
+
 
 config = context.config
 

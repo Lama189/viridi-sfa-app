@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 50a21eb72e60
+Revision ID: db39443ccedf
 Revises: 
-Create Date: 2026-07-16 06:03:30.112336
+Create Date: 2026-07-18 08:15:52.043228
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '50a21eb72e60'
+revision: str = 'db39443ccedf'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,11 +27,10 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('users',
+    op.create_table('clients',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('phone', sa.String(length=20), nullable=False),
     sa.Column('password_hash', sa.String(length=255), nullable=True),
-    sa.Column('role', sa.Enum('ADMIN', 'AGENT', 'CLIENT', name='user_role'), nullable=False),
     sa.Column('full_name', sa.String(length=100), nullable=False),
     sa.Column('telegram_chat_id', sa.BigInteger(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
@@ -39,8 +38,20 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_users_phone'), 'users', ['phone'], unique=True)
-    op.create_index(op.f('ix_users_telegram_chat_id'), 'users', ['telegram_chat_id'], unique=True)
+    op.create_index(op.f('ix_clients_phone'), 'clients', ['phone'], unique=True)
+    op.create_index(op.f('ix_clients_telegram_chat_id'), 'clients', ['telegram_chat_id'], unique=True)
+    op.create_table('employees',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('phone', sa.String(length=20), nullable=False),
+    sa.Column('password_hash', sa.String(length=255), nullable=False),
+    sa.Column('role', sa.Enum('ADMIN', 'AGENT', name='employee_role'), nullable=False),
+    sa.Column('full_name', sa.String(length=100), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_employees_phone'), 'employees', ['phone'], unique=True)
     op.create_table('warehouses',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
@@ -84,9 +95,11 @@ def upgrade() -> None:
     sa.Column('visit_fri', sa.Boolean(), nullable=False),
     sa.Column('visit_sat', sa.Boolean(), nullable=False),
     sa.Column('visit_sun', sa.Boolean(), nullable=False),
-    sa.Column('created_by_user_id', sa.UUID(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.ForeignKeyConstraint(['created_by_user_id'], ['users.id'], ondelete='SET NULL'),
+    sa.Column('created_by_employee_id', sa.UUID(), nullable=True),
+    sa.Column('owner_client_id', sa.UUID(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by_employee_id'], ['employees.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['owner_client_id'], ['clients.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('idx_retail_points_fri', 'retail_points', ['visit_fri'], unique=False)
@@ -113,7 +126,7 @@ def upgrade() -> None:
     sa.Column('actual_longitude', sa.Numeric(precision=9, scale=6), nullable=True),
     sa.Column('status', sa.Enum('COMPLETED', 'SKIPPED', name='visit_status'), nullable=False),
     sa.Column('comment', sa.Text(), nullable=True),
-    sa.ForeignKeyConstraint(['agent_id'], ['users.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['agent_id'], ['employees.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -126,7 +139,7 @@ def upgrade() -> None:
     sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'SHIPPED', 'CANCELLED', name='order_status'), nullable=False),
     sa.Column('total_amount', sa.Numeric(precision=15, scale=2), nullable=False),
     sa.Column('total_volume', sa.Numeric(precision=10, scale=3), nullable=False),
-    sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['created_by_id'], ['clients.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['visit_id'], ['visits.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='RESTRICT'),
@@ -172,8 +185,10 @@ def downgrade() -> None:
     op.drop_table('retail_points')
     op.drop_table('products')
     op.drop_table('warehouses')
-    op.drop_index(op.f('ix_users_telegram_chat_id'), table_name='users')
-    op.drop_index(op.f('ix_users_phone'), table_name='users')
-    op.drop_table('users')
+    op.drop_index(op.f('ix_employees_phone'), table_name='employees')
+    op.drop_table('employees')
+    op.drop_index(op.f('ix_clients_telegram_chat_id'), table_name='clients')
+    op.drop_index(op.f('ix_clients_phone'), table_name='clients')
+    op.drop_table('clients')
     op.drop_table('categories')
     # ### end Alembic commands ###

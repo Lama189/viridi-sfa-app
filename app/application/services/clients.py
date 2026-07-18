@@ -1,9 +1,15 @@
 from uuid import UUID
 
 from app.domain.entities.clients import Client
+from app.core.extensions import UserNotFoundError
+from app.core.security import SecurityUtils
 
 from app.application.interfaces.uow import IUnitOfWork
-from app.api.v1.schemas.clients import ClientCreate, ClientUpdate
+from app.application.interfaces.clients_cache import IClientsCacheRepository
+from app.api.v1.schemas.clients import ClientCreate, ClientUpdate, ClientCachedDTO, ClientLoginDTO
+from app.api.v1.schemas.tokens import TokenResponseDTO
+
+from app.infrastructure.context import client_id_ctx_var
 
 
 class ClientsService:
@@ -65,3 +71,59 @@ class ClientsService:
 
         await self._uow.clients.delete(client)
         await self._uow.commit()
+
+
+class ClientsAuthService:
+
+    def __init__(self, uow: IUnitOfWork, cache: IClientsCacheRepository) -> None:
+        self._uow = uow
+        self._cache = cache
+
+    async def login(self, dto: ClientLoginDTO) -> TokenResponseDTO:
+        client = await self._uow.clients.get_by_phone(dto.phone)
+        if not client:
+            raise UserNotFoundError()
+        
+        client_id_ctx_var.set(str(client.id))
+
+        payload = {"sub": str(client.id), "telegram_chat_id": client.telegram_chat_id}
+        access_token = SecurityUtils.generate_access_token(payload)
+        refresh_token = SecurityUtils.generate_refresh_token(payload)
+
+        await self._cache.set_refresh_token(
+            client_id=str(client.id),
+            token=refresh_token,
+        )
+
+        await self._cache.set_user(
+            client_id=str(client.id),
+            user=ClientCachedDTO.model_validate(client),
+        )
+
+        return TokenResponseDTO(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user_id=client.id
+        )
+    
+    async def refresh(self, refresh_token: str) -> TokenResponseDTO:
+        payload = SecurityUtils.verify_token(refresh_token, expected_type="refresh")
+        client_id = payload.get("sub")
+
+        client_id_ctx_var.set(str(client_id))
+
+        stored_token = await self._cache.get_refresh_token(client_id)
+        if not stored_token or stored_token != refresh_token:
+            raise ValueError("Refresh token is invalid")
+        
+        new_access = SecurityUtils.generate_access_token({"sub": client_id})
+
+        return TokenResponseDTO(
+            access_token=new_access,
+            refresh_token=refresh_token,
+            user_id=client_id
+        )
+    
+    async def logout(self, client_id: str) -> None:
+        await self._cache.delete_refresh_token(client_id)
+        await self._cache.delete_user(client_id)

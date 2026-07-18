@@ -1,5 +1,5 @@
 from uuid import UUID
-from pydantic import BaseModel, Field, FieldSerializationInfo
+from pydantic import BaseModel, Field
 
 from app.domain.enums import UserRole
 

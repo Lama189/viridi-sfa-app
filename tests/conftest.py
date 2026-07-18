@@ -126,9 +126,9 @@ class _TestEmployee(_TestBase):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="agent")
-    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
@@ -191,6 +191,19 @@ def client_repo(session: AsyncSession):
         yield PostgresClientRepository(session)
     finally:
         repo_mod.ClientModel = original
+
+
+@pytest_asyncio.fixture
+def employee_repo(session: AsyncSession):
+    from app.infrastructure.postgres.repos.employees import PostgresEmployeeRepository
+    import app.infrastructure.postgres.repos.employees as repo_mod
+
+    original = repo_mod.EmployeeModel
+    repo_mod.EmployeeModel = _TestEmployee
+    try:
+        yield PostgresEmployeeRepository(session)
+    finally:
+        repo_mod.EmployeeModel = original
 
 
 @pytest_asyncio.fixture

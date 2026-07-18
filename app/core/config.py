@@ -4,6 +4,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     database_url: str = ""
+    redis_url: str = ""
 
     debug: bool = False
     algorithm: str = "HS256"

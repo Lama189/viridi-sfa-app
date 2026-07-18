@@ -67,3 +67,25 @@ class UserResponse(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+
+class UserCachedDTO(BaseModel):
+    id: UUID
+    phone: str                     
+    role: UserRole                  
+    is_active: bool                 
+    telegram_chat_id: int | None   
+
+    model_config = {
+        "from_attributes": True,
+    }
+
+
+class LoginDTO(BaseModel):
+    phone: str = Field(
+        ...,
+        min_length=1,
+        max_length=20,
+        description="Номер телефона пользователя",
+        json_schema_extra={"example": "+998901234567"},
+    )

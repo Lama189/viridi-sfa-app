@@ -9,6 +9,7 @@ from app.domain.enums import UserRole
 class User:
     phone: str  
     full_name: str
+    password_hash: str | None = None
     id: UUID = field(default_factory=uuid4)
     role: UserRole = UserRole.CLIENT
     telegram_chat_id: int | None = None

@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from app.domain.entities.users import User
-from app.domain.enums import UserRole
 
 from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.users import UserCreate, UserUpdate

@@ -1,8 +1,9 @@
 import bcrypt
+import jwt
+from jwt.exceptions import InvalidTokenError
 from typing import Any
 from fastapi import HTTPException
 from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
 from starlette import status
 from app.core.config import get_settings
 
@@ -57,7 +58,7 @@ class SecurityUtils:
                     detail=f"Invalid token type: expected {expected_type}",
                 )
             return payload
-        except JWTError:
+        except InvalidTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials or token expired",

@@ -36,7 +36,7 @@ async def test_create_employee_success(mock_hash, service, mock_uow):
     assert result.full_name == "Test Employee"
     assert result.password_hash == "hashed_value"
     assert result.role == EmployeeRole.AGENT
-    assert result.is_active is True
+    assert result.is_active is False
     mock_uow.employees.add.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
 

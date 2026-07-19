@@ -1,4 +1,3 @@
-from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -12,7 +11,7 @@ router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 
 
 @router.post(
-    path="register",
+    path="/register",
     status_code=status.HTTP_201_CREATED,
     response_model=ClientResponse
 )

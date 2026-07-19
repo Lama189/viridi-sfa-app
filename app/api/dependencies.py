@@ -7,6 +7,8 @@ from redis.asyncio import Redis
 
 from app.core.config import get_settings
 from app.core.security import SecurityUtils
+from app.domain.enums import EmployeeRole
+from app.domain.entities.employees import Employee
 
 from app.application.interfaces.clients_cache import IClientsCacheRepository
 from app.application.interfaces.employees_cache import IEmployeesCacheRepository
@@ -14,7 +16,7 @@ from app.application.interfaces.uow import IUnitOfWork
 
 from app.application.services.categories import CategoriesService
 from app.application.services.clients import ClientsService, ClientsAuthService
-from app.application.services.employees import EmployeesService
+from app.application.services.employees import EmployeesService, EmployeesAuthService
 from app.application.services.products import ProductsService
 from app.application.services.retail_points import RetailPointsService
 from app.application.services.warehouses import WarehousesService
@@ -86,6 +88,11 @@ async def get_clients_auth_service(
 async def get_employees_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> EmployeesService:
     return EmployeesService(uow)
 
+async def get_employees_auth_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    redis: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)]
+) -> EmployeesAuthService:
+    return EmployeesAuthService(uow, redis)
 
 # ======================================================================
 # 4. AUTHENTICATION & CURRENT USER DEPENDENCIES
@@ -97,8 +104,8 @@ async def get_current_client(
     token: str = Depends(oauth2_scheme),
 ):
     payload = SecurityUtils.verify_token(token)
-    client_id = payload.get("sub")
 
+    client_id = payload.get("sub")
     client_id_ctx_var.set(str(client_id))
 
     cached_client = await redis.get_user(client_id)
@@ -119,8 +126,14 @@ async def get_current_employee(
     token: str = Depends(oauth2_scheme),
 ):
     payload = SecurityUtils.verify_token(token)
+    
+    if payload.get("user_type") != "employee":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid token type for this resource"
+        )
+        
     employee_id = payload.get("sub")
-
     employee_id_ctx_var.set(str(employee_id))
 
     cached_employee = await redis.get_employee(employee_id)
@@ -133,4 +146,36 @@ async def get_current_employee(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Employee not found"
         )
+        
+    if not db_employee.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Employee account is inactive"
+        )
+        
     return db_employee
+
+
+# ======================================================================
+# 5. USER ROLES DEPENDENCIES
+# ======================================================================
+
+
+class RoleChecker:
+    def __init__(self, allowed_roles: list[EmployeeRole]) -> None:
+        self.allowed_roles = allowed_roles
+
+    async def __call__(
+        self, 
+        current_employee: Annotated[Employee, Depends(get_current_employee)]
+    ) -> Employee:
+        if current_employee.role not in self.allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied. You do not have the required permissions."
+            )
+        return current_employee
+    
+allow_admin = RoleChecker([EmployeeRole.ADMIN])
+allow_agent = RoleChecker([EmployeeRole.AGENT])
+allow_all_staff = RoleChecker([EmployeeRole.ADMIN, EmployeeRole.AGENT])

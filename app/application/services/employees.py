@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.domain.entities.employees import Employee
-from app.core.extensions import UserNotFoundError, InvalidPasswordError
+from app.core.extensions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
 from app.core.security import SecurityUtils
 
 from app.application.interfaces.uow import IUnitOfWork
@@ -33,6 +33,7 @@ class EmployeesService:
             password_hash=SecurityUtils.hash_password(dto.password),
             full_name=dto.full_name,
             role=dto.role,
+            is_active=False
         )
 
         await self._uow.employees.add(employee)
@@ -98,7 +99,7 @@ class EmployeesAuthService:
             "sub": employee_id_str,
             "role": employee.role.value,           
             "phone": employee.phone, 
-            "type": "employee"             
+            "user_type": "employee"             
         }
         access_token = SecurityUtils.generate_access_token(payload)
         refresh_token = SecurityUtils.generate_refresh_token(payload)
@@ -127,6 +128,9 @@ class EmployeesAuthService:
         if not SecurityUtils.verify_password(dto.password, employee.password_hash):
             raise InvalidPasswordError()
         
+        if not employee.is_active:
+            raise UserNotActiveError()
+        
         tokens = await self._generate_auth_session(employee)
 
         return EmployeeWithTokensResponse(
@@ -149,7 +153,7 @@ class EmployeesAuthService:
             "sub": employee_id,
             "role": payload.get("role"),
             "phone": payload.get("phone"),
-            "type": "employee"
+            "user_type": "employee"
         })
 
         return TokenResponseDTO(

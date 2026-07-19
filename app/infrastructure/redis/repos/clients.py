@@ -3,7 +3,7 @@ import logging
 from redis.asyncio import Redis, RedisError
 
 from app.core.config import get_settings
-from app.api.v1.schemas.users import UserCachedDTO
+from app.api.v1.schemas.clients import ClientCachedDTO
 from app.application.interfaces.clients_cache import IClientsCacheRepository
 
 
@@ -47,7 +47,7 @@ class ClientsRedisRepository(IClientsCacheRepository):
     async def set_user(
         self,
         client_id: str,
-        user: UserCachedDTO,
+        user: ClientCachedDTO,
         expire_seconds: int = 900,
     ) -> None:
         try:
@@ -59,12 +59,12 @@ class ClientsRedisRepository(IClientsCacheRepository):
         except RedisError as e:
             logger.error(f"Failed to set user for {client_id}: {e}")
 
-    async def get_user(self, client_id: str) -> UserCachedDTO | None:
+    async def get_user(self, client_id: str) -> ClientCachedDTO | None:
         try:
             user_json = await self._client.get(f"user:{client_id}")
             if not user_json:
                 return None
-            return UserCachedDTO.model_validate_json(user_json)
+            return ClientCachedDTO.model_validate_json(user_json)
         except RedisError as e:
             logger.error(f"Failed to get user for {client_id}: {e}")
             return None

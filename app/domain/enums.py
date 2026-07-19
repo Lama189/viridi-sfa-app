@@ -1,10 +1,9 @@
 from enum import Enum
 
 
-class UserRole(str, Enum):
+class EmployeeRole(str, Enum):
     ADMIN = "admin"
     AGENT = "agent"
-    CLIENT = "client"
 
 
 class ClientType(str, Enum):

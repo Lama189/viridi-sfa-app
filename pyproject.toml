@@ -12,6 +12,7 @@ dependencies = [
     "pip-audit>=2.10.1",
     "pydantic-settings>=2.14.2",
     "pyjwt[crypto]>=2.13.0",
+    "redis>=8.0.1",
     "ruff>=0.15.21",
     "sqlalchemy>=2.0.51",
     "uvicorn>=0.51.0",

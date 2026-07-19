@@ -29,7 +29,7 @@ async def create_warehouse(
 @router.get(
     path="",
     response_model=list[WarehouseResponse],
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
 )
 async def get_warehouses(
     service: Annotated[WarehousesService, Depends(get_warehouses_service)],

@@ -2,7 +2,6 @@ import re
 from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
-from app.api.v1.schemas.tokens import TokenResponseDTO
 
 
 class ClientLoginDTO(BaseModel):

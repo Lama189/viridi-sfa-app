@@ -23,4 +23,5 @@ test = [
     "pytest>=8.0",
     "pytest-asyncio>=0.25",
     "aiosqlite>=0.20",
+    "httpx>=0.28.0",
 ]

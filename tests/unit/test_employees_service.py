@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -25,15 +25,16 @@ def service(mock_uow):
 # --- create_employee ---
 
 @pytest.mark.asyncio
-async def test_create_employee_success(service, mock_uow):
+@patch("app.application.services.employees.SecurityUtils.hash_password", return_value="hashed_value")
+async def test_create_employee_success(mock_hash, service, mock_uow):
     mock_uow.employees.exists_by.return_value = False
 
-    dto = EmployeeCreate(phone="+998901234567", password_hash="hash123", full_name="Test Employee")
+    dto = EmployeeCreate(phone="+998901234567", password="secret123", full_name="Test Employee")
     result = await service.create_employee(dto)
 
     assert result.phone == "+998901234567"
     assert result.full_name == "Test Employee"
-    assert result.password_hash == "hash123"
+    assert result.password_hash == "hashed_value"
     assert result.role == EmployeeRole.AGENT
     assert result.is_active is True
     mock_uow.employees.add.assert_awaited_once()
@@ -41,11 +42,12 @@ async def test_create_employee_success(service, mock_uow):
 
 
 @pytest.mark.asyncio
-async def test_create_employee_with_role(service, mock_uow):
+@patch("app.application.services.employees.SecurityUtils.hash_password", return_value="hashed_value")
+async def test_create_employee_with_role(mock_hash, service, mock_uow):
     mock_uow.employees.exists_by.return_value = False
 
     dto = EmployeeCreate(
-        phone="+998901234568", password_hash="hash", full_name="Admin", role=EmployeeRole.ADMIN,
+        phone="+998901234568", password="secret123", full_name="Admin", role=EmployeeRole.ADMIN,
     )
     result = await service.create_employee(dto)
 
@@ -56,7 +58,7 @@ async def test_create_employee_with_role(service, mock_uow):
 async def test_create_employee_duplicate_phone(service, mock_uow):
     mock_uow.employees.exists_by.return_value = True
 
-    dto = EmployeeCreate(phone="+998901234567", password_hash="hash", full_name="Dup")
+    dto = EmployeeCreate(phone="+998901234567", password="secret123", full_name="Dup")
     with pytest.raises(ValueError, match="already exists"):
         await service.create_employee(dto)
 

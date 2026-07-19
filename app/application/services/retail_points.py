@@ -55,6 +55,7 @@ class RetailPointsService:
                 phone=phone,
                 full_name=full_name,
                 telegram_chat_id=None,
+                is_active=False
             )
 
             await self._uow.clients.add(client)

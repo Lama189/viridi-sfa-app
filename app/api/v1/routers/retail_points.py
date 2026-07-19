@@ -26,11 +26,11 @@ async def create_retail_point(
     try:
         retail_point = await service.create_retail_point(dto, uuid4()) # ЗАГЛУШКА
 
-        if dto.owner_user_full_name and dto.owner_user_phone:
+        if dto.owner_client_full_name and dto.owner_client_phone:
             await service.connect_client_to_point(
                 retail_point.id, 
-                dto.owner_user_phone, 
-                dto.owner_user_full_name
+                dto.owner_client_phone, 
+                dto.owner_client_full_name
             )
 
     except ValueError as e:

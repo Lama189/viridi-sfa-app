@@ -1,7 +1,8 @@
 import re
 from uuid import UUID
-
 from pydantic import BaseModel, Field, field_validator
+
+from app.api.v1.schemas.tokens import TokenResponseDTO
 
 
 class ClientLoginDTO(BaseModel):
@@ -95,6 +96,16 @@ class ClientResponse(BaseModel):
     }
 
 
+class ClientWithTokensResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    client: ClientResponse
+
+    model_config = {
+        "from_attributes": True,
+    }
+
+
 class ClientCachedDTO(BaseModel):
     id: UUID
     phone: str                                     
@@ -104,3 +115,9 @@ class ClientCachedDTO(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+
+class ClientConfirm(BaseModel):
+    phone: str
+    telegram_chat_id: int
+    full_name: str | None

@@ -1,6 +1,7 @@
+import re
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.infrastructure.postgres.models.enums import EmployeeRole
 
@@ -13,11 +14,11 @@ class EmployeeCreate(BaseModel):
         description="Номер телефона сотрудника",
         json_schema_extra={"example": "+998901234567"},
     )
-    password_hash: str = Field(
+    password: str = Field(
         ...,
-        min_length=1,
-        max_length=255,
-        description="Хэш пароля сотрудника",
+        min_length=6,
+        max_length=100,
+        description="Пароль сотрудника",
     )
     full_name: str = Field(
         ...,
@@ -79,6 +80,39 @@ class EmployeeCachedDTO(BaseModel):
     full_name: str
     role: EmployeeRole
     is_active: bool
+
+    model_config = {
+        "from_attributes": True,
+    }
+
+
+class EmployeeLoginDTO(BaseModel):
+    phone: str = Field(
+        ...,
+        min_length=1,
+        max_length=20,
+        description="Номер телефона сотрудника",
+        json_schema_extra={"example": "+998901234567"},
+    )
+    password: str = Field(
+        ...,
+        min_length=6,  
+        max_length=100,
+        description="Сырой пароль сотрудника для проверки",
+    )
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str) -> str:
+        if not re.fullmatch(r"\+998\d{9}", v):
+            raise ValueError("Неверный формат номера. Ожидается +998XXXXXXXXX")
+        return v
+    
+
+class EmployeeWithTokensResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    employee: EmployeeResponse  
 
     model_config = {
         "from_attributes": True,

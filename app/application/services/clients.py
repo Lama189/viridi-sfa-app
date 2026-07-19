@@ -6,8 +6,16 @@ from app.core.security import SecurityUtils
 
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.clients_cache import IClientsCacheRepository
-from app.api.v1.schemas.clients import ClientCreate, ClientUpdate, ClientCachedDTO, ClientLoginDTO
 from app.api.v1.schemas.tokens import TokenResponseDTO
+from app.api.v1.schemas.clients import (
+    ClientCreate, 
+    ClientUpdate, 
+    ClientCachedDTO, 
+    ClientLoginDTO, 
+    ClientConfirm,
+    ClientResponse,
+    ClientWithTokensResponse
+)
 
 from app.infrastructure.context import client_id_ctx_var
 
@@ -79,24 +87,25 @@ class ClientsAuthService:
         self._uow = uow
         self._cache = cache
 
-    async def login(self, dto: ClientLoginDTO) -> TokenResponseDTO:
-        client = await self._uow.clients.get_by_phone(dto.phone)
-        if not client:
-            raise UserNotFoundError()
-        
-        client_id_ctx_var.set(str(client.id))
+    async def _generate_auth_session(self, client: Client) -> TokenResponseDTO:
+        client_id_str = str(client.id)
+        client_id_ctx_var.set(client_id_str)
 
-        payload = {"sub": str(client.id), "telegram_chat_id": client.telegram_chat_id}
+        payload = {
+            "sub": client_id_str, 
+            "telegram_chat_id": client.telegram_chat_id,
+            "type": "employee" 
+        }
         access_token = SecurityUtils.generate_access_token(payload)
         refresh_token = SecurityUtils.generate_refresh_token(payload)
 
         await self._cache.set_refresh_token(
-            client_id=str(client.id),
+            client_id=client_id_str,
             token=refresh_token,
         )
 
         await self._cache.set_user(
-            client_id=str(client.id),
+            client_id=client_id_str,
             user=ClientCachedDTO.model_validate(client),
         )
 
@@ -104,6 +113,38 @@ class ClientsAuthService:
             access_token=access_token,
             refresh_token=refresh_token,
             user_id=client.id
+        )
+    
+    async def login(self, dto: ClientLoginDTO) -> TokenResponseDTO:
+        client = await self._uow.clients.get_by_phone(dto.phone)
+        if not client:
+            raise UserNotFoundError()
+        
+        if dto.telegram_chat_id is not None and client.telegram_chat_id != dto.telegram_chat_id:
+            client.telegram_chat_id = dto.telegram_chat_id
+            await self._uow.clients.update(client)
+            await self._uow.commit()
+            
+        return await self._generate_auth_session(client)
+    
+    async def confirm(self, dto: ClientConfirm) -> ClientWithTokensResponse:
+        client = await self._uow.clients.get_by_phone(dto.phone)
+        if not client:
+            raise UserNotFoundError()
+        
+        client.telegram_chat_id = dto.telegram_chat_id
+        if dto.full_name:
+            client.full_name = dto.full_name
+
+        await self._uow.clients.update(client)
+        await self._uow.commit()
+        
+        tokens = await self._generate_auth_session(client)
+
+        return ClientWithTokensResponse(
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            client=ClientResponse.model_validate(client)
         )
     
     async def refresh(self, refresh_token: str) -> TokenResponseDTO:

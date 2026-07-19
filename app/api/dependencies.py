@@ -13,7 +13,7 @@ from app.application.interfaces.employees_cache import IEmployeesCacheRepository
 from app.application.interfaces.uow import IUnitOfWork
 
 from app.application.services.categories import CategoriesService
-from app.application.services.clients import ClientsService
+from app.application.services.clients import ClientsService, ClientsAuthService
 from app.application.services.employees import EmployeesService
 from app.application.services.products import ProductsService
 from app.application.services.retail_points import RetailPointsService
@@ -39,6 +39,22 @@ async def get_uow() -> AsyncGenerator[IUnitOfWork, None]:
 
 
 # ======================================================================
+# 3. REDIS REPOSITORIES DEPENDENCIES
+# ======================================================================
+
+async def get_clients_redis_repo(
+    client: Annotated[Redis, Depends(get_redis_client)]
+) -> IClientsCacheRepository:
+    return ClientsRedisRepository(client)
+
+
+async def get_employees_redis_repo(
+    client: Annotated[Redis, Depends(get_redis_client)]
+) -> IEmployeesCacheRepository:
+    return EmployeesRedisRepository(client)
+
+
+# ======================================================================
 # 2. CORE BUSINESS SERVICES DEPENDENCIES
 # ======================================================================
 
@@ -61,25 +77,14 @@ async def get_products_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) ->
 async def get_clients_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ClientsService:
     return ClientsService(uow)
 
+async def get_clients_auth_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    redis: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)]
+) -> ClientsAuthService:
+    return ClientsAuthService(uow, redis)
 
 async def get_employees_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> EmployeesService:
     return EmployeesService(uow)
-
-
-# ======================================================================
-# 3. REDIS REPOSITORIES DEPENDENCIES
-# ======================================================================
-
-async def get_clients_redis_repo(
-    client: Annotated[Redis, Depends(get_redis_client)]
-) -> IClientsCacheRepository:
-    return ClientsRedisRepository(client)
-
-
-async def get_employees_redis_repo(
-    client: Annotated[Redis, Depends(get_redis_client)]
-) -> IEmployeesCacheRepository:
-    return EmployeesRedisRepository(client)
 
 
 # ======================================================================
@@ -107,7 +112,6 @@ async def get_current_client(
             detail="User not found"
         )
     return db_client
-
 
 async def get_current_employee(
     service: Annotated[EmployeesService, Depends(get_employees_service)],

@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.stocks import IStockRepository
+from app.application.interfaces.repos.stocks import IStockRepository
 from app.domain.entities.stocks import Stock
 from app.infrastructure.postgres.models.stocks import Stock as StockModel
 

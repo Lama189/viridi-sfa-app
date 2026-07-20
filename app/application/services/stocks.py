@@ -2,6 +2,7 @@ from uuid import UUID
 
 from app.api.v1.schemas.stocks import StockOperationRequest, StockCreateRequest
 from app.application.interfaces.uow import IUnitOfWork
+from app.application.interfaces.services.stocks import IStockService
 from app.domain.entities.stocks import Stock, StockTransaction
 from app.domain.enums import (
     StockTransactionType,
@@ -10,7 +11,7 @@ from app.domain.enums import (
 )
 
 
-class StockService:
+class StockService(IStockService):
 
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
@@ -85,7 +86,6 @@ class StockService:
         )
 
         await self._uow.stocks.add(stock)
-        await self._uow.commit()
 
         return stock
 
@@ -113,8 +113,6 @@ class StockService:
             reference_id=dto.reference_id,
         )
 
-        await self._uow.commit()
-
         return stock
 
     async def reserve_stock(self, dto: StockOperationRequest) -> Stock:
@@ -135,8 +133,6 @@ class StockService:
             reference_type=dto.reference_type,
             reference_id=dto.reference_id,
         )
-
-        await self._uow.commit()
 
         return stock
 
@@ -159,8 +155,6 @@ class StockService:
             reference_id=dto.reference_id,
         )
 
-        await self._uow.commit()
-
         return stock
 
     async def confirm_sale(self, dto: StockOperationRequest,) -> Stock:
@@ -181,8 +175,6 @@ class StockService:
             reference_type=dto.reference_type,
             reference_id=dto.reference_id,
         )
-
-        await self._uow.commit()
 
         return stock
 
@@ -205,8 +197,6 @@ class StockService:
             reference_id=dto.reference_id,
         )
 
-        await self._uow.commit()
-
         return stock
 
     async def return_stock(self, dto: StockOperationRequest) -> Stock:
@@ -227,7 +217,5 @@ class StockService:
             reference_type=dto.reference_type,
             reference_id=dto.reference_id,
         )
-
-        await self._uow.commit()
 
         return stock

@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.retail_points import IRetailPointRepository
+from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.domain.entities.retail_points import RetailPoint
 from app.infrastructure.postgres.models.retail_points import RetailPoint as RetailPointModel
 

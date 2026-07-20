@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.employees import IEmployeeRepository
+from app.application.interfaces.repos.employees import IEmployeeRepository
 from app.domain.entities.employees import Employee
 from app.infrastructure.postgres.models.employees import Employee as EmployeeModel
 

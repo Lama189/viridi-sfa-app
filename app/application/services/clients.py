@@ -5,7 +5,7 @@ from app.core.extensions import UserNotFoundError
 from app.core.security import SecurityUtils
 
 from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.clients_cache import IClientsCacheRepository
+from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.api.v1.schemas.clients import (
     ClientCreate, 

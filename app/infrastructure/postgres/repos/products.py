@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.products import IProductRepository
+from app.application.interfaces.repos.products import IProductRepository
 from app.domain.entities.inventory import Product
 from app.infrastructure.postgres.models.products import Product as ProductModel
 
@@ -33,6 +33,15 @@ class PostgresProductsRepository(IProductRepository):
         stmt = select(select(ProductModel).filter_by(**kwargs).exists())
         result = await self._session.execute(stmt)
         return bool(result.scalar())
+    
+    async def list_by_ids(self, product_ids: list[UUID]) -> list[Product]:
+        if not product_ids:
+            return []
+        
+        stmt = select(ProductModel).where(ProductModel.id.in_(product_ids))
+        result = (await self._session.execute(stmt)).scalars().all()
+        
+        return [self._to_domain(model) for model in result]
 
     async def list_all(self, only_active: bool = True) -> list[Product]:
         stmt = select(ProductModel)

@@ -5,7 +5,7 @@ from app.core.extensions import UserNotFoundError, InvalidPasswordError, UserNot
 from app.core.security import SecurityUtils
 
 from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.employees_cache import IEmployeesCacheRepository
+from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
 from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.api.v1.schemas.employees import (
     EmployeeCreate, 

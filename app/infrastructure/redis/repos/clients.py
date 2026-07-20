@@ -4,7 +4,7 @@ from redis.asyncio import Redis, RedisError
 
 from app.core.config import get_settings
 from app.api.v1.schemas.clients import ClientCachedDTO
-from app.application.interfaces.clients_cache import IClientsCacheRepository
+from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 
 
 settings = get_settings()

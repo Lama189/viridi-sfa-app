@@ -19,6 +19,10 @@ class IProductRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def list_by_ids(self, product_ids: list[UUID]) -> list[Product]:
+        raise NotImplementedError
+    
+    @abstractmethod
     async def list_all(self, only_active: bool = True) -> list[Product]:
         raise NotImplementedError
 

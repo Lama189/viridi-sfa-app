@@ -11,8 +11,8 @@ from app.domain.enums import EmployeeRole
 from app.domain.entities.employees import Employee
 from app.domain.entities.clients import Client
 
-from app.application.interfaces.clients_cache import IClientsCacheRepository
-from app.application.interfaces.employees_cache import IEmployeesCacheRepository
+from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
+from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
 from app.application.interfaces.uow import IUnitOfWork
 
 from app.application.services.categories import CategoriesService

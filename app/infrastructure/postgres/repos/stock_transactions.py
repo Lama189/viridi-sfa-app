@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.stocks_transactions import IStockTransactionRepository
+from app.application.interfaces.repos.stocks_transactions import IStockTransactionRepository
 from app.domain.entities.stocks import StockTransaction
 from app.infrastructure.postgres.models.stock_transactions import StockTransaction as StockTransactionModel
 

@@ -5,9 +5,7 @@ from uuid import UUID, uuid4
 from app.domain.enums import StockTransactionType, TransactionActorType, StockReferenceType
 
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from uuid import UUID
+from datetime import timezone
 
 
 @dataclass(slots=True)

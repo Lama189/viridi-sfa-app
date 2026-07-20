@@ -1,11 +1,13 @@
-from app.application.interfaces.categories import ICategoryRepository
-from app.application.interfaces.clients import IClientRepository
-from app.application.interfaces.employees import IEmployeeRepository
-from app.application.interfaces.products import IProductRepository
-from app.application.interfaces.retail_points import IRetailPointRepository
-from app.application.interfaces.stocks import IStockRepository
-from app.application.interfaces.stocks_transactions import IStockTransactionRepository
-from app.application.interfaces.warehouses import IWarehouseRepository
+from app.application.interfaces.repos.categories import ICategoryRepository
+from app.application.interfaces.repos.clients import IClientRepository
+from app.application.interfaces.repos.employees import IEmployeeRepository
+from app.application.interfaces.repos.order_items import IOrderItemRepository
+from app.application.interfaces.repos.orders import IOrderRepository
+from app.application.interfaces.repos.products import IProductRepository
+from app.application.interfaces.repos.retail_points import IRetailPointRepository
+from app.application.interfaces.repos.stocks import IStockRepository
+from app.application.interfaces.repos.stocks_transactions import IStockTransactionRepository
+from app.application.interfaces.repos.warehouses import IWarehouseRepository
 
 
 class IUnitOfWork:
@@ -17,6 +19,8 @@ class IUnitOfWork:
     employees: IEmployeeRepository
     stocks: IStockRepository
     stock_transactions: IStockTransactionRepository
+    orders: IOrderRepository
+    order_items: IOrderItemRepository
 
     async def commit(self) -> None: ...
     async def rollback(self) -> None: ...

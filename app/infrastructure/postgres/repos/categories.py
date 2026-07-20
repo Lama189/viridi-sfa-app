@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.categories import ICategoryRepository
+from app.application.interfaces.repos.categories import ICategoryRepository
 from app.domain.entities.inventory import Category
 from app.infrastructure.postgres.models.categories import Category as CategoryModel
 

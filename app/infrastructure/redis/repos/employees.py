@@ -5,7 +5,7 @@ from redis.asyncio import Redis, RedisError
 
 from app.core.config import get_settings
 from app.api.v1.schemas.employees import EmployeeCachedDTO
-from app.application.interfaces.employees_cache import IEmployeesCacheRepository
+from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
 
 
 settings = get_settings()

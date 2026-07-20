@@ -1,7 +1,7 @@
 from uuid import UUID
 from pydantic import BaseModel
 
-from app.domain.enums import StockReferenceType, StockTransactionType, TransactionActorType
+from app.domain.enums import StockReferenceType, TransactionActorType
 
 
 class StockCreateRequest(BaseModel):

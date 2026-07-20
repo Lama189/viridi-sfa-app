@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.warehouses import IWarehouseRepository
+from app.application.interfaces.repos.warehouses import IWarehouseRepository
 from app.domain.entities.inventory import Warehouse
 from app.infrastructure.postgres.models.warehouses import Warehouse as WarehouseModel
 

@@ -3,8 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.extensions import UserNotFoundError
 from app.application.services.clients import ClientsAuthService, ClientsService
-from app.api.dependencies import get_clients_service, get_clients_auth_service
-from app.api.v1.schemas.clients import ClientCreate, ClientResponse, ClientConfirm, ClientWithTokensResponse
+from app.api.dependencies import get_clients_service, get_clients_auth_service, allow_all_staff
+from app.api.v1.schemas.clients import (
+    ClientCreate, 
+    ClientResponse, 
+    ClientConfirm, 
+    ClientWithTokensResponse
+)
+
 
 
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
@@ -13,7 +19,8 @@ router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 @router.post(
     path="/register",
     status_code=status.HTTP_201_CREATED,
-    response_model=ClientResponse
+    response_model=ClientResponse,
+    dependencies=[Depends(allow_all_staff)]
 )
 async def register(
     dto: ClientCreate,

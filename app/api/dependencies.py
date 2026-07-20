@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio import Redis
 
@@ -9,6 +9,7 @@ from app.core.config import get_settings
 from app.core.security import SecurityUtils
 from app.domain.enums import EmployeeRole
 from app.domain.entities.employees import Employee
+from app.domain.entities.clients import Client
 
 from app.application.interfaces.clients_cache import IClientsCacheRepository
 from app.application.interfaces.employees_cache import IEmployeesCacheRepository
@@ -98,62 +99,83 @@ async def get_employees_auth_service(
 # 4. AUTHENTICATION & CURRENT USER DEPENDENCIES
 # ======================================================================
 
-async def get_current_client(
-    service: Annotated[ClientsService, Depends(get_clients_service)],
-    redis: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)],
-    token: str = Depends(oauth2_scheme),
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    clients_service: Annotated[ClientsService, Depends(get_clients_service)],
+    employees_service: Annotated[EmployeesService, Depends(get_employees_service)],
+    clients_cache: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)],
+    employees_cache: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)],
 ):
     payload = SecurityUtils.verify_token(token)
 
-    client_id = payload.get("sub")
-    client_id_ctx_var.set(str(client_id))
+    user_type = payload["user_type"]
+    user_id = payload["sub"]
 
-    cached_client = await redis.get_user(client_id)
-    if cached_client:
-        return cached_client
-    
-    db_client = await service.get_client(client_id)
-    if not db_client:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return db_client
+    if user_type == "client":
+        client_id_ctx_var.set(str(user_id))
+
+        if client := await clients_cache.get_user(user_id):
+            return client
+
+        client = await clients_service.get_client(user_id)
+        if client is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Client not found",
+            )
+
+        return client
+
+    if user_type == "employee":
+        employee_id_ctx_var.set(str(user_id))
+
+        if employee := await employees_cache.get_employee(user_id):
+            if not employee.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Employee account is inactive",
+                )
+            return employee
+
+        employee = await employees_service.get_employee(user_id)
+        if employee is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Employee not found",
+            )
+
+        if not employee.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Employee account is inactive",
+            )
+
+        return employee
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Unknown user type",
+    )
 
 async def get_current_employee(
-    service: Annotated[EmployeesService, Depends(get_employees_service)],
-    redis: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)],
-    token: str = Depends(oauth2_scheme),
-):
-    payload = SecurityUtils.verify_token(token)
-    
-    if payload.get("user_type") != "employee":
+    user: Annotated[Employee | Client, Depends(get_current_user)],
+) -> Employee:
+    if not isinstance(user, Employee):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid token type for this resource"
+            detail="Employees only",
         )
-        
-    employee_id = payload.get("sub")
-    employee_id_ctx_var.set(str(employee_id))
+    return user
 
-    cached_employee = await redis.get_employee(employee_id)
-    if cached_employee:
-        return cached_employee
-
-    db_employee = await service.get_employee(employee_id)
-    if not db_employee:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee not found"
-        )
-        
-    if not db_employee.is_active:
+async def get_current_client(
+    user: Annotated[Employee | Client, Depends(get_current_user)],
+) -> Client:
+    if not isinstance(user, Client):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Employee account is inactive"
+            detail="Clients only",
         )
-        
-    return db_employee
+    return user
 
 
 # ======================================================================
@@ -161,21 +183,99 @@ async def get_current_employee(
 # ======================================================================
 
 
-class RoleChecker:
-    def __init__(self, allowed_roles: list[EmployeeRole]) -> None:
-        self.allowed_roles = allowed_roles
-
+class RequireEmployee:
     async def __call__(
-        self, 
-        current_employee: Annotated[Employee, Depends(get_current_employee)]
+        self,
+        user: Annotated[Employee | Client, Depends(get_current_user)],
     ) -> Employee:
-        if current_employee.role not in self.allowed_roles:
+        if not isinstance(user, Employee):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied. You do not have the required permissions."
+                detail="Employees only.",
             )
-        return current_employee
+
+        return user
     
-allow_admin = RoleChecker([EmployeeRole.ADMIN])
-allow_agent = RoleChecker([EmployeeRole.AGENT])
-allow_all_staff = RoleChecker([EmployeeRole.ADMIN, EmployeeRole.AGENT])
+
+class RequireEmployeeRoles:
+    def __init__(self, *roles: EmployeeRole):
+        self.roles = set(roles)
+
+    async def __call__(
+        self,
+        employee: Annotated[Employee, Depends(RequireEmployee())],
+    ) -> Employee:
+        if employee.role not in self.roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions.",
+            )
+
+        return employee
+    
+
+class RequireOwner:
+    def __init__(self, param_name: str = "client_id"):
+        self.param_name = param_name
+
+    async def __call__(
+        self,
+        request: Request,
+        user: Annotated[Employee | Client, Depends(get_current_user)],
+    ) -> Client:
+        if not isinstance(user, Client):
+            raise HTTPException(
+                status_code=403,
+                detail="Clients only.",
+            )
+
+        owner_id = request.path_params[self.param_name]
+
+        if str(user.id) != owner_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Not your resource.",
+            )
+
+        return user
+    
+
+def allow_staff_or_owner(
+    *roles: EmployeeRole,
+    owner_param: str = "client_id",
+):
+    role_set = set(roles)
+
+    async def dependency(
+        request: Request,
+        user: Annotated[Employee | Client, Depends(get_current_user)],
+    ) -> Employee | Client:
+
+        if isinstance(user, Employee):
+            if user.role not in role_set:
+                raise HTTPException(403, "Forbidden")
+            return user
+
+        owner_id = request.path_params[owner_param]
+
+        if str(user.id) != owner_id:
+            raise HTTPException(403, "Forbidden")
+
+        return user
+
+    return dependency
+
+allow_all_staff = RequireEmployeeRoles(
+    EmployeeRole.ADMIN,
+    EmployeeRole.AGENT,
+)
+
+allow_admin = RequireEmployeeRoles(
+    EmployeeRole.ADMIN
+)
+
+allow_retail_points_view = allow_staff_or_owner(
+    EmployeeRole.ADMIN,
+    EmployeeRole.AGENT,
+    owner_param="owner_id",
+)

@@ -8,7 +8,7 @@ from app.api.v1.schemas.inventory import (
     ProductUpdate,
 )
 from app.application.services.products import ProductsService
-from app.api.dependencies import get_products_service
+from app.api.dependencies import get_products_service, allow_admin, allow_all_staff
 
 
 router = APIRouter(prefix="/api/v1/products", tags=["Products"])
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/api/v1/products", tags=["Products"])
     path="",
     response_model=ProductResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(allow_admin)]
 )
 async def create_product(
     dto: ProductCreate,
@@ -63,6 +64,7 @@ async def get_product(
 @router.patch(
     "/{product_id}",
     response_model=ProductResponse,
+    dependencies=[Depends(allow_admin)]
 )
 async def update_product(
     product_id: UUID,
@@ -81,6 +83,7 @@ async def update_product(
 @router.delete(
     "/{product_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(allow_admin)]
 )
 async def delete_product(
     product_id: UUID,

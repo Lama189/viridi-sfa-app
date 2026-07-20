@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from app.api.v1.routers.categories import router as categories_router
 from app.api.v1.routers.clients import router as clients_router
 from app.api.v1.routers.employees import router as employees_router
-from app.api.v1.routers.inventory import router as inventory_router
+from app.api.v1.routers.warehouses import router as inventory_router
 from app.api.v1.routers.products import router as products_router
 
 app = FastAPI(

@@ -8,7 +8,7 @@ from app.api.v1.schemas.inventory import (
     CategoryUpdate,
 )
 from app.application.services.categories import CategoriesService
-from app.api.dependencies import get_categories_service
+from app.api.dependencies import get_categories_service, allow_admin
 
 
 router = APIRouter(prefix="/api/v1/categories", tags=["Categories"])
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/api/v1/categories", tags=["Categories"])
     path="",
     response_model=CategoryResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=Depends(allow_admin)
 )
 async def create_category(
     dto: CategoryCreate,
@@ -63,6 +64,7 @@ async def get_category(
 @router.patch(
     "/{category_id}",
     response_model=CategoryResponse,
+    dependencies=[Depends(allow_admin)]
 )
 async def update_category(
     category_id: UUID,
@@ -81,6 +83,7 @@ async def update_category(
 @router.delete(
     "/{category_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(allow_admin)]
 )
 async def delete_category(
     category_id: UUID,

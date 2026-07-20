@@ -8,7 +8,8 @@ from app.api.v1.schemas.retail_points import (
     RetailPointResponse
 )
 from app.application.services.retail_points import RetailPointsService
-from app.api.dependencies import get_retail_points_service
+from app.api.dependencies import get_retail_points_service, allow_admin, allow_all_staff, allow_retail_points_view
+from app.domain.entities.employees import Employee
 
 
 router = APIRouter(prefix="/api/v1/retail_points", tags=["RetailPoints"])
@@ -21,10 +22,11 @@ router = APIRouter(prefix="/api/v1/retail_points", tags=["RetailPoints"])
 )
 async def create_retail_point(
     dto: CreateRetailPointRequest,
-    service: Annotated[RetailPointsService, Depends(get_retail_points_service)]
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
+    employee: Annotated[Employee, Depends(allow_all_staff)]
 ):
     try:
-        retail_point = await service.create_retail_point(dto, uuid4()) # ЗАГЛУШКА
+        retail_point = await service.create_retail_point(dto, employee.id) 
 
         if dto.owner_client_full_name and dto.owner_client_phone:
             await service.connect_client_to_point(
@@ -41,7 +43,8 @@ async def create_retail_point(
     
 @router.get(
     path="/by_owner/{owner_id}",
-    response_model=list[RetailPointResponse]
+    response_model=list[RetailPointResponse],
+    dependencies=[Depends(allow_retail_points_view)]
 )
 async def get_retail_points_by_owner_id(
     owner_id: UUID,
@@ -70,6 +73,7 @@ async def get_retail_point(
 @router.patch(
     "/{retail_point_id}",
     response_model=RetailPointResponse,
+    dependencies=[Depends(allow_all_staff)]
 )
 async def update_retail_point(
     retail_point_id: UUID,
@@ -88,6 +92,7 @@ async def update_retail_point(
 @router.delete(
     "/{retail_point_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(allow_admin)],
 )
 async def delete_retail_point(
     retail_point_id: UUID,

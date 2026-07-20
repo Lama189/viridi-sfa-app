@@ -94,7 +94,7 @@ class ClientsAuthService:
         payload = {
             "sub": client_id_str, 
             "telegram_chat_id": client.telegram_chat_id,
-            "type": "employee" 
+            "user_type": "client" 
         }
         access_token = SecurityUtils.generate_access_token(payload)
         refresh_token = SecurityUtils.generate_refresh_token(payload)

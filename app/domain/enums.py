@@ -37,3 +37,12 @@ class TransactionActorType(str, Enum):
     EMPLOYEE = "employee"
     CLIENT = "client"
     SYSTEM = "system"
+
+
+class StockReferenceType(str, Enum):
+    ORDER = "order"
+    RECEIPT = "receipt"
+    TRANSFER = "transfer"
+    INVENTORY = "inventory"
+    RETURN = "return"
+    WRITEOFF = "writeoff"

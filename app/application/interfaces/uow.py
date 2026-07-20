@@ -3,6 +3,8 @@ from app.application.interfaces.clients import IClientRepository
 from app.application.interfaces.employees import IEmployeeRepository
 from app.application.interfaces.products import IProductRepository
 from app.application.interfaces.retail_points import IRetailPointRepository
+from app.application.interfaces.stocks import IStockRepository
+from app.application.interfaces.stocks_transactions import IStockTransactionRepository
 from app.application.interfaces.warehouses import IWarehouseRepository
 
 
@@ -13,6 +15,8 @@ class IUnitOfWork:
     retail_points: IRetailPointRepository
     clients: IClientRepository
     employees: IEmployeeRepository
+    stocks: IStockRepository
+    stock_transactions: IStockTransactionRepository
 
     async def commit(self) -> None: ...
     async def rollback(self) -> None: ...

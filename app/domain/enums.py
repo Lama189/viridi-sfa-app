@@ -21,3 +21,19 @@ class OrderStatus(str, Enum):
 class VisitStatus(str, Enum):
     COMPLETED = "completed"
     SKIPPED = "skipped"
+
+
+class StockTransactionType(str, Enum):
+    RECEIPT = "receipt"
+    RESERVATION = "reservation"
+    CANCEL_RESERVATION = "cancel_reservation"
+    SALE = "sale"
+    WRITEOFF = "writeoff"
+    RETURN = "return"
+    ADJUSTMENT = "adjustment"
+
+
+class TransactionActorType(str, Enum):
+    EMPLOYEE = "employee"
+    CLIENT = "client"
+    SYSTEM = "system"

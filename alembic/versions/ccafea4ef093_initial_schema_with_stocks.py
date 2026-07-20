@@ -1,8 +1,8 @@
-"""Initial migration
+"""initial_schema_with_stocks
 
-Revision ID: db39443ccedf
+Revision ID: ccafea4ef093
 Revises: 
-Create Date: 2026-07-18 08:15:52.043228
+Create Date: 2026-07-20 10:01:42.957969
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'db39443ccedf'
+revision: str = 'ccafea4ef093'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -113,6 +113,7 @@ def upgrade() -> None:
     sa.Column('warehouse_id', sa.UUID(), nullable=False),
     sa.Column('product_id', sa.UUID(), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('reserved_quantity', sa.Integer(), nullable=False),
     sa.CheckConstraint('quantity >= 0', name='ck_stock_quantity_positive'),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='CASCADE'),

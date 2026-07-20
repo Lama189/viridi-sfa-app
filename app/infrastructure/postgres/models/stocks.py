@@ -36,6 +36,12 @@ class Stock(BaseModel):
         default=0,
     )
 
+    reserved_quantity: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
     warehouse: Mapped["Warehouse"] = relationship(
         back_populates="stocks",
     )

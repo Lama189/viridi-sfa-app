@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/v1/categories", tags=["Categories"])
     path="",
     response_model=CategoryResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=Depends(allow_admin)
+    dependencies=[Depends(allow_admin)]
 )
 async def create_category(
     dto: CategoryCreate,

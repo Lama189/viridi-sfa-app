@@ -1,4 +1,4 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 

@@ -7,7 +7,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.domain.entities.employees import Employee
-from app.api.dependencies import get_employees_service, get_employees_auth_service, get_current_employee
+from app.api.dependencies import get_employees_service, get_employees_auth_service, get_current_user
 from app.infrastructure.postgres.models.enums import EmployeeRole
 
 
@@ -38,7 +38,7 @@ def mock_admin_employee():
 def override_deps(mock_service, mock_auth_service, mock_admin_employee):
     app.dependency_overrides[get_employees_service] = lambda: mock_service
     app.dependency_overrides[get_employees_auth_service] = lambda: mock_auth_service
-    app.dependency_overrides[get_current_employee] = lambda: mock_admin_employee
+    app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
     yield
     app.dependency_overrides.clear()
 

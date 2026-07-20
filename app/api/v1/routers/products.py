@@ -8,7 +8,7 @@ from app.api.v1.schemas.inventory import (
     ProductUpdate,
 )
 from app.application.services.products import ProductsService
-from app.api.dependencies import get_products_service, allow_admin, allow_all_staff
+from app.api.dependencies import get_products_service, allow_admin
 
 
 router = APIRouter(prefix="/api/v1/products", tags=["Products"])

@@ -7,7 +7,9 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.domain.entities.clients import Client
-from app.api.dependencies import get_clients_service, get_clients_auth_service
+from app.domain.entities.employees import Employee
+from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.api.dependencies import get_clients_service, get_clients_auth_service, get_current_user
 
 
 @pytest.fixture
@@ -20,10 +22,23 @@ def mock_auth_service():
     return AsyncMock()
 
 
+@pytest.fixture
+def mock_admin_employee():
+    return Employee(
+        id=uuid4(),
+        phone="+998900000000",
+        password_hash="h",
+        role=EmployeeRole.ADMIN,
+        full_name="Mock Admin",
+        is_active=True,
+    )
+
+
 @pytest.fixture(autouse=True)
-def override_deps(mock_service, mock_auth_service):
+def override_deps(mock_service, mock_auth_service, mock_admin_employee):
     app.dependency_overrides[get_clients_service] = lambda: mock_service
     app.dependency_overrides[get_clients_auth_service] = lambda: mock_auth_service
+    app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
     yield
     app.dependency_overrides.clear()
 

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.core.extensions import UserNotFoundError
 from app.domain.entities.orders import Order, OrderItem
-from app.domain.entities.inventory import Product
+from app.domain.entities.inventory import Stock, Product
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.services.stocks import IStockService
 from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest
@@ -10,6 +10,7 @@ from app.api.v1.schemas.stocks import StockOperationRequest
 from app.domain.enums import (
     TransactionActorType,
     StockReferenceType,
+    OrderStatus
 )
 
 
@@ -39,7 +40,7 @@ class OrdersService:
             raise UserNotFoundError()
         
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
-        if retail_point_id is None:
+        if retail_point is None:
             raise ValueError(f"Retail Point with ID {retail_point_id} not found")
         
         if retail_point and not retail_point.is_active:
@@ -111,3 +112,74 @@ class OrdersService:
 
         return order
 
+    async def confirm(self, order_id: UUID) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
+        
+        if order.status != OrderStatus.PENDING:
+            raise ValueError(f"Cannot confirm order with ID {order_id}")
+        
+        for order_item in order.items:
+            await self._stocks.confirm_sale(
+                StockOperationRequest(
+                    warehouse_id=order.warehouse_id,
+                    product_id=order_item.product_id,
+                    quantity=order_item.quantity,
+                    actor_type=TransactionActorType.CLIENT,
+                    created_by_id=order.created_by_id,
+                    reference_type=StockReferenceType.ORDER,
+                    reference_id=order.id
+                )
+            )
+
+        order.confirm()
+
+        await self._uow.orders.update(order)
+        await self._uow.commit()
+
+        return order
+        
+
+    async def cancel(self, order_id: UUID) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
+        
+        if order.status != OrderStatus.PENDING:
+            raise ValueError(f"Cannot confirm order with ID {order_id}")
+        
+        for order_item in order.items:
+            await self._stocks.release_reservation(
+                StockOperationRequest(
+                    warehouse_id=order.warehouse_id,
+                    product_id=order_item.product_id,
+                    quantity=order_item.quantity,
+                    actor_type=TransactionActorType.CLIENT,
+                    created_by_id=order.created_by_id,
+                    reference_type=StockReferenceType.ORDER,
+                    reference_id=order.id
+                )
+            )
+
+        order.cancel()
+
+        await self._uow.orders.update(order)
+        await self._uow.commit()
+
+        return order
+    
+    async def ship(self, order_id: UUID) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
+        
+        if order.status != OrderStatus.CONFIRMED:
+            raise ValueError(f"Cannot confirm order with ID {order_id}")
+        
+        order.ship()
+
+        await self._uow.orders.update(order)
+        await self._uow.commit()
+
+        return order

@@ -7,3 +7,6 @@ class InvalidPasswordError(Exception):
 
 class UserNotActiveError(Exception):
     pass
+
+class InvalidInviteCodeError(Exception):
+    pass

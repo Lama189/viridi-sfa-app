@@ -29,14 +29,18 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
 
         return self._to_domain(model)
 
-    async def get_by_retail_point(self, retail_point_id: UUID) -> list[ClientInviteCode]:
+    async def get_by_retail_point(self, retail_point_id: UUID) -> ClientInviteCode | None:
         result = await self._session.execute(
             select(InviteCodeModel).where(
                 InviteCodeModel.retail_point_id == retail_point_id
             )
         )
 
-        return [self._to_domain(m) for m in result.scalars().all()]
+        model = result.scalar_one_or_none()
+        if model is None:
+            return None
+
+        return self._to_domain(model)
 
     async def get_by_code_hash(self, code_hash: str) -> ClientInviteCode | None:
         result = await self._session.execute(

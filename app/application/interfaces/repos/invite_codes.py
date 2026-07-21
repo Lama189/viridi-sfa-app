@@ -15,7 +15,7 @@ class IInviteCodeRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_retail_point(self, retail_point_id: UUID) -> list[ClientInviteCode]:
+    async def get_by_retail_point(self, retail_point_id: UUID) -> ClientInviteCode | None:
         raise NotImplementedError
 
     @abstractmethod

@@ -36,10 +36,6 @@ class ClientInviteCode:
         expires_in: timedelta | None = None,
         now: datetime | None = None,
     ) -> "ClientInviteCode":
-        """
-        Фабрика принимает готовый code_hash из security.py.
-        `now` можно прокинуть для удобного юнит-тестирования без моков.
-        """
         current_time = now or datetime.now(timezone.utc)
         return cls(
             retail_point_id=retail_point_id,

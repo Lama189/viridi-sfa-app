@@ -7,6 +7,8 @@ from sqlalchemy import (
     String,
     Boolean,
     DateTime,
+    Index,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -23,6 +25,14 @@ if TYPE_CHECKING:
 class RetailPointInviteCode(BaseModel):
     __tablename__ = "retail_point_invite_codes"
 
+    __table_args__ = (
+        Index(
+            "uq_active_invite_per_retail_point",
+            "retail_point_id",
+            unique=True,
+            postgresql_where=text("is_active = TRUE"),
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -40,7 +50,7 @@ class RetailPointInviteCode(BaseModel):
     )
 
     code_hash: Mapped[str] = mapped_column(
-        String(32),
+        String(64),
         unique=True,
         nullable=False,
     )
@@ -75,10 +85,10 @@ class RetailPointInviteCode(BaseModel):
     )
 
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
-
 
     retail_point: Mapped["RetailPoint"] = relationship(
         back_populates="invite_codes",

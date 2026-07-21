@@ -287,9 +287,3 @@ allow_all_staff = RequireEmployeeRoles(
 allow_admin = RequireEmployeeRoles(
     EmployeeRole.ADMIN
 )
-
-allow_retail_points_view = allow_staff_or_owner(
-    EmployeeRole.ADMIN,
-    EmployeeRole.AGENT,
-    owner_param="owner_id",
-)

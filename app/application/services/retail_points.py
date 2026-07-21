@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from app.domain.entities.retail_points import RetailPoint
-from app.domain.entities.clients import Client
 
 from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
@@ -43,26 +42,6 @@ class RetailPointsService:
         await self._uow.commit()
         return point
     
-    async def connect_client_to_point(self, point_id: UUID, phone: str, full_name: str) -> None:
-        point = await self._uow.retail_points.get_by_id(point_id)
-        if not point:
-            raise ValueError("Retail point not found")
-        
-        client = await self._uow.clients.get_by_phone(phone=phone)
-
-        if not client:
-            client = Client(
-                phone=phone,
-                full_name=full_name,
-                telegram_chat_id=None,
-                is_active=False
-            )
-
-            await self._uow.clients.add(client)
-
-        point.owner_client_id = client.id
-        await self._uow.retail_points.update(point)
-
     async def update_retail_point(self, retail_point_id: UUID, dto: UpdateRetailPointRequest) -> RetailPoint:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if not retail_point:
@@ -82,8 +61,6 @@ class RetailPointsService:
             retail_point.contact_person = dto.contact_person
         if dto.phone_number is not None:
             retail_point.phone_number = dto.phone_number
-        if dto.owner_client_id is not None:
-            retail_point.owner_client_id = dto.owner_client_id
         if dto.inn is not None:
             retail_point.inn = dto.inn
         if dto.checking_account is not None:
@@ -129,8 +106,5 @@ class RetailPointsService:
         await self._uow.retail_points.delete(retail_point)
         await self._uow.commit()
 
-    async def get_by_owner(self, owner_id: UUID, only_active: bool = True) -> list[RetailPoint]:
-        return await self._uow.retail_points.list_by_owner(owner_id, only_active)
-    
     async def get_by_id(self, retail_point_id: UUID) -> RetailPoint | None:
         return await self._uow.retail_points.get_by_id(retail_point_id)

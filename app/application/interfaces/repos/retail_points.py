@@ -21,10 +21,6 @@ class IRetailPointRepository(ABC):
     @abstractmethod
     async def list_all(self, only_active: bool = True) -> list[RetailPoint]:
         raise NotImplementedError
-    
-    @abstractmethod
-    async def list_by_owner(self, owner_id: UUID, only_active: bool = True) -> list[RetailPoint]:
-        raise NotImplementedError
 
     @abstractmethod
     async def update(self, category: RetailPoint) -> None:

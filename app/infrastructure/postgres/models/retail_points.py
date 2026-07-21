@@ -19,7 +19,6 @@ from app.infrastructure.postgres.models.enums import ClientType
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee
-    from app.infrastructure.postgres.models.clients import Client
     from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.visits import Visit
 
@@ -98,15 +97,6 @@ class RetailPoint(BaseModel):
     created_by_employee_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="SET NULL"),
-    )
-
-    owner_client_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("clients.id", ondelete="SET NULL"),
-    )
-
-    owner: Mapped["Client | None"] = relationship(
-        foreign_keys=[owner_client_id]
     )
 
     created_by: Mapped["Employee | None"] = relationship(

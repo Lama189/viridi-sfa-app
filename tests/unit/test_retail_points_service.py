@@ -14,7 +14,6 @@ from app.domain.enums import ClientType
 def mock_uow():
     uow = AsyncMock()
     uow.retail_points = AsyncMock()
-    uow.clients = AsyncMock()
     uow.commit = AsyncMock()
     return uow
 
@@ -89,19 +88,6 @@ async def test_get_by_id_not_found(service, mock_uow):
 
     result = await service.get_by_id(uuid4())
     assert result is None
-
-
-@pytest.mark.asyncio
-async def test_get_by_owner(service, mock_uow):
-    owner_id = uuid4()
-    mock_uow.retail_points.list_by_owner.return_value = [
-        RetailPoint(name="A", address="a", owner_client_id=owner_id),
-        RetailPoint(name="B", address="b", owner_client_id=owner_id),
-    ]
-
-    result = await service.get_by_owner(owner_id, only_active=True)
-    assert len(result) == 2
-    mock_uow.retail_points.list_by_owner.assert_awaited_once_with(owner_id, True)
 
 
 @pytest.mark.asyncio
@@ -187,43 +173,3 @@ async def test_delete_retail_point_not_found(service, mock_uow):
         await service.delete_retail_point(uuid4())
 
     mock_uow.retail_points.delete.assert_not_awaited()
-
-
-@pytest.mark.asyncio
-async def test_connect_client_new(service, mock_uow):
-    uid = uuid4()
-    point = RetailPoint(name="X", address="A", id=uid)
-    mock_uow.retail_points.get_by_id.return_value = point
-    mock_uow.clients.get_by_phone.return_value = None
-
-    await service.connect_client_to_point(uid, "+998901234567", "New Client")
-
-    mock_uow.clients.add.assert_awaited_once()
-    mock_uow.retail_points.update.assert_awaited_once()
-    assert point.owner_client_id is not None
-
-
-@pytest.mark.asyncio
-async def test_connect_client_existing(service, mock_uow):
-    uid = uuid4()
-    client_id = uuid4()
-    point = RetailPoint(name="X", address="A", id=uid)
-    mock_uow.retail_points.get_by_id.return_value = point
-
-    from app.domain.entities.clients import Client
-    mock_uow.clients.get_by_phone.return_value = Client(
-        phone="+998901234567", full_name="Existing", id=client_id,
-    )
-
-    await service.connect_client_to_point(uid, "+998901234567", "Existing")
-
-    mock_uow.clients.add.assert_not_awaited()
-    assert point.owner_client_id == client_id
-
-
-@pytest.mark.asyncio
-async def test_connect_client_point_not_found(service, mock_uow):
-    mock_uow.retail_points.get_by_id.return_value = None
-
-    with pytest.raises(ValueError, match="not found"):
-        await service.connect_client_to_point(uuid4(), "+998901234567", "X")

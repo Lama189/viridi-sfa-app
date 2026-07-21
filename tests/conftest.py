@@ -161,9 +161,6 @@ class _TestRetailPoint(_TestBase):
     created_by_employee_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("employees.id", ondelete="SET NULL"), nullable=True,
     )
-    owner_client_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("clients.id", ondelete="SET NULL"), nullable=True,
-    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 

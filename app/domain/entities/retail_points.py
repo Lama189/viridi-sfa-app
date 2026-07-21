@@ -37,7 +37,6 @@ class RetailPoint:
     visit_sun: bool = field(default=False)
 
     created_by_employee_id: UUID | None = None
-    owner_client_id: UUID | None = None
     
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)

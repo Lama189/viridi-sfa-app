@@ -31,14 +31,12 @@ def test_retail_point_default_values():
     assert rp.visit_sat is False
     assert rp.visit_sun is False
     assert rp.created_by_employee_id is None
-    assert rp.owner_client_id is None
     assert rp.is_active is True
 
 
 def test_retail_point_custom_values():
     uid = uuid4()
     emp_id = uuid4()
-    client_id = uuid4()
     rp = RetailPoint(
         name="Big Store",
         address="ul. Main 1",
@@ -60,7 +58,6 @@ def test_retail_point_custom_values():
         visit_wed=True,
         visit_fri=True,
         created_by_employee_id=emp_id,
-        owner_client_id=client_id,
         is_active=False,
     )
     assert rp.id == uid
@@ -82,7 +79,6 @@ def test_retail_point_custom_values():
     assert rp.visit_fri is True
     assert rp.visit_tue is False
     assert rp.created_by_employee_id == emp_id
-    assert rp.owner_client_id == client_id
     assert rp.is_active is False
 
 

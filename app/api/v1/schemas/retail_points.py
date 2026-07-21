@@ -17,9 +17,6 @@ class CreateRetailPointRequest(BaseModel):
     contact_person: str | None = Field(default=None, max_length=100)
     phone_number: str | None = Field(default=None, max_length=20)
 
-    owner_client_phone: str | None = None 
-    owner_client_full_name: str | None = None
-
     inn: str | None = Field(default=None, max_length=9)
     checking_account: str | None = Field(default=None, max_length=20)
     bank_name: str | None = Field(default=None, max_length=150)
@@ -52,8 +49,6 @@ class UpdateRetailPointRequest(BaseModel):
     contact_person: str | None = None
     phone_number: str | None = None
 
-    owner_client_id: UUID | None = None
-
     inn: str | None = None
     checking_account: str | None = None
     bank_name: str | None = None
@@ -76,17 +71,6 @@ class UpdateRetailPointRequest(BaseModel):
     is_active: bool | None = None
 
 
-class RetailPointOwnerResponse(BaseModel):
-    id: UUID
-    full_name: str
-    phone: str
-    telegram_connected: bool
-
-    model_config = {
-        "from_attributes": True  
-    }
-
-
 class RetailPointResponse(BaseModel):
     id: UUID
 
@@ -100,8 +84,6 @@ class RetailPointResponse(BaseModel):
 
     contact_person: str | None
     phone_number: str | None
-
-    owner: RetailPointOwnerResponse | None
 
     inn: str | None
     checking_account: str | None

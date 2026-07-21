@@ -19,6 +19,7 @@ from app.infrastructure.postgres.models.enums import ClientType
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee
+    from app.infrastructure.postgres.models.invite_codes import RetailPointInviteCode
     from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
     from app.infrastructure.postgres.models.visits import Visit
@@ -114,5 +115,9 @@ class RetailPoint(BaseModel):
     )
 
     members: Mapped[list["RetailPointMember"]] = relationship(
+        back_populates="retail_point",
+    )
+
+    invite_codes: Mapped[list["RetailPointInviteCode"]] = relationship(
         back_populates="retail_point",
     )

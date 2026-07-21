@@ -1,6 +1,7 @@
 from app.application.interfaces.repos.categories import ICategoryRepository
 from app.application.interfaces.repos.clients import IClientRepository
 from app.application.interfaces.repos.employees import IEmployeeRepository
+from app.application.interfaces.repos.invite_codes import IInviteCodeRepository
 from app.application.interfaces.repos.order_items import IOrderItemRepository
 from app.application.interfaces.repos.orders import IOrderRepository
 from app.application.interfaces.repos.products import IProductRepository
@@ -17,6 +18,7 @@ class IUnitOfWork:
     products: IProductRepository
     retail_points: IRetailPointRepository
     retail_point_members: IRetailPointMemberRepository
+    invite_codes: IInviteCodeRepository
     clients: IClientRepository
     employees: IEmployeeRepository
     stocks: IStockRepository

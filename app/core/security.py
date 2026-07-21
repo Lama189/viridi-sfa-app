@@ -1,5 +1,7 @@
 import bcrypt
 import jwt
+import secrets
+import hashlib
 from jwt.exceptions import InvalidTokenError
 from typing import Any
 from fastapi import HTTPException
@@ -63,3 +65,19 @@ class SecurityUtils:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials or token expired",
             )
+        
+    @staticmethod
+    def generate_invite_code() -> tuple[str, str]:
+        raw_code = secrets.token_urlsafe(12)
+
+        code_hash = hashlib.sha256(
+            raw_code.encode()
+        ).hexdigest()
+
+        return raw_code, code_hash
+
+    @staticmethod
+    def hash_invite_code(code: str) -> str:
+        return hashlib.sha256(
+            code.encode()
+        ).hexdigest()

@@ -4,6 +4,7 @@ from app.application.interfaces.repos.employees import IEmployeeRepository
 from app.application.interfaces.repos.order_items import IOrderItemRepository
 from app.application.interfaces.repos.orders import IOrderRepository
 from app.application.interfaces.repos.products import IProductRepository
+from app.application.interfaces.repos.retail_point_members import IRetailPointMemberRepository
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.application.interfaces.repos.stocks import IStockRepository
 from app.application.interfaces.repos.stocks_transactions import IStockTransactionRepository
@@ -15,6 +16,7 @@ class IUnitOfWork:
     categories: ICategoryRepository
     products: IProductRepository
     retail_points: IRetailPointRepository
+    retail_point_members: IRetailPointMemberRepository
     clients: IClientRepository
     employees: IEmployeeRepository
     stocks: IStockRepository

@@ -10,6 +10,7 @@ from app.infrastructure.postgres.repos.employees import PostgresEmployeeReposito
 from app.infrastructure.postgres.repos.order_items import PostgresOrderItemRepository
 from app.infrastructure.postgres.repos.orders import PostgresOrderRepository
 from app.infrastructure.postgres.repos.products import PostgresProductsRepository
+from app.infrastructure.postgres.repos.retail_point_members import PostgresRetailPointMemberRepository
 from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
 from app.infrastructure.postgres.repos.stocks import PostgresStocksRepository
 from app.infrastructure.postgres.repos.stock_transactions import PostgresStockTransactionRepository
@@ -28,6 +29,7 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.categories = PostgresCategoriesRepository(self._session)
         self.products = PostgresProductsRepository(self._session)
         self.retail_points = PostgresRetailPointRepository(self._session)
+        self.retail_point_members = PostgresRetailPointMemberRepository(self._session)
         self.clients = PostgresClientRepository(self._session)
         self.employees = PostgresEmployeeRepository(self._session)
         self.stocks = PostgresStocksRepository(self._session)

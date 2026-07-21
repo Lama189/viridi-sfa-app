@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.extensions import UserNotFoundError
+from app.core.extensions import UserNotFoundError, UserNotActiveError
 from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest
 from app.application.services.orders import OrdersService
 from app.domain.entities.inventory import Warehouse, Product
@@ -124,7 +124,7 @@ class TestOrdersServiceCreate:
         mock_uow.clients.get_by_id.return_value = _client(is_active=False)
 
         dto = _create_dto(uuid4(), uuid4(), [(uuid4(), 1)])
-        with pytest.raises(UserNotFoundError):
+        with pytest.raises(UserNotActiveError):
             await service.create(uuid4(), dto)
 
     @pytest.mark.asyncio

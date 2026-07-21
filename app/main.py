@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from app.api.v1.routers.categories import router as categories_router
 from app.api.v1.routers.clients import router as clients_router
 from app.api.v1.routers.employees import router as employees_router
+from app.api.v1.routers.orders import router as orders_router
 from app.api.v1.routers.warehouses import router as inventory_router
 from app.api.v1.routers.products import router as products_router
 
@@ -28,5 +29,6 @@ async def health_check():
 app.include_router(categories_router)
 app.include_router(clients_router)
 app.include_router(employees_router)
+app.include_router(orders_router)
 app.include_router(inventory_router)
 app.include_router(products_router)

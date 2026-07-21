@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.core.extensions import UserNotFoundError
+from app.core.extensions import UserNotFoundError, UserNotActiveError
 from app.domain.entities.orders import Order, OrderItem
 from app.domain.entities.inventory import Product
 from app.application.interfaces.uow import IUnitOfWork
@@ -37,7 +37,7 @@ class OrdersService:
             raise UserNotFoundError()
         
         if not client.is_active:
-            raise UserNotFoundError()
+            raise UserNotActiveError()
         
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:

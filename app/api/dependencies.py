@@ -18,9 +18,12 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.application.services.categories import CategoriesService
 from app.application.services.clients import ClientsService, ClientsAuthService
 from app.application.services.employees import EmployeesService, EmployeesAuthService
+from app.application.services.orders import OrdersService
 from app.application.services.products import ProductsService
 from app.application.services.retail_points import RetailPointsService
+from app.application.services.stocks import StockService
 from app.application.services.warehouses import WarehousesService
+from app.application.interfaces.services.stocks import IStockService
 
 from app.infrastructure.context import client_id_ctx_var, employee_id_ctx_var
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
@@ -75,6 +78,17 @@ async def get_retail_points_service(uow: Annotated[IUnitOfWork, Depends(get_uow)
 
 async def get_products_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ProductsService:
     return ProductsService(uow)
+
+
+async def get_stocks_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> IStockService:
+    return StockService(uow)
+
+
+async def get_orders_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    stocks: Annotated[IStockService, Depends(get_stocks_service)],
+) -> OrdersService:
+    return OrdersService(uow, stocks)
 
 
 async def get_clients_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ClientsService:

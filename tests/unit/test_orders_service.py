@@ -6,7 +6,6 @@ import pytest
 
 from app.core.extensions import UserNotFoundError
 from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest
-from app.api.v1.schemas.stocks import StockOperationRequest
 from app.application.services.orders import OrdersService
 from app.domain.entities.inventory import Warehouse, Product
 from app.domain.entities.clients import Client

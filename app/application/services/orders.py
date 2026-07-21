@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.core.extensions import UserNotFoundError
 from app.domain.entities.orders import Order, OrderItem
-from app.domain.entities.inventory import Stock, Product
+from app.domain.entities.inventory import Product
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.services.stocks import IStockService
 from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest

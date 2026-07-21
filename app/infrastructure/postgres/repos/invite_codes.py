@@ -5,11 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.invite_codes import IInviteCodeRepository
 from app.domain.entities.invite_codes import ClientInviteCode
-from app.infrastructure.postgres.models.invite_codes import RetailPointInviteCode as InviteCodeModel
+from app.infrastructure.postgres.models.invite_codes import (
+    RetailPointInviteCode as InviteCodeModel,
+)
 
 
 class PostgresInviteCodeRepository(IInviteCodeRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -22,7 +23,6 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
         result = await self._session.execute(
             select(InviteCodeModel).where(InviteCodeModel.id == invite_code_id)
         )
-
         model = result.scalar_one_or_none()
         if model is None:
             return None
@@ -35,7 +35,6 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
                 InviteCodeModel.retail_point_id == retail_point_id
             )
         )
-
         model = result.scalar_one_or_none()
         if model is None:
             return None
@@ -46,7 +45,6 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
         result = await self._session.execute(
             select(InviteCodeModel).where(InviteCodeModel.code_hash == code_hash)
         )
-
         model = result.scalar_one_or_none()
         if model is None:
             return None
@@ -55,10 +53,12 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
 
     async def exists(self, retail_point_id: UUID, code_hash: str) -> bool:
         stmt = select(
-            select(InviteCodeModel).where(
+            select(InviteCodeModel)
+            .where(
                 InviteCodeModel.retail_point_id == retail_point_id,
                 InviteCodeModel.code_hash == code_hash,
-            ).exists()
+            )
+            .exists()
         )
         result = await self._session.execute(stmt)
         return bool(result.scalar())
@@ -68,7 +68,7 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
             update(InviteCodeModel)
             .where(InviteCodeModel.id == invite_code.id)
             .values(
-                code=invite_code.code_hash,
+                code_hash=invite_code.code_hash,
                 is_active=invite_code.is_active,
                 last_activated_client_id=invite_code.last_activated_client_id,
                 last_activated_at=invite_code.last_activated_at,
@@ -86,14 +86,14 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
             last_activated_client_id=model.last_activated_client_id,
             last_activated_at=model.last_activated_at,
             created_at=model.created_at,
-            updated_at=model.created_at,
+            updated_at=getattr(model, "updated_at", model.created_at),
         )
 
     def _to_model(self, invite_code: ClientInviteCode) -> InviteCodeModel:
         return InviteCodeModel(
             id=invite_code.id,
             retail_point_id=invite_code.retail_point_id,
-            code=invite_code.code_hash,
+            code_hash=invite_code.code_hash,
             created_by_employee_id=invite_code.created_by_employee_id,
             is_active=invite_code.is_active,
             last_activated_client_id=invite_code.last_activated_client_id,

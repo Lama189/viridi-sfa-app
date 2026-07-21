@@ -10,3 +10,9 @@ class UserNotActiveError(Exception):
 
 class InvalidInviteCodeError(Exception):
     pass
+
+class MembershipNotFoundError(Exception):
+    pass
+
+class MembershipAlreadyExistsError(Exception):
+    pass

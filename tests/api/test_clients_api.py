@@ -6,7 +6,6 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from app.domain.entities.clients import Client
 from app.domain.entities.employees import Employee
 from app.infrastructure.postgres.models.enums import EmployeeRole
 from app.api.dependencies import get_clients_service, get_clients_auth_service, get_current_user
@@ -51,64 +50,39 @@ async def client():
 
 
 @pytest.mark.asyncio
-async def test_register_success(client, mock_service):
-    uid = uuid4()
-    mock_service.create_client.return_value = Client(
-        phone="+998901234567", full_name="Test", id=uid, is_active=True,
-    )
-
-    resp = await client.post("/api/v1/clients/register", json={
-        "phone": "+998901234567",
-        "full_name": "Test",
-    })
-    assert resp.status_code == 201
-    data = resp.json()
-    assert data["phone"] == "+998901234567"
-    assert data["full_name"] == "Test"
-
-
-@pytest.mark.asyncio
-async def test_register_duplicate_phone(client, mock_service):
-    mock_service.create_client.side_effect = ValueError("already exists")
-
-    resp = await client.post("/api/v1/clients/register", json={
-        "phone": "+998901234567",
-        "full_name": "Dup",
-    })
-    assert resp.status_code == 400
-
-
-@pytest.mark.asyncio
-async def test_confirm_success(client, mock_auth_service):
-    uid = uuid4()
+async def test_register_success(client, mock_auth_service):
     from app.api.v1.schemas.clients import ClientWithTokensResponse, ClientResponse
-    mock_auth_service.confirm.return_value = ClientWithTokensResponse(
+    uid = uuid4()
+    mock_auth_service.register.return_value = ClientWithTokensResponse(
         access_token="acc",
         refresh_token="ref",
         client=ClientResponse(
-            id=uid, phone="+998901234567", full_name="Test", telegram_chat_id=123, is_active=True,
+            id=uid, phone="+998901234567", full_name="Test", telegram_chat_id=None, is_active=True,
         ),
     )
 
-    resp = await client.post("/api/v1/clients/confirm", json={
+    resp = await client.post("/api/v1/clients/register", json={
+        "invite_code": "ABC123",
         "phone": "+998901234567",
-        "telegram_chat_id": 123,
         "full_name": "Test",
+        "telegram_chat_id": 123,
     })
-    assert resp.status_code == 200
+    assert resp.status_code == 201
     data = resp.json()
     assert data["access_token"] == "acc"
     assert data["refresh_token"] == "ref"
+    assert data["client"]["phone"] == "+998901234567"
 
 
 @pytest.mark.asyncio
-async def test_confirm_not_found(client, mock_auth_service):
-    from app.core.extensions import UserNotFoundError
-    mock_auth_service.confirm.side_effect = UserNotFoundError()
+async def test_register_duplicate_phone(client, mock_auth_service):
+    from app.core.extensions import UserAlreadyExistsError
+    mock_auth_service.register.side_effect = UserAlreadyExistsError()
 
-    resp = await client.post("/api/v1/clients/confirm", json={
-        "phone": "+998900000000",
-        "telegram_chat_id": 999,
-        "full_name": None,
+    resp = await client.post("/api/v1/clients/register", json={
+        "invite_code": "ABC123",
+        "phone": "+998901234567",
+        "full_name": "Dup",
+        "telegram_chat_id": 111,
     })
-    assert resp.status_code == 404
+    assert resp.status_code == 409

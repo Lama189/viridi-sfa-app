@@ -21,20 +21,27 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
 
     async def get_by_id(self, invite_code_id: UUID) -> ClientInviteCode | None:
         result = await self._session.execute(
-            select(InviteCodeModel).where(InviteCodeModel.id == invite_code_id)
+            select(InviteCodeModel).where(
+                InviteCodeModel.id == invite_code_id
+            )
         )
+
         model = result.scalar_one_or_none()
         if model is None:
             return None
 
         return self._to_domain(model)
 
-    async def get_by_retail_point(self, retail_point_id: UUID) -> ClientInviteCode | None:
+    async def get_by_retail_point(
+        self,
+        retail_point_id: UUID,
+    ) -> ClientInviteCode | None:
         result = await self._session.execute(
             select(InviteCodeModel).where(
                 InviteCodeModel.retail_point_id == retail_point_id
             )
         )
+
         model = result.scalar_one_or_none()
         if model is None:
             return None
@@ -43,8 +50,11 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
 
     async def get_by_code_hash(self, code_hash: str) -> ClientInviteCode | None:
         result = await self._session.execute(
-            select(InviteCodeModel).where(InviteCodeModel.code_hash == code_hash)
+            select(InviteCodeModel).where(
+                InviteCodeModel.code_hash == code_hash
+            )
         )
+
         model = result.scalar_one_or_none()
         if model is None:
             return None
@@ -60,26 +70,32 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
             )
             .exists()
         )
+
         result = await self._session.execute(stmt)
         return bool(result.scalar())
 
     async def update(self, invite_code: ClientInviteCode) -> None:
         await self._session.execute(
             update(InviteCodeModel)
-            .where(InviteCodeModel.id == invite_code.id)
+            .where(
+                InviteCodeModel.id == invite_code.id
+            )
             .values(
+                encrypted_code=invite_code.encrypted_code,
                 code_hash=invite_code.code_hash,
                 is_active=invite_code.is_active,
                 last_activated_client_id=invite_code.last_activated_client_id,
                 last_activated_at=invite_code.last_activated_at,
             )
         )
+
         await self._session.flush()
 
     def _to_domain(self, model: InviteCodeModel) -> ClientInviteCode:
         return ClientInviteCode(
             id=model.id,
             retail_point_id=model.retail_point_id,
+            encrypted_code=model.encrypted_code,
             code_hash=model.code_hash,
             created_by_employee_id=model.created_by_employee_id,
             is_active=model.is_active,
@@ -93,6 +109,7 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
         return InviteCodeModel(
             id=invite_code.id,
             retail_point_id=invite_code.retail_point_id,
+            encrypted_code=invite_code.encrypted_code,
             code_hash=invite_code.code_hash,
             created_by_employee_id=invite_code.created_by_employee_id,
             is_active=invite_code.is_active,

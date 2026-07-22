@@ -6,7 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.v1.schemas.retail_points import (
     CreateRetailPointRequest,
     UpdateRetailPointRequest,
-    RetailPointResponse
+    RetailPointResponse,
+    InviteCodeResponse,
+    RetailPointWithCodeResponse
 )
 from app.application.services.retail_points import RetailPointsService
 from app.api.dependencies import get_retail_points_service, allow_admin, allow_all_staff
@@ -18,7 +20,7 @@ router = APIRouter(prefix="/api/v1/retail_points", tags=["RetailPoints"])
 
 @router.post(
     path="",
-    response_model=RetailPointResponse,
+    response_model=RetailPointWithCodeResponse,
     status_code=status.HTTP_201_CREATED
 )
 async def create_retail_point(
@@ -29,8 +31,8 @@ async def create_retail_point(
     try:
         point, invite_code = await service.create_retail_point(dto, employee.id)
 
-        return RetailPointResponse(
-            **asdict(point), 
+        return RetailPointWithCodeResponse(
+            retail_point=asdict(point), 
             invite_code=invite_code
         )
 
@@ -55,6 +57,27 @@ async def get_retail_point(
             detail=f"Retail point {retail_point_id} not found",
         )
     return retail_point
+
+
+@router.get(
+    "/{retail_point_id}/code",
+    response_model=InviteCodeResponse,
+    dependencies=[Depends(allow_all_staff)]
+)
+async def get_retail_point_invite_code(
+    retail_point_id: UUID,
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)]
+):
+    invite_code = await service.get_retail_point_invite_code(retail_point_id)
+    if not invite_code:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Retail point {retail_point_id} not found",
+        )
+    
+    return InviteCodeResponse(
+        invite_code=invite_code
+    )
 
 
 @router.patch(

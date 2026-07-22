@@ -50,3 +50,10 @@ class IClientInviteCodesService(ABC):
         retail_point_id: UUID,
     ) -> ClientInviteCode:
         raise NotImplementedError
+
+    @abstractmethod
+    async def get_raw_code(
+        self,
+        retail_point_id: UUID,
+    ) -> str:
+        raise NotImplementedError

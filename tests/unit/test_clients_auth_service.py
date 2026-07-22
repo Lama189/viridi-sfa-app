@@ -47,6 +47,7 @@ async def test_register_success(mock_refresh, mock_access, service, mock_uow, mo
     mock_uow.clients.exists_by.return_value = False
     mock_invite_codes.activate.return_value = ClientInviteCode(
         retail_point_id=uuid4(),
+        encrypted_code="enc",
         code_hash="hash",
         created_by_employee_id=uuid4(),
     )

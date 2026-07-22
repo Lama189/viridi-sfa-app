@@ -28,7 +28,7 @@ def service(mock_uow):
 # --- create ---
 
 @pytest.mark.asyncio
-@patch("app.application.services.invite_codes.SecurityUtils.generate_invite_code", return_value=("raw_code", "hash_code"))
+@patch("app.application.services.invite_codes.SecurityUtils.generate_invite_code", return_value=("raw_code", "encrypted_code", "hash_code"))
 async def test_create_success(mock_gen, service, mock_uow):
     rp_id = uuid4()
     emp_id = uuid4()
@@ -63,20 +63,21 @@ async def test_create_retail_point_inactive(service, mock_uow):
 # --- regenerate ---
 
 @pytest.mark.asyncio
-@patch("app.application.services.invite_codes.SecurityUtils.generate_invite_code", return_value=("new_raw", "new_hash"))
+@patch("app.application.services.invite_codes.SecurityUtils.generate_invite_code", return_value=("new_raw", "new_encrypted", "new_hash"))
 async def test_regenerate_success(mock_gen, service, mock_uow):
     rp_id = uuid4()
     emp_id = uuid4()
     mock_uow.employees.get_by_id.return_value = _make_employee(is_active=True)
     mock_uow.retail_points.get_by_id.return_value = RetailPoint(name="X", address="A", id=rp_id)
     existing = ClientInviteCode(
-        retail_point_id=rp_id, code_hash="old_hash", created_by_employee_id=emp_id,
+        retail_point_id=rp_id, encrypted_code="old_encrypted", code_hash="old_hash", created_by_employee_id=emp_id,
     )
     mock_uow.invite_codes.get_by_retail_point.return_value = existing
 
     result = await service.regenerate(emp_id, rp_id)
 
     assert result == "new_raw"
+    assert existing.encrypted_code == "new_encrypted"
     assert existing.code_hash == "new_hash"
     assert existing.last_activated_client_id is None
     assert existing.last_activated_at is None
@@ -130,7 +131,7 @@ async def test_activate_success(service, mock_uow):
     client_id = uuid4()
     rp_id = uuid4()
     invite = ClientInviteCode(
-        retail_point_id=rp_id, code_hash="hash", created_by_employee_id=uuid4(),
+        retail_point_id=rp_id, encrypted_code="enc", code_hash="hash", created_by_employee_id=uuid4(),
     )
     mock_uow.invite_codes.get_by_code_hash.return_value = invite
 
@@ -160,6 +161,7 @@ async def test_activate_expired_code(service, mock_uow):
     past = datetime.now(timezone.utc) - timedelta(hours=1)
     invite = ClientInviteCode.create(
         retail_point_id=rp_id,
+        encrypted_code="enc",
         code_hash="hash",
         created_by_employee_id=uuid4(),
         expires_in=timedelta(minutes=-30),
@@ -178,7 +180,7 @@ async def test_activate_expired_code(service, mock_uow):
 async def test_deactivate_success(service, mock_uow):
     uid = uuid4()
     invite = ClientInviteCode(
-        retail_point_id=uuid4(), code_hash="h", created_by_employee_id=uuid4(), id=uid,
+        retail_point_id=uuid4(), encrypted_code="enc", code_hash="h", created_by_employee_id=uuid4(), id=uid,
     )
     mock_uow.invite_codes.get_by_id.return_value = invite
 
@@ -203,7 +205,7 @@ async def test_deactivate_not_found(service, mock_uow):
 async def test_get_success(service, mock_uow):
     uid = uuid4()
     invite = ClientInviteCode(
-        retail_point_id=uuid4(), code_hash="h", created_by_employee_id=uuid4(), id=uid,
+        retail_point_id=uuid4(), encrypted_code="enc", code_hash="h", created_by_employee_id=uuid4(), id=uid,
     )
     mock_uow.invite_codes.get_by_id.return_value = invite
 
@@ -225,7 +227,7 @@ async def test_get_not_found(service, mock_uow):
 async def test_get_by_retail_point_success(service, mock_uow):
     rp_id = uuid4()
     invite = ClientInviteCode(
-        retail_point_id=rp_id, code_hash="h", created_by_employee_id=uuid4(),
+        retail_point_id=rp_id, encrypted_code="enc", code_hash="h", created_by_employee_id=uuid4(),
     )
     mock_uow.invite_codes.get_by_retail_point.return_value = invite
 

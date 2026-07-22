@@ -106,8 +106,23 @@ class RetailPointResponse(BaseModel):
 
     is_active: bool
 
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class InviteCodeResponse(BaseModel):
+    invite_code: str
+    
+    model_config = {
+        "from_attributes": True
+    }
+
+class RetailPointWithCodeResponse(BaseModel):
+    retail_point: RetailPointResponse
     invite_code: str
 
     model_config = {
         "from_attributes": True
     }
+

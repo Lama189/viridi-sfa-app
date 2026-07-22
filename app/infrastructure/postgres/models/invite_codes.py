@@ -49,6 +49,11 @@ class RetailPointInviteCode(BaseModel):
         nullable=False,
     )
 
+    encrypted_code: Mapped[str] = mapped_column(
+        String(512),
+        nullable=False,
+    )
+
     code_hash: Mapped[str] = mapped_column(
         String(64),
         unique=True,
@@ -87,6 +92,13 @@ class RetailPointInviteCode(BaseModel):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
 

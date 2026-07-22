@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 730e47d22951
+Revision ID: d833f850ccb7
 Revises: 
-Create Date: 2026-07-22 05:34:00.272597
+Create Date: 2026-07-22 08:27:57.941176
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '730e47d22951'
+revision: str = 'd833f850ccb7'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -110,12 +110,14 @@ def upgrade() -> None:
     op.create_table('retail_point_invite_codes',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('retail_point_id', sa.UUID(), nullable=False),
+    sa.Column('encrypted_code', sa.String(length=512), nullable=False),
     sa.Column('code_hash', sa.String(length=64), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('last_activated_client_id', sa.UUID(), nullable=True),
     sa.Column('last_activated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_by_employee_id', sa.UUID(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['created_by_employee_id'], ['employees.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['last_activated_client_id'], ['clients.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='CASCADE'),

@@ -114,6 +114,16 @@ class RetailPointsService:
         await self._uow.retail_points.delete(retail_point)
         await self._uow.commit()
 
-    async def get_by_id(self, retail_point_id: UUID) -> tuple[RetailPoint, str] | None:
+    async def get_by_id(self, retail_point_id: UUID) -> RetailPoint | None:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
-        code = await self._invite_codes.get_by_retail_point(retail_point_id)
+        if not retail_point:
+            return None
+        
+        return retail_point
+
+    async def get_retail_point_invite_code(self, retail_point_id: UUID) -> str | None:
+        retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
+        if retail_point is None:
+            return None
+
+        return await self._invite_codes.get_raw_code(retail_point_id)

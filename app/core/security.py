@@ -7,6 +7,8 @@ from typing import Any
 from fastapi import HTTPException
 from datetime import datetime, timedelta, timezone
 from starlette import status
+from cryptography.fernet import Fernet
+
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -67,15 +69,28 @@ class SecurityUtils:
             )
         
     @staticmethod
-    def generate_invite_code() -> tuple[str, str]:
+    def generate_invite_code() -> tuple[str, str, str]:
         raw_code = secrets.token_urlsafe(12)
 
-        code_hash = hashlib.sha256(
-            raw_code.encode()
-        ).hexdigest()
+        encrypted_code = SecurityUtils.encrypt_invite_code(raw_code)
+        code_hash = SecurityUtils.hash_invite_code(raw_code)
 
-        return raw_code, code_hash
+        return raw_code, encrypted_code, code_hash
+    
+    @staticmethod
+    def encrypt_invite_code(code: str) -> str:
+        cipher = Fernet(settings.invite_code_secret_key.encode())
+        encrypted = cipher.encrypt(code.encode())
 
+        return encrypted.decode()
+    
+    @staticmethod
+    def decrypt_invite_code(encrypted_code: str) -> str:
+        cipher = Fernet(settings.invite_code_secret_key.encode())
+        decrypted = cipher.decrypt(encrypted_code.encode())
+
+        return decrypted.decode()
+    
     @staticmethod
     def hash_invite_code(code: str) -> str:
         return hashlib.sha256(

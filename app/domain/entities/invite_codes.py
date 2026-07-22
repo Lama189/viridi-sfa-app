@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 @dataclass(slots=True)
 class ClientInviteCode:
     retail_point_id: UUID
+    encrypted_code: str
     code_hash: str
     created_by_employee_id: UUID
 
@@ -31,14 +32,17 @@ class ClientInviteCode:
         cls,
         *,
         retail_point_id: UUID,
+        encrypted_code: str,
         code_hash: str,
         created_by_employee_id: UUID,
         expires_in: timedelta | None = None,
         now: datetime | None = None,
     ) -> "ClientInviteCode":
         current_time = now or datetime.now(timezone.utc)
+
         return cls(
             retail_point_id=retail_point_id,
+            encrypted_code=encrypted_code,
             code_hash=code_hash,
             created_by_employee_id=created_by_employee_id,
             expires_at=(
@@ -50,7 +54,12 @@ class ClientInviteCode:
             updated_at=current_time,
         )
 
-    def activate(self, client_id: UUID, *, now: datetime | None = None) -> None:
+    def activate(
+        self,
+        client_id: UUID,
+        *,
+        now: datetime | None = None,
+    ) -> None:
         current_time = now or datetime.now(timezone.utc)
 
         if not self.is_available(now=current_time):
@@ -58,30 +67,48 @@ class ClientInviteCode:
 
         self.last_activated_client_id = client_id
         self.last_activated_at = current_time
-        self.is_active = True
 
         self._touch(now=current_time)
 
-    def regenerate(self, new_hash: str, *, now: datetime | None = None) -> None:
+    def regenerate(
+        self,
+        *,
+        encrypted_code: str,
+        code_hash: str,
+        now: datetime | None = None,
+    ) -> None:
         current_time = now or datetime.now(timezone.utc)
-        self.code_hash = new_hash
+
+        self.encrypted_code = encrypted_code
+        self.code_hash = code_hash
         self.is_active = True
         self.last_activated_client_id = None
         self.last_activated_at = None
 
         self._touch(now=current_time)
 
-    def deactivate(self, *, now: datetime | None = None) -> None:
+    def deactivate(
+        self,
+        *,
+        now: datetime | None = None,
+    ) -> None:
         self.is_active = False
         self._touch(now=now)
 
     def change_expiration(
-        self, expires_at: datetime | None, *, now: datetime | None = None
+        self,
+        expires_at: datetime | None,
+        *,
+        now: datetime | None = None,
     ) -> None:
         self.expires_at = expires_at
         self._touch(now=now)
 
-    def is_available(self, *, now: datetime | None = None) -> bool:
+    def is_available(
+        self,
+        *,
+        now: datetime | None = None,
+    ) -> bool:
         if not self.is_active:
             return False
 
@@ -92,5 +119,9 @@ class ClientInviteCode:
 
         return True
 
-    def _touch(self, *, now: datetime | None = None) -> None:
+    def _touch(
+        self,
+        *,
+        now: datetime | None = None,
+    ) -> None:
         self.updated_at = now or datetime.now(timezone.utc)

@@ -10,7 +10,6 @@ from app.application.interfaces.services.invite_codes import IClientInviteCodesS
 from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
 from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.api.v1.schemas.clients import (
-    ClientCreate, 
     ClientUpdate, 
     ClientCachedDTO, 
     ClientLoginDTO, 

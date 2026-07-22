@@ -18,6 +18,8 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.application.services.categories import CategoriesService
 from app.application.services.clients import ClientsService, ClientsAuthService
 from app.application.services.employees import EmployeesService, EmployeesAuthService
+from app.application.services.invite_codes import ClientInviteCodesService
+from app.application.services.members import RetailPointMembersService
 from app.application.services.orders import OrdersService
 from app.application.services.products import ProductsService
 from app.application.services.retail_points import RetailPointsService
@@ -72,8 +74,24 @@ async def get_warehouses_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) 
     return WarehousesService(uow)
 
 
-async def get_retail_points_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> RetailPointsService:
-    return RetailPointsService(uow)
+async def get_invite_codes_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)]
+) -> ClientInviteCodesService:
+    return ClientInviteCodesService(uow)
+
+
+async def get_retail_point_members_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
+) -> RetailPointMembersService:
+    return RetailPointMembersService(uow, invite_codes)
+
+
+async def get_retail_points_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
+) -> RetailPointsService:
+    return RetailPointsService(uow, invite_codes)
 
 
 async def get_products_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ProductsService:
@@ -96,9 +114,11 @@ async def get_clients_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> 
 
 async def get_clients_auth_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
-    redis: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)]
+    redis: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)],
+    invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
+    memberships: Annotated[RetailPointMembersService, Depends(get_retail_point_members_service)],
 ) -> ClientsAuthService:
-    return ClientsAuthService(uow, redis)
+    return ClientsAuthService(uow, redis, invite_codes, memberships)
 
 async def get_employees_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> EmployeesService:
     return EmployeesService(uow)

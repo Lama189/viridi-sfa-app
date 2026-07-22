@@ -6,6 +6,7 @@ from app.api.v1.routers.employees import router as employees_router
 from app.api.v1.routers.orders import router as orders_router
 from app.api.v1.routers.warehouses import router as inventory_router
 from app.api.v1.routers.products import router as products_router
+from app.api.v1.routers.retail_points import router as retail_points_router
 
 app = FastAPI(
     title="Viridi SFA API",
@@ -32,3 +33,4 @@ app.include_router(employees_router)
 app.include_router(orders_router)
 app.include_router(inventory_router)
 app.include_router(products_router)
+app.include_router(retail_points_router)

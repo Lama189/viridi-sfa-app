@@ -1,8 +1,8 @@
-"""initial_schema_with_stocks
+"""Initial migration
 
-Revision ID: ccafea4ef093
+Revision ID: 730e47d22951
 Revises: 
-Create Date: 2026-07-20 10:01:42.957969
+Create Date: 2026-07-22 05:34:00.272597
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ccafea4ef093'
+revision: str = '730e47d22951'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -97,9 +97,7 @@ def upgrade() -> None:
     sa.Column('visit_sun', sa.Boolean(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_by_employee_id', sa.UUID(), nullable=True),
-    sa.Column('owner_client_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_employee_id'], ['employees.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['owner_client_id'], ['clients.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('idx_retail_points_fri', 'retail_points', ['visit_fri'], unique=False)
@@ -109,6 +107,47 @@ def upgrade() -> None:
     op.create_index('idx_retail_points_thu', 'retail_points', ['visit_thu'], unique=False)
     op.create_index('idx_retail_points_tue', 'retail_points', ['visit_tue'], unique=False)
     op.create_index('idx_retail_points_wed', 'retail_points', ['visit_wed'], unique=False)
+    op.create_table('retail_point_invite_codes',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('retail_point_id', sa.UUID(), nullable=False),
+    sa.Column('code_hash', sa.String(length=64), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('last_activated_client_id', sa.UUID(), nullable=True),
+    sa.Column('last_activated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_by_employee_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['created_by_employee_id'], ['employees.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['last_activated_client_id'], ['clients.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('code_hash')
+    )
+    op.create_index('uq_active_invite_per_retail_point', 'retail_point_invite_codes', ['retail_point_id'], unique=True, postgresql_where=sa.text('is_active = TRUE'))
+    op.create_table('retail_point_members',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('retail_point_id', sa.UUID(), nullable=False),
+    sa.Column('client_id', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('stock_transactions',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('warehouse_id', sa.UUID(), nullable=False),
+    sa.Column('product_id', sa.UUID(), nullable=False),
+    sa.Column('quantity_delta', sa.Integer(), nullable=False),
+    sa.Column('transaction_type', sa.Enum('RECEIPT', 'RESERVATION', 'CANCEL_RESERVATION', 'SALE', 'WRITEOFF', 'RETURN', 'ADJUSTMENT', name='stock_transaction_type_enum'), nullable=False),
+    sa.Column('reference_type', sa.String(length=50), nullable=False),
+    sa.Column('reference_id', sa.UUID(), nullable=False),
+    sa.Column('actor_type', sa.Enum('EMPLOYEE', 'CLIENT', 'SYSTEM', name='transaction_actor_type_enum'), nullable=False),
+    sa.Column('created_by_id', sa.UUID(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='RESTRICT'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_stock_tx_warehouse_product_created', 'stock_transactions', ['warehouse_id', 'product_id', 'created_at'], unique=False)
     op.create_table('stocks',
     sa.Column('warehouse_id', sa.UUID(), nullable=False),
     sa.Column('product_id', sa.UUID(), nullable=False),
@@ -176,6 +215,11 @@ def downgrade() -> None:
     op.drop_table('orders')
     op.drop_table('visits')
     op.drop_table('stocks')
+    op.drop_index('idx_stock_tx_warehouse_product_created', table_name='stock_transactions')
+    op.drop_table('stock_transactions')
+    op.drop_table('retail_point_members')
+    op.drop_index('uq_active_invite_per_retail_point', table_name='retail_point_invite_codes', postgresql_where=sa.text('is_active = TRUE'))
+    op.drop_table('retail_point_invite_codes')
     op.drop_index('idx_retail_points_wed', table_name='retail_points')
     op.drop_index('idx_retail_points_tue', table_name='retail_points')
     op.drop_index('idx_retail_points_thu', table_name='retail_points')

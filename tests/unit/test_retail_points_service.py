@@ -19,28 +19,39 @@ def mock_uow():
 
 
 @pytest.fixture
-def service(mock_uow):
-    return RetailPointsService(mock_uow)
+def mock_invite_codes():
+    return AsyncMock()
 
+
+@pytest.fixture
+def service(mock_uow, mock_invite_codes):
+    return RetailPointsService(mock_uow, mock_invite_codes)
+
+
+# --- create_retail_point ---
 
 @pytest.mark.asyncio
-async def test_create_retail_point_success(service, mock_uow):
+async def test_create_retail_point_success(service, mock_uow, mock_invite_codes):
     agent_id = uuid4()
+    mock_invite_codes.create.return_value="invite-raw-code"
     dto = CreateRetailPointRequest(name="Store-1", address="ul. Test 1")
 
-    result = await service.create_retail_point(dto, agent_id)
+    point, code = await service.create_retail_point(dto, agent_id)
 
-    assert result.name == "Store-1"
-    assert result.address == "ul. Test 1"
-    assert result.created_by_employee_id == agent_id
-    assert result.is_active is True
+    assert point.name == "Store-1"
+    assert point.address == "ul. Test 1"
+    assert point.created_by_employee_id == agent_id
+    assert point.is_active is True
+    assert code == "invite-raw-code"
     mock_uow.retail_points.add.assert_awaited_once()
+    mock_invite_codes.create.assert_awaited_once_with(agent_id, point.id)
     mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_create_retail_point_with_optional_fields(service, mock_uow):
+async def test_create_retail_point_with_optional_fields(service, mock_uow, mock_invite_codes):
     agent_id = uuid4()
+    mock_invite_codes.create.return_value = "code"
     dto = CreateRetailPointRequest(
         name="Store-2",
         address="ul. Test 2",
@@ -57,18 +68,20 @@ async def test_create_retail_point_with_optional_fields(service, mock_uow):
         visit_fri=True,
     )
 
-    result = await service.create_retail_point(dto, agent_id)
+    point, _ = await service.create_retail_point(dto, agent_id)
 
-    assert result.legal_name == "OOO Test"
-    assert result.client_type == ClientType.B
-    assert result.landmark == "near park"
-    assert result.inn == "123456789"
-    assert result.latitude == Decimal("41.311081")
-    assert result.visit_mon is True
-    assert result.visit_wed is True
-    assert result.visit_fri is True
-    assert result.visit_tue is False
+    assert point.legal_name == "OOO Test"
+    assert point.client_type == ClientType.B
+    assert point.landmark == "near park"
+    assert point.inn == "123456789"
+    assert point.latitude == Decimal("41.311081")
+    assert point.visit_mon is True
+    assert point.visit_wed is True
+    assert point.visit_fri is True
+    assert point.visit_tue is False
 
+
+# --- get_by_id ---
 
 @pytest.mark.asyncio
 async def test_get_by_id_found(service, mock_uow):
@@ -89,6 +102,8 @@ async def test_get_by_id_not_found(service, mock_uow):
     result = await service.get_by_id(uuid4())
     assert result is None
 
+
+# --- update_retail_point ---
 
 @pytest.mark.asyncio
 async def test_update_retail_point_success(service, mock_uow):
@@ -151,6 +166,8 @@ async def test_update_retail_point_not_found(service, mock_uow):
     with pytest.raises(ValueError, match="not found"):
         await service.update_retail_point(uuid4(), dto)
 
+
+# --- delete_retail_point ---
 
 @pytest.mark.asyncio
 async def test_delete_retail_point_success(service, mock_uow):

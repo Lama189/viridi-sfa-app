@@ -9,7 +9,7 @@ from app.core.security import SecurityUtils
 
 class ClientInviteCodesService(IClientInviteCodesService):
 
-    def __init(self, uow: IUnitOfWork) -> None:
+    def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
     async def _validate_retail_point(
@@ -28,7 +28,7 @@ class ClientInviteCodesService(IClientInviteCodesService):
         employee_id: UUID,
     ) -> None:
         employee = await self._uow.employees.get_by_id(employee_id)
-        if employee_id is None:
+        if employee is None:
             raise UserNotFoundError()
         
         if employee and not employee.is_active:

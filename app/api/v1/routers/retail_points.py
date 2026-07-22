@@ -1,5 +1,6 @@
 from uuid import UUID
 from typing import Annotated
+from dataclasses import asdict
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.v1.schemas.retail_points import (
@@ -29,7 +30,7 @@ async def create_retail_point(
         point, invite_code = await service.create_retail_point(dto, employee.id)
 
         return RetailPointResponse(
-            **point.__dict__, 
+            **asdict(point), 
             invite_code=invite_code
         )
 

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.infrastructure.postgres.models.categories import Category
     from app.infrastructure.postgres.models.order_items import OrderItem
     from app.infrastructure.postgres.models.stocks import Stock
+    from app.infrastructure.postgres.models.stock_transactions import StockTransaction
 
 
 class Product(BaseModel):
@@ -68,4 +69,8 @@ class Product(BaseModel):
 
     order_items: Mapped[list["OrderItem"]] = relationship(
         back_populates="product",
+    )
+
+    transactions: Mapped[list["StockTransaction"]] = relationship(
+        back_populates="product"
     )

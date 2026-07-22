@@ -3,10 +3,11 @@ from uuid import uuid4
 
 import pytest
 
-from app.api.v1.schemas.clients import ClientLoginDTO, ClientConfirm
+from app.api.v1.schemas.clients import ClientLoginDTO, ClientRegisterRequest
 from app.application.services.clients import ClientsAuthService
-from app.core.extensions import UserNotFoundError
+from app.core.extensions import UserNotFoundError, UserAlreadyExistsError, UserNotActiveError
 from app.domain.entities.clients import Client
+from app.domain.entities.invite_codes import ClientInviteCode
 
 
 @pytest.fixture
@@ -23,8 +24,65 @@ def mock_cache():
 
 
 @pytest.fixture
-def service(mock_uow, mock_cache):
-    return ClientsAuthService(mock_uow, mock_cache)
+def mock_invite_codes():
+    return AsyncMock()
+
+
+@pytest.fixture
+def mock_memberships():
+    return AsyncMock()
+
+
+@pytest.fixture
+def service(mock_uow, mock_cache, mock_invite_codes, mock_memberships):
+    return ClientsAuthService(mock_uow, mock_cache, mock_invite_codes, mock_memberships)
+
+
+# --- register ---
+
+@pytest.mark.asyncio
+@patch("app.application.services.clients.SecurityUtils.generate_access_token", return_value="access_tok")
+@patch("app.application.services.clients.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
+async def test_register_success(mock_refresh, mock_access, service, mock_uow, mock_cache, mock_invite_codes, mock_memberships):
+    mock_uow.clients.exists_by.return_value = False
+    mock_invite_codes.activate.return_value = ClientInviteCode(
+        retail_point_id=uuid4(),
+        code_hash="hash",
+        created_by_employee_id=uuid4(),
+    )
+
+    dto = ClientRegisterRequest(
+        invite_code="ABC123",
+        phone="+998901234567",
+        full_name="New Client",
+        telegram_chat_id=111111,
+    )
+    result = await service.register(dto)
+
+    assert result.access_token == "access_tok"
+    assert result.refresh_token == "refresh_tok"
+    assert result.client.phone == "+998901234567"
+    assert result.client.full_name == "New Client"
+    mock_uow.clients.add.assert_awaited_once()
+    mock_invite_codes.activate.assert_awaited_once_with("ABC123", result.client.id)
+    mock_memberships.join.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_register_duplicate_phone(service, mock_uow):
+    mock_uow.clients.exists_by.return_value = True
+
+    dto = ClientRegisterRequest(
+        invite_code="ABC123",
+        phone="+998901234567",
+        full_name="Dup",
+        telegram_chat_id=111,
+    )
+    with pytest.raises(UserAlreadyExistsError):
+        await service.register(dto)
+
+    mock_uow.clients.add.assert_not_awaited()
 
 
 # --- login ---
@@ -57,6 +115,17 @@ async def test_login_user_not_found(service, mock_uow):
 
 
 @pytest.mark.asyncio
+async def test_login_user_not_active(service, mock_uow):
+    uid = uuid4()
+    client = Client(phone="+998901234567", full_name="Test", id=uid, is_active=False)
+    mock_uow.clients.get_by_phone.return_value = client
+
+    dto = ClientLoginDTO(phone="+998901234567")
+    with pytest.raises(UserNotActiveError):
+        await service.login(dto)
+
+
+@pytest.mark.asyncio
 @patch("app.application.services.clients.SecurityUtils.generate_access_token", return_value="access_tok")
 @patch("app.application.services.clients.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
 async def test_login_updates_telegram_chat_id(mock_refresh, mock_access, service, mock_uow, mock_cache):
@@ -84,49 +153,6 @@ async def test_login_no_telegram_update_when_same(mock_refresh, mock_access, ser
     await service.login(dto)
 
     mock_uow.clients.update.assert_not_awaited()
-
-
-# --- confirm ---
-
-@pytest.mark.asyncio
-@patch("app.application.services.clients.SecurityUtils.generate_access_token", return_value="access_tok")
-@patch("app.application.services.clients.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
-async def test_confirm_success(mock_refresh, mock_access, service, mock_uow, mock_cache):
-    uid = uuid4()
-    client = Client(phone="+998901234567", full_name="Old", id=uid)
-    mock_uow.clients.get_by_phone.return_value = client
-
-    dto = ClientConfirm(phone="+998901234567", telegram_chat_id=333333, full_name="New Name")
-    result = await service.confirm(dto)
-
-    assert client.telegram_chat_id == 333333
-    assert client.full_name == "New Name"
-    assert result.access_token == "access_tok"
-    assert result.client.full_name == "New Name"
-
-
-@pytest.mark.asyncio
-async def test_confirm_not_found(service, mock_uow):
-    mock_uow.clients.get_by_phone.return_value = None
-
-    dto = ClientConfirm(phone="+998900000000", telegram_chat_id=123, full_name=None)
-    with pytest.raises(UserNotFoundError):
-        await service.confirm(dto)
-
-
-@pytest.mark.asyncio
-@patch("app.application.services.clients.SecurityUtils.generate_access_token", return_value="access_tok")
-@patch("app.application.services.clients.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
-async def test_confirm_without_full_name(mock_refresh, mock_access, service, mock_uow, mock_cache):
-    uid = uuid4()
-    client = Client(phone="+998901234567", full_name="Keep", id=uid)
-    mock_uow.clients.get_by_phone.return_value = client
-
-    dto = ClientConfirm(phone="+998901234567", telegram_chat_id=444444, full_name=None)
-    await service.confirm(dto)
-
-    assert client.full_name == "Keep"
-    assert client.telegram_chat_id == 444444
 
 
 # --- refresh ---

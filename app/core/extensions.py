@@ -2,6 +2,9 @@
 class UserNotFoundError(Exception):
     pass
 
+class UserAlreadyExistsError(Exception):
+    pass
+
 class InvalidPasswordError(Exception):
     pass
 

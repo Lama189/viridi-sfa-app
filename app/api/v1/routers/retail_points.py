@@ -26,7 +26,12 @@ async def create_retail_point(
     employee: Annotated[Employee, Depends(allow_all_staff)]
 ):
     try:
-        return await service.create_retail_point(dto, employee.id) 
+        point, invite_code = await service.create_retail_point(dto, employee.id)
+
+        return RetailPointResponse(
+            **point.__dict__, 
+            invite_code=invite_code
+        )
 
     except ValueError as e:
         raise HTTPException(

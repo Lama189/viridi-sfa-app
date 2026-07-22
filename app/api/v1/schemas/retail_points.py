@@ -105,3 +105,9 @@ class RetailPointResponse(BaseModel):
     visit_sun: bool
 
     is_active: bool
+
+    invite_code: str
+
+    model_config = {
+        "from_attributes": True
+    }

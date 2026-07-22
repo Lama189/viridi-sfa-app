@@ -39,7 +39,6 @@ class ClientInviteCodesService(IClientInviteCodesService):
         employee_id: UUID,
         retail_point_id: UUID,
     ) -> str:
-        await self._validate_employee(employee_id)
         await self._validate_retail_point(retail_point_id)
 
         raw_code, code_hash = SecurityUtils.generate_invite_code()
@@ -51,7 +50,6 @@ class ClientInviteCodesService(IClientInviteCodesService):
         )
 
         await self._uow.invite_codes.add(invite_code)
-        await self._uow.commit()
 
         return raw_code
     

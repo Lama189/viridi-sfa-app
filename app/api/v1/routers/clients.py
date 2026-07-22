@@ -1,47 +1,132 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.extensions import UserNotFoundError
-from app.application.services.clients import ClientsAuthService, ClientsService
-from app.api.dependencies import get_clients_service, get_clients_auth_service, allow_all_staff
-from app.api.v1.schemas.clients import (
-    ClientCreate, 
-    ClientResponse, 
-    ClientConfirm, 
-    ClientWithTokensResponse
+from app.api.dependencies import (
+    allow_all_staff,
+    get_clients_auth_service,
+    get_clients_service,
 )
-
+from app.api.v1.schemas.clients import (
+    ClientRegisterRequest,
+    ClientResponse,
+    ClientUpdate,
+    ClientWithTokensResponse,
+)
+from app.application.services.clients import (
+    ClientsAuthService,
+    ClientsService,
+)
+from app.core.extensions import (
+    InvalidInviteCodeError,
+    UserAlreadyExistsError,
+    UserNotActiveError,
+    UserNotFoundError,
+)
 
 
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 
 
 @router.post(
-    path="/register",
+    "/register",
+    response_model=ClientWithTokensResponse,
     status_code=status.HTTP_201_CREATED,
-    response_model=ClientResponse,
-    dependencies=[Depends(allow_all_staff)]
 )
 async def register(
-    dto: ClientCreate,
-    service: Annotated[ClientsService, Depends(get_clients_service)],
-):
-    try:
-        return await service.create_client(dto) 
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@router.post(
-    path="/confirm",
-    status_code=status.HTTP_200_OK,
-    response_model=ClientWithTokensResponse
-)
-async def confirm(
-    dto: ClientConfirm,
+    dto: ClientRegisterRequest,
     service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)]
 ):
     try:
-        return await service.confirm(dto)
+        return await service.register(dto)
+    except UserAlreadyExistsError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Client already exists",
+        )
+    except InvalidInviteCodeError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid invite code",
+        )
+    except UserNotActiveError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Client is inactive",
+        )
+
+
+@router.get(
+    "/{client_id}",
+    response_model=ClientResponse,
+    dependencies=[Depends(allow_all_staff)],
+)
+async def get_client(
+    client_id: str,
+    service: Annotated[
+        ClientsService,
+        Depends(get_clients_service),
+    ],
+):
+    client = await service.get_client(client_id)
+
+    if client is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )
+
+    return client
+
+
+@router.get(
+    "",
+    response_model=list[ClientResponse],
+    dependencies=[Depends(allow_all_staff)],
+)
+async def list_clients(
+    service: Annotated[ClientsService, Depends(get_clients_service)]
+):
+    return await service.list_clients()
+
+
+@router.patch(
+    "/{client_id}",
+    response_model=ClientResponse,
+    dependencies=[Depends(allow_all_staff)],
+)
+async def update_client(
+    client_id: str,
+    dto: ClientUpdate,
+    service: Annotated[ClientsService, Depends(get_clients_service)]
+):
+    try:
+        return await service.update_client(client_id, dto)
     except UserNotFoundError:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.delete(
+    "/{client_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(allow_all_staff)],
+)
+async def delete_client(
+    client_id: str,
+    service: Annotated[ClientsService, Depends(get_clients_service)]
+):
+    try:
+        await service.delete_client(client_id)
+    except UserNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )

@@ -120,3 +120,10 @@ class ClientConfirm(BaseModel):
     phone: str
     telegram_chat_id: int
     full_name: str | None
+
+
+class ClientRegisterRequest(BaseModel):
+    invite_code: str
+    phone: str
+    full_name: str
+    telegram_chat_id: int

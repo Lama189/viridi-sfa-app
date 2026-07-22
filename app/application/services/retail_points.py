@@ -3,14 +3,20 @@ from uuid import UUID
 from app.domain.entities.retail_points import RetailPoint
 
 from app.application.interfaces.uow import IUnitOfWork
+from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
 
 
 class RetailPointsService:
-    def __init__(self, uow: IUnitOfWork) -> None:
+    def __init__(
+        self, 
+        uow: IUnitOfWork, 
+        invite_codes: IClientInviteCodesService,
+    ) -> None:
         self._uow = uow
+        self._invite_codes = invite_codes
 
-    async def create_retail_point(self, dto: CreateRetailPointRequest, agent_id: UUID) -> RetailPoint:
+    async def create_retail_point(self, dto: CreateRetailPointRequest, agent_id: UUID) -> tuple[RetailPoint, str]:
         point = RetailPoint(
             name=dto.name,
             address=dto.address,
@@ -39,8 +45,10 @@ class RetailPointsService:
         )
         
         await self._uow.retail_points.add(point)
+        code = await self._invite_codes.create(agent_id, point.id)
+
         await self._uow.commit()
-        return point
+        return point, code
     
     async def update_retail_point(self, retail_point_id: UUID, dto: UpdateRetailPointRequest) -> RetailPoint:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)

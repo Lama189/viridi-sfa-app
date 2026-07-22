@@ -1,12 +1,18 @@
 from uuid import UUID
 
-from app.core.extensions import UserNotFoundError, UserNotActiveError, MembershipAlreadyExistsError, MembershipNotFoundError
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
+from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
 from app.domain.entities.retail_point_members import RetailPointMember
+from app.core.extensions import (
+    UserNotFoundError, 
+    UserNotActiveError, 
+    MembershipAlreadyExistsError, 
+    MembershipNotFoundError
+)
 
 
-class RetailPointMembersService():
+class RetailPointMembersService(IRetailPointMembersService):
     def __init__(
         self, 
         uow: IUnitOfWork,

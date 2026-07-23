@@ -46,3 +46,10 @@ class StockReferenceType(str, Enum):
     INVENTORY = "inventory"
     RETURN = "return"
     WRITEOFF = "writeoff"
+
+
+class MediaBucket(str, Enum):
+    RETAIL_POINTS = "retail-point-images"
+    VISITS = "visit-reports"
+    DOCUMENTS = "documents"
+    AVATARS = "avatars"

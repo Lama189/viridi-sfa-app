@@ -2,6 +2,7 @@ from app.application.interfaces.repos.categories import ICategoryRepository
 from app.application.interfaces.repos.clients import IClientRepository
 from app.application.interfaces.repos.employees import IEmployeeRepository
 from app.application.interfaces.repos.invite_codes import IInviteCodeRepository
+from app.application.interfaces.repos.media_objects import IMediaObjectRepository
 from app.application.interfaces.repos.order_items import IOrderItemRepository
 from app.application.interfaces.repos.orders import IOrderRepository
 from app.application.interfaces.repos.products import IProductRepository
@@ -25,6 +26,7 @@ class IUnitOfWork:
     stock_transactions: IStockTransactionRepository
     orders: IOrderRepository
     order_items: IOrderItemRepository
+    media_objects: IMediaObjectRepository
 
     async def commit(self) -> None: ...
     async def rollback(self) -> None: ...

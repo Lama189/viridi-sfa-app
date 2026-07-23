@@ -26,7 +26,7 @@ class RetailPoint:
 
     latitude: Decimal | None = None
     longitude: Decimal | None = None
-    photo_url: str | None = None
+    photo_id: UUID | None = None
 
     visit_mon: bool = field(default=False)
     visit_tue: bool = field(default=False)

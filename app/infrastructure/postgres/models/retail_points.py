@@ -80,7 +80,11 @@ class RetailPoint(BaseModel):
         Numeric(9, 6)
     )
 
-    photo_url: Mapped[str | None] = mapped_column(String(255))
+    photo_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("media_objects.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     visit_mon: Mapped[bool] = mapped_column(Boolean, default=False)
     visit_tue: Mapped[bool] = mapped_column(Boolean, default=False)

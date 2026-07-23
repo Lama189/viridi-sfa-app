@@ -9,6 +9,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "bcrypt>=5.0.0",
     "fastapi>=0.139.0",
+    "minio>=7.2.20",
     "pip-audit>=2.10.1",
     "pydantic-settings>=2.14.2",
     "pyjwt[crypto]>=2.13.0",

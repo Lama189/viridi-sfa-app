@@ -7,6 +7,7 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.infrastructure.postgres.repos.categories import PostgresCategoriesRepository
 from app.infrastructure.postgres.repos.clients import PostgresClientRepository
 from app.infrastructure.postgres.repos.employees import PostgresEmployeeRepository
+from app.infrastructure.postgres.repos.media_objects import PostgresMediaObjectRepository
 from app.infrastructure.postgres.repos.order_items import PostgresOrderItemRepository
 from app.infrastructure.postgres.repos.orders import PostgresOrderRepository
 from app.infrastructure.postgres.repos.products import PostgresProductsRepository
@@ -38,6 +39,7 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.stock_transactions = PostgresStockTransactionRepository(self._session)
         self.orders = PostgresOrderRepository(self._session)
         self.order_items = PostgresOrderItemRepository(self._session)
+        self.media_objects = PostgresMediaObjectRepository(self._session)
 
         return self
     

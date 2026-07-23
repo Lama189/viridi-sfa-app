@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 from typing import Annotated
+from minio import Minio
 
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
@@ -26,12 +27,16 @@ from app.application.services.retail_points import RetailPointsService
 from app.application.services.stocks import StockService
 from app.application.services.warehouses import WarehousesService
 from app.application.interfaces.services.stocks import IStockService
+from app.application.interfaces.object_storage import IObjectStorage
+from app.application.services.media import MediaService
 
 from app.infrastructure.context import client_id_ctx_var, employee_id_ctx_var
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
 from app.infrastructure.redis.client import get_redis_client
 from app.infrastructure.redis.repos.clients import ClientsRedisRepository
 from app.infrastructure.redis.repos.employees import EmployeesRedisRepository
+from app.infrastructure.minio.client import get_minio_client
+from app.infrastructure.minio.storage import MinioStorage
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/users/login")
@@ -47,7 +52,7 @@ async def get_uow() -> AsyncGenerator[IUnitOfWork, None]:
 
 
 # ======================================================================
-# 3. REDIS REPOSITORIES DEPENDENCIES
+# 3. INFRASTRUCTURE DEPENDENCIES
 # ======================================================================
 
 async def get_clients_redis_repo(
@@ -61,6 +66,9 @@ async def get_employees_redis_repo(
 ) -> IEmployeesCacheRepository:
     return EmployeesRedisRepository(client)
 
+
+def get_minio_storage(client: Annotated[Minio, Depends(get_minio_client)]) -> IObjectStorage:
+    return MinioStorage(client)
 
 # ======================================================================
 # 2. CORE BUSINESS SERVICES DEPENDENCIES
@@ -112,6 +120,7 @@ async def get_orders_service(
 async def get_clients_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ClientsService:
     return ClientsService(uow)
 
+
 async def get_clients_auth_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
     redis: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)],
@@ -128,6 +137,9 @@ async def get_employees_auth_service(
     redis: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)]
 ) -> EmployeesAuthService:
     return EmployeesAuthService(uow, redis)
+
+async def get_media_service(storage: Annotated[IObjectStorage, Depends(get_minio_storage)]) -> MediaService:
+    return MediaService(storage)
 
 # ======================================================================
 # 4. AUTHENTICATION & CURRENT USER DEPENDENCIES
@@ -190,6 +202,7 @@ async def get_current_user(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Unknown user type",
     )
+
 
 async def get_current_employee(
     user: Annotated[Employee | Client, Depends(get_current_user)],

@@ -138,8 +138,11 @@ async def get_employees_auth_service(
 ) -> EmployeesAuthService:
     return EmployeesAuthService(uow, redis)
 
-async def get_media_service(storage: Annotated[IObjectStorage, Depends(get_minio_storage)]) -> MediaService:
-    return MediaService(storage)
+async def get_media_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    storage: Annotated[IObjectStorage, Depends(get_minio_storage)]
+) -> MediaService:
+    return MediaService(uow, storage)
 
 # ======================================================================
 # 4. AUTHENTICATION & CURRENT USER DEPENDENCIES

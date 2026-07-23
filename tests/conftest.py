@@ -150,7 +150,7 @@ class _TestRetailPoint(_TestBase):
     oked: Mapped[str | None] = mapped_column(String(5), nullable=True)
     latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
     longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
-    photo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    photo_id: Mapped[UUID | None] = mapped_column(nullable=True)
     visit_mon: Mapped[bool] = mapped_column(Boolean, default=False)
     visit_tue: Mapped[bool] = mapped_column(Boolean, default=False)
     visit_wed: Mapped[bool] = mapped_column(Boolean, default=False)

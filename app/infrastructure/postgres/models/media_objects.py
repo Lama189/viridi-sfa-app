@@ -14,7 +14,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.employees import Employee
+    pass
 
 
 class MediaObject(BaseModel):

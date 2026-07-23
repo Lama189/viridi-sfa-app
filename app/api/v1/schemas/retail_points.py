@@ -26,7 +26,7 @@ class CreateRetailPointRequest(BaseModel):
     latitude: Decimal | None = None
     longitude: Decimal | None = None
 
-    photo_url: str | None = None
+    photo_id: UUID | None = None
 
     visit_mon: bool = False
     visit_tue: bool = False
@@ -58,7 +58,7 @@ class UpdateRetailPointRequest(BaseModel):
     latitude: Decimal | None = None
     longitude: Decimal | None = None
 
-    photo_url: str | None = None
+    photo_id: UUID | None = None
 
     visit_mon: bool | None = None
     visit_tue: bool | None = None
@@ -94,7 +94,7 @@ class RetailPointResponse(BaseModel):
     latitude: Decimal | None
     longitude: Decimal | None
 
-    photo_url: str | None
+    photo_id: UUID | None
 
     visit_mon: bool
     visit_tue: bool

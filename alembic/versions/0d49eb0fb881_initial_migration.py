@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: d833f850ccb7
+Revision ID: 0d49eb0fb881
 Revises: 
-Create Date: 2026-07-22 08:27:57.941176
+Create Date: 2026-07-23 06:26:52.792165
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd833f850ccb7'
+revision: str = '0d49eb0fb881'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -60,6 +60,18 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
+    op.create_table('media_objects',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('bucket', sa.String(length=255), nullable=False),
+    sa.Column('object_name', sa.String(length=512), nullable=False),
+    sa.Column('content_type', sa.String(length=127), nullable=False),
+    sa.Column('size', sa.BigInteger(), nullable=False),
+    sa.Column('original_filename', sa.String(length=255), nullable=False),
+    sa.Column('uploaded_by', sa.UUID(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['uploaded_by'], ['employees.id'], ondelete='RESTRICT'),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('products',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('category_id', sa.UUID(), nullable=False),
@@ -87,7 +99,7 @@ def upgrade() -> None:
     sa.Column('oked', sa.String(length=5), nullable=True),
     sa.Column('latitude', sa.Numeric(precision=9, scale=6), nullable=True),
     sa.Column('longitude', sa.Numeric(precision=9, scale=6), nullable=True),
-    sa.Column('photo_url', sa.String(length=255), nullable=True),
+    sa.Column('photo_id', sa.UUID(), nullable=True),
     sa.Column('visit_mon', sa.Boolean(), nullable=False),
     sa.Column('visit_tue', sa.Boolean(), nullable=False),
     sa.Column('visit_wed', sa.Boolean(), nullable=False),
@@ -98,6 +110,7 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_by_employee_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_employee_id'], ['employees.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['photo_id'], ['media_objects.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('idx_retail_points_fri', 'retail_points', ['visit_fri'], unique=False)
@@ -107,6 +120,32 @@ def upgrade() -> None:
     op.create_index('idx_retail_points_thu', 'retail_points', ['visit_thu'], unique=False)
     op.create_index('idx_retail_points_tue', 'retail_points', ['visit_tue'], unique=False)
     op.create_index('idx_retail_points_wed', 'retail_points', ['visit_wed'], unique=False)
+    op.create_table('stock_transactions',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('warehouse_id', sa.UUID(), nullable=False),
+    sa.Column('product_id', sa.UUID(), nullable=False),
+    sa.Column('quantity_delta', sa.Integer(), nullable=False),
+    sa.Column('transaction_type', sa.Enum('RECEIPT', 'RESERVATION', 'CANCEL_RESERVATION', 'SALE', 'WRITEOFF', 'RETURN', 'ADJUSTMENT', name='stock_transaction_type_enum'), nullable=False),
+    sa.Column('reference_type', sa.String(length=50), nullable=False),
+    sa.Column('reference_id', sa.UUID(), nullable=False),
+    sa.Column('actor_type', sa.Enum('EMPLOYEE', 'CLIENT', 'SYSTEM', name='transaction_actor_type_enum'), nullable=False),
+    sa.Column('created_by_id', sa.UUID(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='RESTRICT'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_stock_tx_warehouse_product_created', 'stock_transactions', ['warehouse_id', 'product_id', 'created_at'], unique=False)
+    op.create_table('stocks',
+    sa.Column('warehouse_id', sa.UUID(), nullable=False),
+    sa.Column('product_id', sa.UUID(), nullable=False),
+    sa.Column('quantity', sa.Integer(), nullable=False),
+    sa.Column('reserved_quantity', sa.Integer(), nullable=False),
+    sa.CheckConstraint('quantity >= 0', name='ck_stock_quantity_positive'),
+    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('warehouse_id', 'product_id')
+    )
     op.create_table('retail_point_invite_codes',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('retail_point_id', sa.UUID(), nullable=False),
@@ -133,32 +172,6 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('stock_transactions',
-    sa.Column('id', sa.UUID(), nullable=False),
-    sa.Column('warehouse_id', sa.UUID(), nullable=False),
-    sa.Column('product_id', sa.UUID(), nullable=False),
-    sa.Column('quantity_delta', sa.Integer(), nullable=False),
-    sa.Column('transaction_type', sa.Enum('RECEIPT', 'RESERVATION', 'CANCEL_RESERVATION', 'SALE', 'WRITEOFF', 'RETURN', 'ADJUSTMENT', name='stock_transaction_type_enum'), nullable=False),
-    sa.Column('reference_type', sa.String(length=50), nullable=False),
-    sa.Column('reference_id', sa.UUID(), nullable=False),
-    sa.Column('actor_type', sa.Enum('EMPLOYEE', 'CLIENT', 'SYSTEM', name='transaction_actor_type_enum'), nullable=False),
-    sa.Column('created_by_id', sa.UUID(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='RESTRICT'),
-    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='RESTRICT'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('idx_stock_tx_warehouse_product_created', 'stock_transactions', ['warehouse_id', 'product_id', 'created_at'], unique=False)
-    op.create_table('stocks',
-    sa.Column('warehouse_id', sa.UUID(), nullable=False),
-    sa.Column('product_id', sa.UUID(), nullable=False),
-    sa.Column('quantity', sa.Integer(), nullable=False),
-    sa.Column('reserved_quantity', sa.Integer(), nullable=False),
-    sa.CheckConstraint('quantity >= 0', name='ck_stock_quantity_positive'),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('warehouse_id', 'product_id')
     )
     op.create_table('visits',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -216,12 +229,12 @@ def downgrade() -> None:
     op.drop_table('visit_photos')
     op.drop_table('orders')
     op.drop_table('visits')
-    op.drop_table('stocks')
-    op.drop_index('idx_stock_tx_warehouse_product_created', table_name='stock_transactions')
-    op.drop_table('stock_transactions')
     op.drop_table('retail_point_members')
     op.drop_index('uq_active_invite_per_retail_point', table_name='retail_point_invite_codes', postgresql_where=sa.text('is_active = TRUE'))
     op.drop_table('retail_point_invite_codes')
+    op.drop_table('stocks')
+    op.drop_index('idx_stock_tx_warehouse_product_created', table_name='stock_transactions')
+    op.drop_table('stock_transactions')
     op.drop_index('idx_retail_points_wed', table_name='retail_points')
     op.drop_index('idx_retail_points_tue', table_name='retail_points')
     op.drop_index('idx_retail_points_thu', table_name='retail_points')
@@ -231,6 +244,7 @@ def downgrade() -> None:
     op.drop_index('idx_retail_points_fri', table_name='retail_points')
     op.drop_table('retail_points')
     op.drop_table('products')
+    op.drop_table('media_objects')
     op.drop_table('warehouses')
     op.drop_index(op.f('ix_employees_phone'), table_name='employees')
     op.drop_table('employees')

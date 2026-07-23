@@ -22,7 +22,7 @@ def test_retail_point_default_values():
     assert rp.oked is None
     assert rp.latitude is None
     assert rp.longitude is None
-    assert rp.photo_url is None
+    assert rp.photo_id is None
     assert rp.visit_mon is False
     assert rp.visit_tue is False
     assert rp.visit_wed is False
@@ -37,6 +37,7 @@ def test_retail_point_default_values():
 def test_retail_point_custom_values():
     uid = uuid4()
     emp_id = uuid4()
+    photo_id = uuid4()
     rp = RetailPoint(
         name="Big Store",
         address="ul. Main 1",
@@ -53,7 +54,7 @@ def test_retail_point_custom_values():
         oked="12345",
         latitude=Decimal("41.311081"),
         longitude=Decimal("69.240562"),
-        photo_url="/photos/store.jpg",
+        photo_id=photo_id,
         visit_mon=True,
         visit_wed=True,
         visit_fri=True,
@@ -73,7 +74,7 @@ def test_retail_point_custom_values():
     assert rp.oked == "12345"
     assert rp.latitude == Decimal("41.311081")
     assert rp.longitude == Decimal("69.240562")
-    assert rp.photo_url == "/photos/store.jpg"
+    assert rp.photo_id == photo_id
     assert rp.visit_mon is True
     assert rp.visit_wed is True
     assert rp.visit_fri is True

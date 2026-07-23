@@ -16,7 +16,11 @@ class RetailPointsService:
         self._uow = uow
         self._invite_codes = invite_codes
 
-    async def create_retail_point(self, dto: CreateRetailPointRequest, agent_id: UUID) -> tuple[RetailPoint, str]:
+    async def create_retail_point(
+        self, 
+        dto: CreateRetailPointRequest, 
+        agent_id: UUID
+    ) -> tuple[RetailPoint, str]:
         point = RetailPoint(
             name=dto.name,
             address=dto.address,
@@ -32,7 +36,7 @@ class RetailPointsService:
             oked=dto.oked,
             latitude=dto.latitude,
             longitude=dto.longitude,
-            photo_url=dto.photo_url,
+            photo_id=dto.photo_id,
             visit_mon=dto.visit_mon,
             visit_tue=dto.visit_tue,
             visit_wed=dto.visit_wed,
@@ -83,8 +87,8 @@ class RetailPointsService:
             retail_point.latitude = dto.latitude
         if dto.longitude is not None:
             retail_point.longitude = dto.longitude
-        if dto.photo_url is not None:
-            retail_point.photo_url = dto.photo_url
+        if dto.photo_id is not None:
+            retail_point.photo_id = dto.photo_id
         if dto.visit_mon is not None:
             retail_point.visit_mon = dto.visit_mon
         if dto.visit_tue is not None:

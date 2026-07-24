@@ -17,6 +17,9 @@ from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointR
 from app.infrastructure.postgres.repos.stocks import PostgresStocksRepository
 from app.infrastructure.postgres.repos.stock_transactions import PostgresStockTransactionRepository
 from app.infrastructure.postgres.repos.warehouses import PostgresWarehousesRepository
+from app.infrastructure.postgres.repos.visits import PostgresVisitRepository
+from app.infrastructure.postgres.repos.visit_media import PostgresVisitMediaRepository
+from app.infrastructure.postgres.repos.visit_debts import PostgresVisitDebtRepository
 
 
 class PostgresUnitOfWork(IUnitOfWork):
@@ -40,6 +43,9 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.orders = PostgresOrderRepository(self._session)
         self.order_items = PostgresOrderItemRepository(self._session)
         self.media_objects = PostgresMediaObjectRepository(self._session)
+        self.visits = PostgresVisitRepository(self._session)
+        self.visit_media = PostgresVisitMediaRepository(self._session)
+        self.visit_debts = PostgresVisitDebtRepository(self._session)
 
         return self
     

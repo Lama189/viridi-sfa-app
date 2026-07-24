@@ -10,8 +10,8 @@ class Visit:
     employee_id: UUID
     retail_point_id: UUID
 
-    started_at: datetime
-    finished_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
 
     id: UUID = field(default_factory=uuid4)
     status: VisitStatus = VisitStatus.IN_PROGRESS

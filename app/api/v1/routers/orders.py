@@ -2,7 +2,6 @@ from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.extensions import UserNotFoundError, UserNotActiveError
 from app.api.v1.schemas.orders import (
     CreateOrderRequest,
     OrderResponse,
@@ -31,16 +30,6 @@ async def create_order(
 ):
     try:
         return await service.create(client.id, dto)
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Client not found",
-        )
-    except UserNotActiveError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Client account is inactive",
-        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

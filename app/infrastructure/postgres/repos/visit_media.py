@@ -18,6 +18,20 @@ class PostgresVisitMediaRepository(IVisitMediaRepository):
         self._session.add(model)
         await self._session.flush()
 
+    async def get(self, visit_id: UUID, media_id: UUID) -> VisitMedia | None:
+        result = await self._session.execute(
+            select(VisitMediaModel).where(
+                VisitMediaModel.visit_id == visit_id,
+                VisitMediaModel.media_id == media_id,
+            )
+        )
+
+        model = result.scalar_one_or_none()
+        if model is None:
+            return None
+
+        return self._to_domain(model)
+
     async def list_by_visit(self, visit_id: UUID) -> list[VisitMedia]:
         stmt = select(VisitMediaModel).where(
             VisitMediaModel.visit_id == visit_id
@@ -39,6 +53,11 @@ class PostgresVisitMediaRepository(IVisitMediaRepository):
             )
         )
         await self._session.flush()
+
+    async def exists_by(self, **kwargs) -> bool:
+        stmt = select(select(VisitMediaModel).filter_by(**kwargs).exists())
+        result = await self._session.execute(stmt)
+        return bool(result.scalar())
 
     def _to_domain(self, model: VisitMediaModel) -> VisitMedia:
         return VisitMedia(

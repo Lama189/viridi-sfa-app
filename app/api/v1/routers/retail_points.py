@@ -12,7 +12,7 @@ from app.api.v1.schemas.retail_points import (
 )
 from app.application.services.retail_points import RetailPointsService
 from app.api.dependencies import get_retail_points_service, allow_admin, allow_all_staff
-from app.core.extensions import RetailPointNotFound
+
 from app.domain.entities.employees import Employee
 
 
@@ -51,13 +51,7 @@ async def get_retail_point(
     retail_point_id: UUID,
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)]
 ):
-    try:
-        return await service.get_by_id(retail_point_id)
-    except RetailPointNotFound:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Retail point {retail_point_id} not found",
-        )
+    return await service.get_by_id(retail_point_id)
 
 
 @router.get(
@@ -69,13 +63,7 @@ async def get_retail_point_invite_code(
     retail_point_id: UUID,
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)]
 ):
-    try:
-        invite_code = await service.get_retail_point_invite_code(retail_point_id)
-    except RetailPointNotFound:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Retail point {retail_point_id} not found",
-        )
+    invite_code = await service.get_retail_point_invite_code(retail_point_id)
 
     return InviteCodeResponse(
         invite_code=invite_code
@@ -110,10 +98,4 @@ async def delete_retail_point(
     retail_point_id: UUID,
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
 ):
-    try:
-        await service.delete_retail_point(retail_point_id)
-    except RetailPointNotFound:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Retail point {retail_point_id} not found",
-        )
+    await service.delete_retail_point(retail_point_id)

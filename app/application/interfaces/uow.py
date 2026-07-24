@@ -10,6 +10,9 @@ from app.application.interfaces.repos.retail_point_members import IRetailPointMe
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.application.interfaces.repos.stocks import IStockRepository
 from app.application.interfaces.repos.stocks_transactions import IStockTransactionRepository
+from app.application.interfaces.repos.visit_debts import IVisitDebtRepository
+from app.application.interfaces.repos.visit_media import IVisitMediaRepository
+from app.application.interfaces.repos.visits import IVisitRepository
 from app.application.interfaces.repos.warehouses import IWarehouseRepository
 
 
@@ -27,6 +30,9 @@ class IUnitOfWork:
     orders: IOrderRepository
     order_items: IOrderItemRepository
     media_objects: IMediaObjectRepository
+    visits: IVisitRepository
+    visit_media: IVisitMediaRepository
+    visit_debts: IVisitDebtRepository
 
     async def commit(self) -> None: ...
     async def rollback(self) -> None: ...

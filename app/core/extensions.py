@@ -1,33 +1,74 @@
-
-class UserNotFoundError(Exception):
+class DomainError(Exception):
     pass
 
-class UserAlreadyExistsError(Exception):
+
+class UserNotFoundError(DomainError):
     pass
 
-class InvalidPasswordError(Exception):
+
+class UserAlreadyExistsError(DomainError):
     pass
 
-class UserNotActiveError(Exception):
+
+class InvalidPasswordError(DomainError):
     pass
 
-class InvalidInviteCodeError(Exception):
+
+class UserNotActiveError(DomainError):
     pass
 
-class MembershipNotFoundError(Exception):
+
+class InvalidInviteCodeError(DomainError):
     pass
 
-class MembershipAlreadyExistsError(Exception):
+
+class MembershipNotFoundError(DomainError):
     pass
 
-class MediaNotFoundError(Exception):
+
+class MembershipAlreadyExistsError(DomainError):
     pass
 
-class RetailPointNotFound(Exception):
+
+class MediaNotFoundError(DomainError):
     pass
 
-class RetailPointImageNotFoundError(Exception):
+
+class RetailPointNotFoundError(DomainError):
     pass
 
-class RetailPointImageAlreadyExistsError(Exception):
+
+class RetailPointInactiveError(DomainError):
+    pass
+
+
+class RetailPointImageNotFoundError(DomainError):
+    pass
+
+
+class RetailPointImageAlreadyExistsError(DomainError):
+    pass
+
+
+class VisitNotFoundError(DomainError):
+    pass
+
+
+class VisitNotActiveError(DomainError):
+    pass
+
+
+class VisitDebtNotFoundError(DomainError):
+    pass
+
+
+class VisitMediaNotFoundError(DomainError):
+    pass
+
+
+class VisitMediaAlreadyAttachedError(DomainError):
+    pass
+
+
+class EmployeeHasActiveVisitError(DomainError):
     pass

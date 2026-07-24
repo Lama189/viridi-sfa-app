@@ -6,6 +6,8 @@ from app.core.extensions import (
     InvalidInviteCodeError,
     UserNotActiveError,
     UserNotFoundError,
+    RetailPointNotFoundError,
+    RetailPointInactiveError,
 )
 from app.core.security import SecurityUtils
 from app.domain.entities.invite_codes import ClientInviteCode
@@ -23,10 +25,10 @@ class ClientInviteCodesService(IClientInviteCodesService):
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
 
         if retail_point is None:
-            raise ValueError(f"Retail Point with ID {retail_point_id} not found")
+            raise RetailPointNotFoundError()
 
         if not retail_point.is_active:
-            raise ValueError("Retail Point is inactive")
+            raise RetailPointInactiveError()
 
     async def _validate_employee(
         self,

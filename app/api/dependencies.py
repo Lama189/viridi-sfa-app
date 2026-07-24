@@ -29,6 +29,11 @@ from app.application.services.warehouses import WarehousesService
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.object_storage import IObjectStorage
 from app.application.services.media import MediaService
+from app.application.services.visit_media import VisitMediaService
+from app.application.services.visit_debts import VisitDebtService
+from app.application.services.visits import VisitService
+from app.application.interfaces.services.visit_media import IVisitMediaService
+from app.application.interfaces.services.visit_debts import IVisitDebtService
 
 from app.infrastructure.context import client_id_ctx_var, employee_id_ctx_var
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
@@ -143,6 +148,22 @@ async def get_media_service(
     storage: Annotated[IObjectStorage, Depends(get_minio_storage)]
 ) -> MediaService:
     return MediaService(uow, storage)
+
+
+async def get_visit_media_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> IVisitMediaService:
+    return VisitMediaService(uow)
+
+
+async def get_visit_debts_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> IVisitDebtService:
+    return VisitDebtService(uow)
+
+
+async def get_visits_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    visit_media: Annotated[IVisitMediaService, Depends(get_visit_media_service)],
+    visit_debts: Annotated[IVisitDebtService, Depends(get_visit_debts_service)],
+) -> VisitService:
+    return VisitService(uow, visit_media, visit_debts)
 
 # ======================================================================
 # 4. AUTHENTICATION & CURRENT USER DEPENDENCIES

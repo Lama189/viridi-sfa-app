@@ -11,6 +11,10 @@ class IVisitMediaRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get(self, visit_id: UUID, media_id: UUID) -> VisitMedia | None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def list_by_visit(self, visit_id: UUID) -> list[VisitMedia]:
         raise NotImplementedError
 
@@ -20,4 +24,8 @@ class IVisitMediaRepository(ABC):
 
     @abstractmethod
     async def delete_all_for_visit(self, visit_id: UUID) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def exists_by(self, **kwargs) -> bool:
         raise NotImplementedError

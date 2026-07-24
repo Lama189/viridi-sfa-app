@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from app.infrastructure.minio.client import get_minio_client
 from app.infrastructure.minio.bucket_initializer import ensure_buckets
 
+from app.api.exceptions_handlers import register_exception_handlers
+
 from app.api.v1.routers.categories import router as categories_router
 from app.api.v1.routers.clients import router as clients_router
 from app.api.v1.routers.employees import router as employees_router
@@ -12,6 +14,7 @@ from app.api.v1.routers.warehouses import router as inventory_router
 from app.api.v1.routers.products import router as products_router
 from app.api.v1.routers.retail_points import router as retail_points_router
 from app.api.v1.routers.media import router as media_router
+from app.api.v1.routers.visits import router as visits_router
 
 
 @asynccontextmanager
@@ -28,6 +31,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
+register_exception_handlers(app)
 
 @app.get("/")
 async def root():
@@ -50,3 +55,4 @@ app.include_router(inventory_router)
 app.include_router(products_router)
 app.include_router(retail_points_router)
 app.include_router(media_router)
+app.include_router(visits_router)

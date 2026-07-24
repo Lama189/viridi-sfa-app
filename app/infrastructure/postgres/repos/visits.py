@@ -30,7 +30,7 @@ class PostgresVisitRepository(IVisitRepository):
 
         return self._to_domain(model)
 
-    async def list_by_employee(self, employee_id: UUID, active: bool = True) -> list[Visit]:
+    async def list_by_employee(self, employee_id: UUID, active: bool = True, limit: int = 1) -> list[Visit]:
         stmt = select(VisitModel).where(VisitModel.employee_id == employee_id)
 
         if active:
@@ -40,6 +40,7 @@ class PostgresVisitRepository(IVisitRepository):
                 VisitModel.finished_at.is_(None),
             )
 
+        stmt = stmt.limit(limit)
         result = await self._session.execute(stmt)
         return [self._to_domain(m) for m in result.scalars().all()]
 
@@ -47,6 +48,24 @@ class PostgresVisitRepository(IVisitRepository):
         stmt = select(VisitModel).where(
             VisitModel.retail_point_id == retail_point_id
         )
+
+        result = await self._session.execute(stmt)
+        return [self._to_domain(m) for m in result.scalars().all()]
+
+    async def list(
+        self,
+        employee_id: UUID | None = None,
+        retail_point_id: UUID | None = None,
+        status: VisitStatus | None = None,
+    ) -> list[Visit]:
+        stmt = select(VisitModel)
+
+        if employee_id is not None:
+            stmt = stmt.where(VisitModel.employee_id == employee_id)
+        if retail_point_id is not None:
+            stmt = stmt.where(VisitModel.retail_point_id == retail_point_id)
+        if status is not None:
+            stmt = stmt.where(VisitModel.status == status)
 
         result = await self._session.execute(stmt)
         return [self._to_domain(m) for m in result.scalars().all()]

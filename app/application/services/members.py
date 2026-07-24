@@ -5,14 +5,17 @@ from app.application.interfaces.services.invite_codes import IClientInviteCodesS
 from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
 from app.domain.entities.retail_point_members import RetailPointMember
 from app.core.extensions import (
-    UserNotFoundError, 
-    UserNotActiveError, 
-    MembershipAlreadyExistsError, 
-    MembershipNotFoundError
+    UserNotFoundError,
+    UserNotActiveError,
+    MembershipAlreadyExistsError,
+    MembershipNotFoundError,
+    RetailPointNotFoundError,
+    RetailPointInactiveError,
 )
 
 
 class RetailPointMembersService(IRetailPointMembersService):
+    
     def __init__(
         self, 
         uow: IUnitOfWork,
@@ -27,10 +30,10 @@ class RetailPointMembersService(IRetailPointMembersService):
     ) -> None:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
-            raise ValueError(f"Retail Point with ID {retail_point_id} not found")
-        
-        if retail_point and not retail_point.is_active:
-            raise ValueError("Retail Point is inactive")
+            raise RetailPointNotFoundError()
+
+        if not retail_point.is_active:
+            raise RetailPointInactiveError()
         
     async def _validate_client(
         self,

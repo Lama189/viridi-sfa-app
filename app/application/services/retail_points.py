@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.core.extensions import RetailPointNotFound, RetailPointImageNotFoundError, RetailPointImageAlreadyExistsError
+from app.core.extensions import RetailPointNotFoundErrorError, RetailPointImageNotFoundError, RetailPointImageAlreadyExistsError
 from app.domain.entities.retail_points import RetailPoint
 
 from app.application.interfaces.uow import IUnitOfWork
@@ -114,7 +114,7 @@ class RetailPointsService:
     async def delete_retail_point(self, retail_point_id: UUID) -> None:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if not retail_point:
-            raise RetailPointNotFound()
+            raise RetailPointNotFoundError()
 
         await self._uow.retail_points.delete(retail_point)
         await self._uow.commit()
@@ -122,21 +122,21 @@ class RetailPointsService:
     async def get_by_id(self, retail_point_id: UUID) -> RetailPoint:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if not retail_point:
-            raise RetailPointNotFound()
+            raise RetailPointNotFoundError()
         
         return retail_point
 
     async def get_retail_point_invite_code(self, retail_point_id: UUID) -> str | None:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
-            raise RetailPointNotFound()
+            raise RetailPointNotFoundError()
 
         return await self._invite_codes.get_raw_code(retail_point_id)
 
     async def detach_media(self, retail_point_id: UUID) -> UUID:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
-            raise RetailPointNotFound()
+            raise RetailPointNotFoundError()
 
         if retail_point.photo_id is None:
             raise RetailPointImageNotFoundError()
@@ -153,7 +153,7 @@ class RetailPointsService:
         exists = await self._uow.media_objects.exists_by(id=new_media_id)
 
         if retail_point is None:
-            raise RetailPointNotFound()
+            raise RetailPointNotFoundError()
 
         if retail_point.photo_id is None or not exists:
             raise RetailPointImageNotFoundError()
@@ -169,7 +169,7 @@ class RetailPointsService:
     async def setup_media(self, retail_point_id: UUID, media_id: UUID) -> UUID:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
-            raise RetailPointNotFound()
+            raise RetailPointNotFoundError()
 
         if retail_point.photo_id is not None:
             raise RetailPointImageAlreadyExistsError()

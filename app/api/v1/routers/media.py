@@ -8,7 +8,6 @@ from starlette.responses import StreamingResponse
 from app.api.dependencies import get_media_service, allow_all_staff
 from app.application.services.media import MediaService
 from app.api.v1.schemas.media import MediaUploadResponse
-from app.core.extensions import MediaNotFoundError
 from app.domain.entities.employees import Employee
 from app.domain.enums import MediaBucket
 
@@ -68,17 +67,11 @@ async def get_media_content(
     media_id: UUID,
     service: Annotated[MediaService, Depends(get_media_service)],
 ):
-    try:
-        data, content_type = await service.get_content(media_id)
-        return StreamingResponse(
-            iter([data]),
-            media_type=content_type,
-        )
-    except MediaNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Media not found",
-        )
+    data, content_type = await service.get_content(media_id)
+    return StreamingResponse(
+        iter([data]),
+        media_type=content_type,
+    )
 
 
 @router.get(
@@ -89,14 +82,8 @@ async def get_media_thumbnail(
     media_id: UUID,
     service: Annotated[MediaService, Depends(get_media_service)],
 ):
-    try:
-        data, content_type = await service.get_thumbnail(media_id)
-        return StreamingResponse(
-            iter([data]),
-            media_type=content_type,
-        )
-    except MediaNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Media not found",
-        )
+    data, content_type = await service.get_thumbnail(media_id)
+    return StreamingResponse(
+        iter([data]),
+        media_type=content_type,
+    )

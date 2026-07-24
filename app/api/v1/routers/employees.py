@@ -2,7 +2,6 @@ from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.extensions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
 from app.application.services.employees import EmployeesService, EmployeesAuthService
 from app.api.dependencies import get_employees_service, get_employees_auth_service, allow_admin
 from app.api.v1.schemas.employees import (
@@ -41,23 +40,7 @@ async def login(
     dto: EmployeeLoginDTO,
     service: Annotated[EmployeesAuthService, Depends(get_employees_auth_service)],
 ):
-    try:
-        return await service.login(dto)
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee with this phone number not found."
-        )
-    except InvalidPasswordError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid password."
-        )
-    except UserNotActiveError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your account is inactive. Please contact your administrator."
-        )
+    return await service.login(dto)
 
 
 @router.patch(

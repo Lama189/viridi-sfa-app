@@ -1,16 +1,21 @@
-from dataclasses import dataclass
-from datetime import datetime
+from uuid import UUID, uuid4
 from decimal import Decimal
-from uuid import UUID
+from datetime import datetime
+from dataclasses import dataclass, field
 
 
 @dataclass(slots=True)
 class VisitDebt:
-    id: UUID | None
     visit_id: UUID
     amount: Decimal
     comment: str | None
-    created_at: datetime | None = None
+
+    id: UUID = field(default_factory=uuid4) 
+    created_at: datetime = field(default_factory=datetime.now)
+
+    def __post_init__(self) -> None:
+        if self.amount < 0:
+            raise ValueError("Amount cannot be negative")
 
     def change_amount(self, amount: Decimal) -> None:
         if amount <= 0:

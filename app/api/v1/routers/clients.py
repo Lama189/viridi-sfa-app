@@ -17,12 +17,7 @@ from app.application.services.clients import (
     ClientsAuthService,
     ClientsService,
 )
-from app.core.extensions import (
-    InvalidInviteCodeError,
-    UserAlreadyExistsError,
-    UserNotActiveError,
-    UserNotFoundError,
-)
+
 
 
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
@@ -37,23 +32,7 @@ async def register(
     dto: ClientRegisterRequest,
     service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)]
 ):
-    try:
-        return await service.register(dto)
-    except UserAlreadyExistsError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Client already exists",
-        )
-    except InvalidInviteCodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid invite code",
-        )
-    except UserNotActiveError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Client is inactive",
-        )
+    return await service.register(dto)
 
 
 @router.get(
@@ -102,11 +81,6 @@ async def update_client(
 ):
     try:
         return await service.update_client(client_id, dto)
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Client not found",
-        )
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -123,10 +97,4 @@ async def delete_client(
     client_id: str,
     service: Annotated[ClientsService, Depends(get_clients_service)]
 ):
-    try:
-        await service.delete_client(client_id)
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Client not found",
-        )
+    await service.delete_client(client_id)

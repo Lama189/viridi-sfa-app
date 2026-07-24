@@ -1,13 +1,8 @@
-from decimal import Decimal
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import (
-    Enum,
-    ForeignKey,
-    Numeric,
-    Text,
-)
+from sqlalchemy import DateTime, Enum, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,9 +11,9 @@ from app.infrastructure.postgres.models.enums import VisitStatus
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee
-    from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.retail_points import RetailPoint
-    from app.infrastructure.postgres.models.visit_photos import VisitPhoto
+    from app.infrastructure.postgres.models.visit_media import VisitMedia
+    from app.infrastructure.postgres.models.visit_debts import VisitDebt
 
 
 class Visit(BaseModel):
@@ -30,7 +25,7 @@ class Visit(BaseModel):
         default=uuid4,
     )
 
-    agent_id: Mapped[UUID] = mapped_column(
+    employee_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="RESTRICT"),
         nullable=False,
@@ -42,23 +37,21 @@ class Visit(BaseModel):
         nullable=False,
     )
 
-    actual_latitude: Mapped[Decimal | None] = mapped_column(
-        Numeric(9, 6)
-    )
-
-    actual_longitude: Mapped[Decimal | None] = mapped_column(
-        Numeric(9, 6)
-    )
-
     status: Mapped[VisitStatus] = mapped_column(
         Enum(VisitStatus, name="visit_status"),
-        default=VisitStatus.COMPLETED,
+        default=VisitStatus.IN_PROGRESS,
         nullable=False,
     )
 
-    comment: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+    )
 
-    agent: Mapped["Employee"] = relationship(
+    finished_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+    )
+
+    employee: Mapped["Employee"] = relationship(
         back_populates="visits",
     )
 
@@ -66,11 +59,12 @@ class Visit(BaseModel):
         back_populates="visits",
     )
 
-    photos: Mapped[list["VisitPhoto"]] = relationship(
+    media: Mapped[list["VisitMedia"]] = relationship(
         back_populates="visit",
         cascade="all, delete-orphan",
     )
 
-    orders: Mapped[list["Order"]] = relationship(
+    debts: Mapped[list["VisitDebt"]] = relationship(
         back_populates="visit",
+        cascade="all, delete-orphan",
     )

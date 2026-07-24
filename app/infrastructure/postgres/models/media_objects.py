@@ -9,9 +9,12 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
+
+if TYPE_CHECKING:
+    from app.infrastructure.postgres.models.visit_media import VisitMedia
 
 if TYPE_CHECKING:
     pass
@@ -67,3 +70,5 @@ class MediaObject(BaseModel):
         server_default=func.now(),
         nullable=False,
     )
+
+    visits: Mapped[list["VisitMedia"]] = relationship()

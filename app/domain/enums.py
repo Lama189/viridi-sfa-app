@@ -18,11 +18,6 @@ class OrderStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
-class VisitStatus(str, Enum):
-    COMPLETED = "completed"
-    SKIPPED = "skipped"
-
-
 class StockTransactionType(str, Enum):
     RECEIPT = "receipt"
     RESERVATION = "reservation"
@@ -46,6 +41,12 @@ class StockReferenceType(str, Enum):
     INVENTORY = "inventory"
     RETURN = "return"
     WRITEOFF = "writeoff"
+
+
+class VisitStatus(str, Enum):
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
 
 
 class MediaBucket(str, Enum):

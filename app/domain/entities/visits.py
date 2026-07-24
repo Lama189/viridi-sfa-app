@@ -1,32 +1,63 @@
 from dataclasses import dataclass, field
-from datetime import datetime
-from decimal import Decimal
+from datetime import datetime, UTC
 from uuid import UUID, uuid4
 
-
-@dataclass(slots=True)
-class VisitPhoto:
-    visit_id: UUID
-    photo_url: str
-    id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(default_factory=datetime.now)
+from app.domain.enums import VisitStatus
 
 
 @dataclass(slots=True)
 class Visit:
-    agent_id: UUID
+    employee_id: UUID
     retail_point_id: UUID
+
+    started_at: datetime
+    finished_at: datetime
+
     id: UUID = field(default_factory=uuid4)
-    check_in_time: datetime = field(default_factory=datetime.now)
-    check_out_time: datetime | None = None
-    actual_latitude: Decimal | None = None
-    actual_longitude: Decimal | None = None
-    status: str = "completed"
-    comment: str | None = None
-    created_at: datetime = field(default_factory=datetime.now)
+    status: VisitStatus = VisitStatus.IN_PROGRESS
 
+    def start(self) -> None:
+        if self.started_at is not None:
+            raise ValueError("Visit has already been started.")
 
-@dataclass(slots=True)
-class VisitWithPhotos:
-    visit: Visit
-    photos: list[VisitPhoto] = field(default_factory=list)
+        if self.status != VisitStatus.IN_PROGRESS:
+            raise ValueError("Visit cannot be started")
+
+        self.started_at = datetime.now(UTC)
+
+    def finish(self) -> None:
+        if self.started_at is None:
+            raise ValueError("Visit has not been started.")
+
+        if self.finished_at is not None:
+            raise ValueError("Visit has already been finished.")
+
+        if self.status != VisitStatus.IN_PROGRESS:
+            raise ValueError("Visit cannot be finished.")
+
+        self.status = VisitStatus.COMPLETED
+        self.finished_at = datetime.now(UTC)
+
+    def cancel(self) -> None:
+        if self.status == VisitStatus.COMPLETED:
+            raise ValueError("Completed visit cannot be cancelled.")
+
+        if self.status == VisitStatus.CANCELLED:
+            raise ValueError("Visit has already been cancelled.")
+
+        self.status = VisitStatus.CANCELLED
+        self.finished_at = datetime.now(UTC)
+
+    @property
+    def is_active(self) -> bool:
+        return (
+            self.status == VisitStatus.IN_PROGRESS
+            and self.started_at is not None
+            and self.finished_at is None
+        )
+
+    def can_attach_media(self) -> bool:
+        return self.is_active
+
+    def can_add_debt(self) -> bool:
+        return self.is_active

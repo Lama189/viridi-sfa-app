@@ -19,6 +19,7 @@ class OrderStatus(str, Enum):
 
 
 class VisitStatus(str, Enum):
+    IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     SKIPPED = "skipped"
 
@@ -34,6 +35,6 @@ class StockTransactionType(str, Enum):
 
 
 class TransactionActorType(str, Enum):
-    EMPLOYEE = "employee"  
-    CLIENT = "client"      
-    SYSTEM = "system"     
+    EMPLOYEE = "employee"
+    CLIENT = "client"
+    SYSTEM = "system"

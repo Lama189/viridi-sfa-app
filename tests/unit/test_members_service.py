@@ -9,6 +9,8 @@ from app.core.extensions import (
     UserNotActiveError,
     MembershipAlreadyExistsError,
     MembershipNotFoundError,
+    RetailPointNotFoundError,
+    RetailPointInactiveError,
 )
 from app.domain.entities.clients import Client
 from app.domain.entities.retail_point_members import RetailPointMember
@@ -79,7 +81,7 @@ async def test_join_retail_point_not_found(service, mock_uow):
     )
     mock_uow.retail_points.get_by_id.return_value = None
 
-    with pytest.raises(ValueError, match="not found"):
+    with pytest.raises(RetailPointNotFoundError):
         await service.join(uuid4(), client_id)
 
 
@@ -94,7 +96,7 @@ async def test_join_retail_point_inactive(service, mock_uow):
         name="R", address="A", id=rp_id, is_active=False,
     )
 
-    with pytest.raises(ValueError, match="inactive"):
+    with pytest.raises(RetailPointInactiveError):
         await service.join(rp_id, client_id)
 
 
@@ -205,7 +207,7 @@ async def test_list_members_success(service, mock_uow):
 async def test_list_members_retail_point_not_found(service, mock_uow):
     mock_uow.retail_points.get_by_id.return_value = None
 
-    with pytest.raises(ValueError, match="not found"):
+    with pytest.raises(RetailPointNotFoundError):
         await service.list_members(uuid4())
 
 
@@ -216,7 +218,7 @@ async def test_list_members_retail_point_inactive(service, mock_uow):
         name="R", address="A", id=rp_id, is_active=False,
     )
 
-    with pytest.raises(ValueError, match="inactive"):
+    with pytest.raises(RetailPointInactiveError):
         await service.list_members(rp_id)
 
 

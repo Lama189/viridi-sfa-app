@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.invite_codes import ClientInviteCodesService
-from app.core.extensions import InvalidInviteCodeError, UserNotFoundError, UserNotActiveError
+from app.core.extensions import InvalidInviteCodeError, UserNotFoundError, UserNotActiveError, RetailPointNotFoundError, RetailPointInactiveError
 from app.domain.entities.employees import Employee
 from app.domain.entities.invite_codes import ClientInviteCode
 from app.domain.entities.retail_points import RetailPoint
@@ -45,7 +45,7 @@ async def test_create_success(mock_gen, service, mock_uow):
 async def test_create_retail_point_not_found(service, mock_uow):
     mock_uow.retail_points.get_by_id.return_value = None
 
-    with pytest.raises(ValueError, match="not found"):
+    with pytest.raises(RetailPointNotFoundError):
         await service.create(uuid4(), uuid4())
 
 
@@ -56,7 +56,7 @@ async def test_create_retail_point_inactive(service, mock_uow):
         name="X", address="A", id=rp_id, is_active=False,
     )
 
-    with pytest.raises(ValueError, match="inactive"):
+    with pytest.raises(RetailPointInactiveError):
         await service.create(uuid4(), rp_id)
 
 
@@ -108,7 +108,7 @@ async def test_regenerate_retail_point_not_found(service, mock_uow):
     mock_uow.employees.get_by_id.return_value = _make_employee(is_active=True)
     mock_uow.retail_points.get_by_id.return_value = None
 
-    with pytest.raises(ValueError, match="not found"):
+    with pytest.raises(RetailPointNotFoundError):
         await service.regenerate(emp_id, uuid4())
 
 

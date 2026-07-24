@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.api.dependencies import (
     get_visits_service,
     get_visit_media_service,
-    get_visit_debts_service,
     allow_all_staff,
 )
 from app.api.v1.schemas.visits import (
@@ -19,7 +18,6 @@ from app.api.v1.schemas.visits import (
 )
 from app.application.services.visits import VisitService
 from app.application.services.visit_media import VisitMediaService
-from app.application.services.visit_debts import VisitDebtService
 from app.domain.enums import VisitStatus
 
 

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.core.extensions import RetailPointNotFoundErrorError, RetailPointImageNotFoundError, RetailPointImageAlreadyExistsError
+from app.core.extensions import RetailPointNotFoundError, RetailPointImageNotFoundError, RetailPointImageAlreadyExistsError
 from app.domain.entities.retail_points import RetailPoint
 
 from app.application.interfaces.uow import IUnitOfWork

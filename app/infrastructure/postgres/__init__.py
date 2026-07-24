@@ -5,7 +5,8 @@ from app.infrastructure.postgres.models.stocks import Stock
 from app.infrastructure.postgres.models.stock_transactions import StockTransaction
 from app.infrastructure.postgres.models.retail_points import RetailPoint
 from app.infrastructure.postgres.models.visits import Visit
-from app.infrastructure.postgres.models.visit_photos import VisitPhoto
+from app.infrastructure.postgres.models.visit_media import VisitMedia
+from app.infrastructure.postgres.models.visit_debts import VisitDebt
 from app.infrastructure.postgres.models.orders import Order
 from app.infrastructure.postgres.models.order_items import OrderItem
 from app.infrastructure.postgres.models.clients import Client
@@ -23,7 +24,8 @@ __all__ = [
     "StockTransaction",
     "RetailPoint",
     "Visit",
-    "VisitPhoto",
+    "VisitMedia",
+    "VisitDebt",
     "Order",
     "OrderItem",
     "Client",

@@ -19,8 +19,9 @@ def test_order_status_values():
 
 
 def test_visit_status_values():
+    assert VisitStatus.IN_PROGRESS == "in_progress"
     assert VisitStatus.COMPLETED == "completed"
-    assert VisitStatus.SKIPPED == "skipped"
+    assert VisitStatus.CANCELLED == "cancelled"
 
 
 def test_employee_role_is_str_enum():

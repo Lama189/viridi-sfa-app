@@ -179,7 +179,7 @@ class VisitService:
         return debt
 
     async def delete_debt(self, visit_debt_id: UUID) -> None:
-        debt = await self._visit_debts_service.get_by_id(visit_debt_id)
+        await self._visit_debts_service.get_by_id(visit_debt_id)
         await self._visit_debts_service.delete(visit_debt_id)
 
         await self._uow.commit()

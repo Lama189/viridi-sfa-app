@@ -1,10 +1,14 @@
 from typing import Annotated
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException
 from starlette import status
+from starlette.responses import StreamingResponse
 
 from app.api.dependencies import get_media_service, allow_all_staff
 from app.application.services.media import MediaService
 from app.api.v1.schemas.media import MediaUploadResponse
+from app.core.extensions import MediaNotFoundError
 from app.domain.entities.employees import Employee
 from app.domain.enums import MediaBucket
 
@@ -43,8 +47,8 @@ async def upload_media(
 
         return MediaUploadResponse(
             id=media.id,
-            bucket=media.bucket,
-            object_name=media.object_name,
+            original_object_name=media.original_object_name,
+            thumbnail_object_name=media.thumbnail_object_name,
             content_type=media.content_type,
             size=media.size,
         )
@@ -53,4 +57,46 @@ async def upload_media(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
+        )
+
+
+@router.get(
+    path="/{media_id}/content",
+    dependencies=[Depends(allow_all_staff)],
+)
+async def get_media_content(
+    media_id: UUID,
+    service: Annotated[MediaService, Depends(get_media_service)],
+):
+    try:
+        data, content_type = await service.get_content(media_id)
+        return StreamingResponse(
+            iter([data]),
+            media_type=content_type,
+        )
+    except MediaNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Media not found",
+        )
+
+
+@router.get(
+    path="/{media_id}/thumbnail",
+    dependencies=[Depends(allow_all_staff)],
+)
+async def get_media_thumbnail(
+    media_id: UUID,
+    service: Annotated[MediaService, Depends(get_media_service)],
+):
+    try:
+        data, content_type = await service.get_thumbnail(media_id)
+        return StreamingResponse(
+            iter([data]),
+            media_type=content_type,
+        )
+    except MediaNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Media not found",
         )

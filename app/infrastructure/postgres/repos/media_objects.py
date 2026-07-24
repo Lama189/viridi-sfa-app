@@ -29,13 +29,19 @@ class PostgresMediaObjectRepository(IMediaObjectRepository):
 
         return self._to_domain(model)
 
+    async def exists_by(self, **kwargs) -> bool:
+        stmt = select(select(MediaObjectModel).filter_by(**kwargs).exists())
+        result = await self._session.execute(stmt)
+        return bool(result.scalar())
+
     async def update(self, media: MediaFile) -> None:
         await self._session.execute(
             update(MediaObjectModel)
             .where(MediaObjectModel.id == media.id)
             .values(
                 bucket=media.bucket,
-                object_name=media.object_name,
+                original_object_name=media.original_object_name,
+                thumbnail_object_name=media.thumbnail_object_name,
                 content_type=media.content_type,
                 size=media.size,
                 original_filename=media.original_filename,
@@ -54,7 +60,8 @@ class PostgresMediaObjectRepository(IMediaObjectRepository):
         return MediaFile(
             id=model.id,
             bucket=model.bucket,
-            object_name=model.object_name,
+            original_object_name=model.original_object_name,
+            thumbnail_object_name=model.thumbnail_object_name,
             content_type=model.content_type,
             size=model.size,
             original_filename=model.original_filename,
@@ -65,7 +72,8 @@ class PostgresMediaObjectRepository(IMediaObjectRepository):
         return MediaObjectModel(
             id=media.id,
             bucket=media.bucket,
-            object_name=media.object_name,
+            original_object_name=media.original_object_name,
+            thumbnail_object_name=media.thumbnail_object_name,
             content_type=media.content_type,
             size=media.size,
             original_filename=media.original_filename,

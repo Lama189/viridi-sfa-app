@@ -19,3 +19,15 @@ class MembershipNotFoundError(Exception):
 
 class MembershipAlreadyExistsError(Exception):
     pass
+
+class MediaNotFoundError(Exception):
+    pass
+
+class RetailPointNotFound(Exception):
+    pass
+
+class RetailPointImageNotFoundError(Exception):
+    pass
+
+class RetailPointImageAlreadyExistsError(Exception):
+    pass

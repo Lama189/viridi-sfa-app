@@ -15,6 +15,10 @@ class IMediaObjectRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def exists_by(self, **kwargs) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     async def update(self, media: MediaFile) -> None:
         raise NotImplementedError
 

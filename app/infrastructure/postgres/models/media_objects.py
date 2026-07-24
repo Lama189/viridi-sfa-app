@@ -31,9 +31,14 @@ class MediaObject(BaseModel):
         nullable=False,
     )
 
-    object_name: Mapped[str] = mapped_column(
+    original_object_name: Mapped[str] = mapped_column(
         String(512),
         nullable=False,
+    )
+
+    thumbnail_object_name: Mapped[str | None] = mapped_column(
+        String(512),
+        nullable=True,
     )
 
     content_type: Mapped[str] = mapped_column(

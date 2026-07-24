@@ -4,9 +4,8 @@ from pydantic import BaseModel
 
 class MediaUploadResponse(BaseModel):
     id: UUID
-    bucket: str
-    object_name: str
-    url: str | None = None
+    original_object_name: str
+    thumbnail_object_name: str
     content_type: str
     size: int
 

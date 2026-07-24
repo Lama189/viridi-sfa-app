@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 0d49eb0fb881
+Revision ID: df38e19f5e88
 Revises: 
-Create Date: 2026-07-23 06:26:52.792165
+Create Date: 2026-07-23 07:46:15.259282
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '0d49eb0fb881'
+revision: str = 'df38e19f5e88'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -63,7 +63,8 @@ def upgrade() -> None:
     op.create_table('media_objects',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('bucket', sa.String(length=255), nullable=False),
-    sa.Column('object_name', sa.String(length=512), nullable=False),
+    sa.Column('original_object_name', sa.String(length=512), nullable=False),
+    sa.Column('thumbnail_object_name', sa.String(length=512), nullable=True),
     sa.Column('content_type', sa.String(length=127), nullable=False),
     sa.Column('size', sa.BigInteger(), nullable=False),
     sa.Column('original_filename', sa.String(length=255), nullable=False),

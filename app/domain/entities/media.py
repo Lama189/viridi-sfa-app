@@ -6,13 +6,14 @@ from uuid import UUID, uuid4
 @dataclass(slots=True)
 class MediaFile:
     bucket: str
-    object_name: str
+    original_object_name: str
     content_type: str
     size: int
     uploaded_by: UUID
 
     id: UUID = field(default_factory=uuid4)
 
+    thumbnail_object_name: str | None = None
     original_filename: str | None = None
 
     created_at: datetime = field(

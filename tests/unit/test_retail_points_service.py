@@ -6,6 +6,7 @@ import pytest
 
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
 from app.application.services.retail_points import RetailPointsService
+from app.core.extensions import RetailPointNotFound
 from app.domain.entities.retail_points import RetailPoint
 from app.domain.enums import ClientType
 
@@ -99,8 +100,8 @@ async def test_get_by_id_found(service, mock_uow):
 async def test_get_by_id_not_found(service, mock_uow):
     mock_uow.retail_points.get_by_id.return_value = None
 
-    result = await service.get_by_id(uuid4())
-    assert result is None
+    with pytest.raises(RetailPointNotFound):
+        await service.get_by_id(uuid4())
 
 
 # --- update_retail_point ---
@@ -186,7 +187,7 @@ async def test_delete_retail_point_success(service, mock_uow):
 async def test_delete_retail_point_not_found(service, mock_uow):
     mock_uow.retail_points.get_by_id.return_value = None
 
-    with pytest.raises(ValueError, match="not found"):
+    with pytest.raises(RetailPointNotFound):
         await service.delete_retail_point(uuid4())
 
     mock_uow.retail_points.delete.assert_not_awaited()

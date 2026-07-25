@@ -6,6 +6,7 @@ from app.application.interfaces.repos.media_objects import IMediaObjectRepositor
 from app.application.interfaces.repos.order_items import IOrderItemRepository
 from app.application.interfaces.repos.orders import IOrderRepository
 from app.application.interfaces.repos.products import IProductRepository
+from app.application.interfaces.repos.retail_point_assignments import IRetailPointAssignmentRepository
 from app.application.interfaces.repos.retail_point_members import IRetailPointMemberRepository
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.application.interfaces.repos.stocks import IStockRepository
@@ -22,6 +23,7 @@ class IUnitOfWork:
     products: IProductRepository
     retail_points: IRetailPointRepository
     retail_point_members: IRetailPointMemberRepository
+    retail_point_assignments: IRetailPointAssignmentRepository
     invite_codes: IInviteCodeRepository
     clients: IClientRepository
     employees: IEmployeeRepository

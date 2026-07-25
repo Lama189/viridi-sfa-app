@@ -17,6 +17,7 @@ from app.infrastructure.postgres.models.enums import EmployeeRole
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.retail_points import RetailPoint
     from app.infrastructure.postgres.models.visits import Visit
+    from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
 
 
 class Employee(BaseModel):
@@ -76,4 +77,9 @@ class Employee(BaseModel):
 
     visits: Mapped[list["Visit"]] = relationship(
         back_populates="agent",
+    )
+
+    retail_point_assignments: Mapped[list["RetailPointAssignment"]] = relationship(
+        back_populates="employee",
+        foreign_keys="RetailPointAssignment.employee_id",
     )

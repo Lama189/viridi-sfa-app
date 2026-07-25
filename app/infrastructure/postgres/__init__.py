@@ -14,6 +14,7 @@ from app.infrastructure.postgres.models.employees import Employee
 from app.infrastructure.postgres.models.invite_codes import RetailPointInviteCode
 from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
 from app.infrastructure.postgres.models.media_objects import MediaObject
+from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
 
 
 __all__ = [
@@ -32,5 +33,6 @@ __all__ = [
     "Employee",
     "RetailPointInviteCode",
     "RetailPointMember",
-    "MediaObject"
+    "MediaObject",
+    "RetailPointAssignment"
 ]

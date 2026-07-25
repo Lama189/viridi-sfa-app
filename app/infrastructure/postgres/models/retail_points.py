@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
     from app.infrastructure.postgres.models.visits import Visit
+    from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
 
 
 class RetailPoint(BaseModel):
@@ -123,5 +124,9 @@ class RetailPoint(BaseModel):
     )
 
     invite_codes: Mapped[list["RetailPointInviteCode"]] = relationship(
+        back_populates="retail_point",
+    )
+
+    assignments: Mapped[list["RetailPointAssignment"]] = relationship(
         back_populates="retail_point",
     )

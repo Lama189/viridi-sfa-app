@@ -5,8 +5,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
+from app.domain.enums import Weekday
 from app.infrastructure.postgres.models.retail_points import RetailPoint as RetailPointModel
 from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment as RetailPointAssignmentModel
+
+
+_WEEKDAY_COLUMNS = {
+    Weekday.MONDAY: RetailPointModel.visit_mon,
+    Weekday.TUESDAY: RetailPointModel.visit_tue,
+    Weekday.WEDNESDAY: RetailPointModel.visit_wed,
+    Weekday.THURSDAY: RetailPointModel.visit_thu,
+    Weekday.FRIDAY: RetailPointModel.visit_fri,
+    Weekday.SATURDAY: RetailPointModel.visit_sat,
+    Weekday.SUNDAY: RetailPointModel.visit_sun,
+}
 
 
 class PostgresRetailPointRepository(IRetailPointRepository):
@@ -138,7 +150,31 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         result = await self._session.execute(stmt)
 
         return [self._to_domain(model) for model in result.scalars().all()]
-    
+
+    async def list_by_employee_and_weekday(
+        self,
+        employee_id: UUID,
+        weekday: Weekday,
+    ) -> list[RetailPoint]:
+        schedule_column = _WEEKDAY_COLUMNS[weekday]
+
+        stmt = (
+            select(RetailPointModel)
+            .join(
+                RetailPointAssignmentModel,
+                RetailPointAssignmentModel.retail_point_id == RetailPointModel.id,
+            )
+            .where(
+                RetailPointAssignmentModel.employee_id == employee_id,
+                RetailPointModel.is_active.is_(True),
+                schedule_column.is_(True),
+            )
+        )
+
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(model) for model in result.scalars().all()]
+
     def _to_domain(self, model: RetailPointModel) -> RetailPoint:
         return RetailPoint(
             id=model.id,

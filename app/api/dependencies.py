@@ -34,6 +34,7 @@ from app.application.services.media import MediaService
 from app.application.services.visit_media import VisitMediaService
 from app.application.services.visit_debts import VisitDebtService
 from app.application.services.visits import VisitService
+from app.application.services.visit_plans import VisitPlanService
 from app.application.interfaces.services.visit_media import IVisitMediaService
 from app.application.interfaces.services.visit_debts import IVisitDebtService
 
@@ -173,6 +174,12 @@ async def get_visits_service(
     visit_debts: Annotated[IVisitDebtService, Depends(get_visit_debts_service)],
 ) -> VisitService:
     return VisitService(uow, visit_media, visit_debts)
+
+
+async def get_visit_plans_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> VisitPlanService:
+    return VisitPlanService(uow)
 
 # ======================================================================
 # 4. AUTHENTICATION & CURRENT USER DEPENDENCIES

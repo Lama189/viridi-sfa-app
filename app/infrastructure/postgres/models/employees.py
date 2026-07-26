@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from app.infrastructure.postgres.models.retail_points import RetailPoint
     from app.infrastructure.postgres.models.visits import Visit
     from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
+    from app.infrastructure.postgres.models.visit_plans import VisitPlan
 
 
 class Employee(BaseModel):
@@ -82,4 +83,8 @@ class Employee(BaseModel):
     retail_point_assignments: Mapped[list["RetailPointAssignment"]] = relationship(
         back_populates="employee",
         foreign_keys="RetailPointAssignment.employee_id",
+    )
+
+    visit_plans: Mapped[list["VisitPlan"]] = relationship(
+        back_populates="employee",
     )

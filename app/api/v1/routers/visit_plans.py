@@ -1,0 +1,86 @@
+from datetime import date
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, status
+
+from app.api.dependencies import (
+    get_current_employee,
+    get_visit_plans_service,
+    allow_admin,
+)
+from app.api.v1.schemas.visit_plans import (
+    GenerateVisitPlanRequest,
+    VisitPlanItemResponse,
+    VisitPlanItemRetailPointResponse,
+    VisitPlanResponse,
+)
+from app.application.services.visit_plans import VisitPlanService
+from app.domain.entities.employees import Employee
+from app.domain.entities.visit_plans import VisitPlan
+
+
+router = APIRouter(prefix="/api/v1/visit-plans", tags=["Visit Plans"])
+
+
+async def _to_response(service: VisitPlanService, plan: VisitPlan) -> VisitPlanResponse:
+    items: list[VisitPlanItemResponse] = []
+
+    for item in plan.items:
+        retail_point = await service._uow.retail_points.get_by_id(item.retail_point_id)
+
+        items.append(
+            VisitPlanItemResponse(
+                order=item.order,
+                status=item.status,
+                retail_point_id=item.retail_point_id,
+                retail_point=VisitPlanItemRetailPointResponse.model_validate(retail_point),
+            )
+        )
+
+    return VisitPlanResponse(
+        id=plan.id,
+        employee_id=plan.employee_id,
+        date=plan.plan_date,
+        weekday=plan.weekday,
+        status=plan.status,
+        items=items,
+    )
+
+
+@router.get(
+    path="/today",
+    response_model=VisitPlanResponse,
+)
+async def get_today_plan(
+    employee: Annotated[Employee, Depends(get_current_employee)],
+    service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
+):
+    plan = await service.get_today_plan(employee.id)
+    return await _to_response(service, plan)
+
+
+@router.get(
+    path="/{plan_date}",
+    response_model=VisitPlanResponse,
+)
+async def get_plan_by_date(
+    plan_date: date,
+    employee: Annotated[Employee, Depends(get_current_employee)],
+    service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
+):
+    plan = await service.get_by_employee_and_date(employee.id, plan_date)
+    return await _to_response(service, plan)
+
+
+@router.post(
+    path="/generate",
+    response_model=VisitPlanResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(allow_admin)],
+)
+async def generate_visit_plan(
+    dto: GenerateVisitPlanRequest,
+    service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
+):
+    plan = await service.generate_for_employee(dto.employee_id, dto.plan_date)
+    return await _to_response(service, plan)

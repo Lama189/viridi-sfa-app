@@ -87,3 +87,9 @@ class DuplicateRetailPointError(DomainError):
 
 class BulkCreateRetailPointsRequestIsEmptyError(DomainError):
     pass
+
+class VisitPlanNotFoundError(DomainError):
+    pass
+
+class VisitPlanAlreadyExistsError(DomainError):
+    pass

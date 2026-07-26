@@ -12,6 +12,7 @@ from app.core.extensions import (
     MembershipAlreadyExistsError,
     MediaNotFoundError,
     RetailPointNotFoundError,
+    RetailPointAlreadyExistsError,
     RetailPointInactiveError,
     RetailPointImageNotFoundError,
     RetailPointImageAlreadyExistsError,
@@ -21,6 +22,12 @@ from app.core.extensions import (
     VisitMediaNotFoundError,
     VisitMediaAlreadyAttachedError,
     EmployeeHasActiveVisitError,
+    RetailPointAssignmentAlreadyExistsError,
+    RetailPointAssignmentNotFoundError,
+    DuplicateRetailPointError,
+    BulkCreateRetailPointsRequestIsEmptyError,
+    VisitPlanNotFoundError,
+    VisitPlanAlreadyExistsError,
 )
 
 ERROR_MAPPING = {
@@ -33,6 +40,7 @@ ERROR_MAPPING = {
     MembershipAlreadyExistsError: (409, "Membership already exists"),
     MediaNotFoundError: (404, "Media not found"),
     RetailPointNotFoundError: (404, "Retail point not found"),
+    RetailPointAlreadyExistsError: (409, "Retail point already exists"),
     RetailPointInactiveError: (409, "Retail point is inactive"),
     RetailPointImageNotFoundError: (404, "Retail point image not found"),
     RetailPointImageAlreadyExistsError: (409,"Retail point already has an image"),
@@ -42,6 +50,12 @@ ERROR_MAPPING = {
     VisitMediaNotFoundError: (404, "Visit media not found"),
     VisitMediaAlreadyAttachedError: (409,"Media is already attached to visit"),
     EmployeeHasActiveVisitError: (409,"Employee already has an active visit"),
+    RetailPointAssignmentAlreadyExistsError: (409, "Retail point assignment already exists"),
+    RetailPointAssignmentNotFoundError: (404, "Retail point assignment not found"),
+    DuplicateRetailPointError: (409, "Duplicate retail point in request"),
+    BulkCreateRetailPointsRequestIsEmptyError: (400, "Bulk create request is empty"),
+    VisitPlanNotFoundError: (404, "Visit plan not found"),
+    VisitPlanAlreadyExistsError: (409, "Visit plan already exists for this date"),
 }
 
 

@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
     from app.infrastructure.postgres.models.visits import Visit
     from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
+    from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem
 
 
 class RetailPoint(BaseModel):
@@ -130,4 +131,8 @@ class RetailPoint(BaseModel):
     assignment: Mapped["RetailPointAssignment"] = relationship(
         back_populates="retail_point",
         uselist=False,
+    )
+
+    visit_plan_items: Mapped[list["VisitPlanItem"]] = relationship(
+        back_populates="retail_point",
     )

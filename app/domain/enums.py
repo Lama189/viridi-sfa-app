@@ -1,4 +1,14 @@
-from enum import Enum
+from enum import Enum, IntEnum
+
+
+class Weekday(IntEnum):
+    MONDAY = 0
+    TUESDAY = 1
+    WEDNESDAY = 2
+    THURSDAY = 3
+    FRIDAY = 4
+    SATURDAY = 5
+    SUNDAY = 6
 
 
 class EmployeeRole(str, Enum):
@@ -45,6 +55,18 @@ class StockReferenceType(str, Enum):
 
 class VisitStatus(str, Enum):
     IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class VisitPlanStatus(str, Enum):
+    PLANNED = "planned"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class VisitPlanItemStatus(str, Enum):
+    PENDING = "pending"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 

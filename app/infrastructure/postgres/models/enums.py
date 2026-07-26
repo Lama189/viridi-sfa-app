@@ -24,6 +24,18 @@ class VisitStatus(str, Enum):
     SKIPPED = "skipped"
 
 
+class VisitPlanStatus(str, Enum):
+    PLANNED = "planned"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class VisitPlanItemStatus(str, Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
 class StockTransactionType(str, Enum):
     RECEIPT = "receipt"          # Приход от поставщика / Пополнение
     RESERVATION = "reservation"  # Бронь под заказ

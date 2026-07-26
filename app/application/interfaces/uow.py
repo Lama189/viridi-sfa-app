@@ -14,6 +14,8 @@ from app.application.interfaces.repos.stocks_transactions import IStockTransacti
 from app.application.interfaces.repos.visit_debts import IVisitDebtRepository
 from app.application.interfaces.repos.visit_media import IVisitMediaRepository
 from app.application.interfaces.repos.visits import IVisitRepository
+from app.application.interfaces.repos.visit_plans import IVisitPlanRepository
+from app.application.interfaces.repos.visit_plan_items import IVisitPlanItemRepository
 from app.application.interfaces.repos.warehouses import IWarehouseRepository
 
 
@@ -35,6 +37,8 @@ class IUnitOfWork:
     visits: IVisitRepository
     visit_media: IVisitMediaRepository
     visit_debts: IVisitDebtRepository
+    visit_plans: IVisitPlanRepository
+    visit_plan_items: IVisitPlanItemRepository
 
     async def commit(self) -> None: ...
     async def rollback(self) -> None: ...

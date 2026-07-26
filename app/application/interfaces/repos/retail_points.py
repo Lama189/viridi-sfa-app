@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from uuid import UUID
 
 from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
+from app.domain.enums import Weekday
 
 
 class IRetailPointRepository(ABC):
@@ -46,5 +47,13 @@ class IRetailPointRepository(ABC):
         self,
         employee_id: UUID,
         only_active: bool = True,
+    ) -> list[RetailPoint]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def list_by_employee_and_weekday(
+        self,
+        employee_id: UUID,
+        weekday: Weekday,
     ) -> list[RetailPoint]:
         raise NotImplementedError

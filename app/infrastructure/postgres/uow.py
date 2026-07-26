@@ -21,6 +21,8 @@ from app.infrastructure.postgres.repos.warehouses import PostgresWarehousesRepos
 from app.infrastructure.postgres.repos.visits import PostgresVisitRepository
 from app.infrastructure.postgres.repos.visit_media import PostgresVisitMediaRepository
 from app.infrastructure.postgres.repos.visit_debts import PostgresVisitDebtRepository
+from app.infrastructure.postgres.repos.visit_plans import PostgresVisitPlanRepository
+from app.infrastructure.postgres.repos.visit_plan_items import PostgresVisitPlanItemRepository
 
 
 class PostgresUnitOfWork(IUnitOfWork):
@@ -48,6 +50,8 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.visits = PostgresVisitRepository(self._session)
         self.visit_media = PostgresVisitMediaRepository(self._session)
         self.visit_debts = PostgresVisitDebtRepository(self._session)
+        self.visit_plans = PostgresVisitPlanRepository(self._session)
+        self.visit_plan_items = PostgresVisitPlanItemRepository(self._session)
 
         return self
     

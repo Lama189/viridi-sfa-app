@@ -37,6 +37,9 @@ class MediaNotFoundError(DomainError):
 class RetailPointNotFoundError(DomainError):
     pass
 
+class RetailPointAlreadyExistsError(DomainError):
+    pass
+
 
 class RetailPointInactiveError(DomainError):
     pass
@@ -77,4 +80,10 @@ class RetailPointAssignmentAlreadyExistsError(DomainError):
     pass
 
 class RetailPointAssignmentNotFoundError(DomainError):
+    pass
+
+class DuplicateRetailPointError(DomainError):
+    pass
+
+class BulkCreateRetailPointsRequestIsEmptyError(DomainError):
     pass

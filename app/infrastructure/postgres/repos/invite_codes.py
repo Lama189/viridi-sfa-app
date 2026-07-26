@@ -19,6 +19,11 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
         self._session.add(model)
         await self._session.flush()
 
+    async def add_many(self, invite_codes: list[ClientInviteCode]) -> None:
+        models = [self._to_model(ic) for ic in invite_codes]
+        self._session.add_all(models)
+        await self._session.flush()
+
     async def get_by_id(self, invite_code_id: UUID) -> ClientInviteCode | None:
         result = await self._session.execute(
             select(InviteCodeModel).where(

@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import select, update, delete as sa_delete, tuple_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
-from app.domain.entities.retail_points import RetailPoint
+from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
 from app.infrastructure.postgres.models.retail_points import RetailPoint as RetailPointModel
 from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment as RetailPointAssignmentModel
 
@@ -18,6 +18,40 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         model = self._to_model(retail_point)
         self._session.add(model)
         await self._session.flush()
+
+    async def add_many(self, retail_points: list[RetailPoint]) -> None:
+        models = [self._to_model(rp) for rp in retail_points]
+        self._session.add_all(models)
+        await self._session.flush()
+
+    async def find_existing_by_identity(
+        self,
+        identities: list[RetailPointIdentity],
+    ) -> dict[RetailPointIdentity, UUID]:
+        if not identities:
+            return {}
+
+        criteria = [(i.name, i.address) for i in identities]
+
+        result = await self._session.execute(
+            select(
+                RetailPointModel.id,
+                RetailPointModel.name,
+                RetailPointModel.address,
+            ).where(
+                tuple_(
+                    func.lower(RetailPointModel.name), 
+                    func.lower(RetailPointModel.address)
+                ).in_(criteria))
+        )
+
+        rows = result.all()
+        identity_map = {
+            RetailPointIdentity(name=row.name, address=row.address): row.id
+            for row in rows
+        }
+
+        return identity_map
 
     async def get_by_id(self, retail_point_id: UUID) -> RetailPoint | None:
         result = await self._session.execute(

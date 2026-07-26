@@ -8,7 +8,8 @@ from app.api.v1.schemas.retail_points import (
     UpdateRetailPointRequest,
     RetailPointResponse,
     InviteCodeResponse,
-    RetailPointWithCodeResponse
+    RetailPointWithCodeResponse,
+    BulkCreateRetailPointsResponse
 )
 from app.application.services.retail_points import RetailPointsService
 from app.api.dependencies import get_retail_points_service, allow_admin, allow_all_staff
@@ -42,6 +43,31 @@ async def create_retail_point(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
         )
+
+@router.post(
+    path="",
+    response_model=BulkCreateRetailPointsResponse,
+    status_code=status.HTTP_201_CREATED
+)
+async def bulk_create_retail_points(
+    dto: list[CreateRetailPointRequest],
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
+    employee: Annotated[Employee, Depends(allow_admin)]
+):
+    try:
+        result = await service.bulk_create(employee.id, dto)
+
+        return BulkCreateRetailPointsResponse(
+            created_count=result.created_count,
+            created=result.created
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    
 
 @router.get(
     "/{retail_point_id}",

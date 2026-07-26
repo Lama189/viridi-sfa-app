@@ -105,3 +105,19 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         await self._uow.commit()
         
         return assignment
+
+    async def create_many(
+        self,
+        retail_point_ids: list[UUID]
+    ) -> None:
+        assignments_list: list[RetailPointAssignment] = []
+
+        for point_id in retail_point_ids:
+            assignment = RetailPointAssignment(
+                retail_point_id=point_id,
+                employee_id=None
+            )
+
+            assignments_list.append(assignment)
+
+        await self._uow.retail_point_assignments.add_many(assignments_list)

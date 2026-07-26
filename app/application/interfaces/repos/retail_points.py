@@ -1,13 +1,24 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.domain.entities.retail_points import RetailPoint
+from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
 
 
 class IRetailPointRepository(ABC):
 
     @abstractmethod
     async def add(self, retail_point: RetailPoint) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def add_many(self, retail_points: list[RetailPoint]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def find_existing_by_identity(
+        self,
+        identities: list[RetailPointIdentity],
+    ) -> dict[RetailPointIdentity, UUID]:
         raise NotImplementedError
 
     @abstractmethod

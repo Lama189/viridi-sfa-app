@@ -1,14 +1,17 @@
 from uuid import UUID
 
-from app.domain.entities.retail_points import RetailPoint
+from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity, BulkCreateRetailPointsResult
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
 from app.core.extensions import (
     RetailPointNotFoundError, 
+    RetailPointAlreadyExistsError,
     RetailPointImageNotFoundError, 
-    RetailPointImageAlreadyExistsError
+    RetailPointImageAlreadyExistsError,
+    DuplicateRetailPointError,
+    BulkCreateRetailPointsRequestIsEmptyError
 )
 
 
@@ -28,7 +31,7 @@ class RetailPointsService:
     async def create_retail_point(
         self, 
         dto: CreateRetailPointRequest, 
-        agent_id: UUID
+        employee_id: UUID
     ) -> tuple[RetailPoint, str]:
         point = RetailPoint(
             name=dto.name,
@@ -53,12 +56,12 @@ class RetailPointsService:
             visit_fri=dto.visit_fri,
             visit_sat=dto.visit_sat,
             visit_sun=dto.visit_sun,
-            created_by_employee_id=agent_id,  
+            created_by_employee_id=employee_id,  
             is_active=True,
         )
         
         await self._uow.retail_points.add(point)
-        code = await self._invite_codes_service.create(agent_id, point.id)
+        code = await self._invite_codes_service.create(employee_id, point.id)
         await self._assignments_service.create(point.id)
 
         await self._uow.commit()
@@ -201,3 +204,76 @@ class RetailPointsService:
 
     async def list_by_employee(self, employee_id: UUID) -> list[RetailPoint]:
         return await self._uow.retail_points.list_by_employee(employee_id, True)
+
+    async def bulk_create(
+        self,
+        employee_id: UUID,
+        dto: list[CreateRetailPointRequest],
+    ) -> BulkCreateRetailPointsResult:
+        if not dto:
+            raise BulkCreateRetailPointsRequestIsEmptyError()
+
+        retail_points = await self._prepare_bulk_create(employee_id, dto)
+        retail_point_ids = [retail_point.id for retail_point in retail_points]
+
+        await self._uow.retail_points.add_many(retail_points)
+        await self._invite_codes_service.create_many(employee_id, retail_point_ids)
+        await self._assignments_service.create_many(retail_point_ids)
+
+        await self._uow.commit()
+
+        return BulkCreateRetailPointsResult(created=retail_points)
+
+    async def _prepare_bulk_create(
+        self,
+        employee_id: UUID,
+        dto: list[CreateRetailPointRequest],
+    ) -> list[RetailPoint]:
+        identities: set[RetailPointIdentity] = set()
+
+        for point in dto:
+            identity = RetailPointIdentity(
+                name=point.name,
+                address=point.address,
+            )
+
+            if identity in identities:
+                raise DuplicateRetailPointError()
+
+            identities.add(identity)
+
+        existing = await self._uow.retail_points.find_existing_by_identity(
+            list(identities)
+        )
+
+        if existing:
+            raise RetailPointAlreadyExistsError(existing)
+
+        return [
+            RetailPoint(
+                name=point.name,
+                address=point.address,
+                legal_name=point.legal_name,
+                client_type=point.client_type,
+                landmark=point.landmark,
+                contact_person=point.contact_person,
+                phone_number=point.phone_number,
+                inn=point.inn,
+                checking_account=point.checking_account,
+                bank_name=point.bank_name,
+                mfo=point.mfo,
+                oked=point.oked,
+                latitude=point.latitude,
+                longitude=point.longitude,
+                photo_id=point.photo_id,
+                visit_mon=point.visit_mon,
+                visit_tue=point.visit_tue,
+                visit_wed=point.visit_wed,
+                visit_thu=point.visit_thu,
+                visit_fri=point.visit_fri,
+                visit_sat=point.visit_sat,
+                visit_sun=point.visit_sun,
+                created_by_employee_id=employee_id,
+            )
+            for point in dto
+        ]

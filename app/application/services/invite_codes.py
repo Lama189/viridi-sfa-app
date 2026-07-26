@@ -48,7 +48,7 @@ class ClientInviteCodesService(IClientInviteCodesService):
         retail_point_id: UUID,
     ) -> str:
         await self._validate_retail_point(retail_point_id)
-
+        
         raw_code, encrypted_code, code_hash = SecurityUtils.generate_invite_code()
 
         invite_code = ClientInviteCode.create(
@@ -158,3 +158,24 @@ class ClientInviteCodesService(IClientInviteCodesService):
         return SecurityUtils.decrypt_invite_code(
             invite_code.encrypted_code
         )
+
+    async def create_many(
+        self,
+        employee_id: UUID,
+        retail_point_ids: list[UUID],
+    ) -> None:
+        invite_codes: list[ClientInviteCode] = []
+
+        for point_id in retail_point_ids:
+            _, encrypted_code, code_hash = SecurityUtils.generate_invite_code()
+
+            invite_code = ClientInviteCode.create(
+                retail_point_id=point_id,
+                created_by_employee_id=employee_id,
+                encrypted_code=encrypted_code,
+                code_hash=code_hash,
+            )
+
+            invite_codes.append(invite_code)
+
+        await self._uow.invite_codes.add_many(invite_codes)

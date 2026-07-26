@@ -11,6 +11,10 @@ class IInviteCodeRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def add_many(self, invite_codes: list[ClientInviteCode]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_by_id(self, invite_code_id: UUID) -> ClientInviteCode | None:
         raise NotImplementedError
 

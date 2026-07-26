@@ -13,6 +13,13 @@ class IRetailPointAssignmentService(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def create_many(
+        self,
+        retail_point_ids: list[UUID]
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete(self, retail_point_id: UUID) -> None:
         raise NotImplementedError
 
@@ -27,3 +34,5 @@ class IRetailPointAssignmentService(ABC):
         self, retail_point_id: UUID,
     ) -> RetailPointAssignment:
         raise NotImplementedError
+    
+    

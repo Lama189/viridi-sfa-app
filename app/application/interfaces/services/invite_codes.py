@@ -15,6 +15,14 @@ class IClientInviteCodesService(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def create_many(
+        self, 
+        employee_id: UUID,
+        retail_point_ids: list[UUID]
+    ) -> dict[UUID, str]:
+        raise NotImplementedError
+    
+    @abstractmethod
     async def regenerate(
         self,
         employee_id: UUID,

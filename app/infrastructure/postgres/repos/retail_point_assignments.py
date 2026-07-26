@@ -18,6 +18,11 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
         self._session.add(model)
         await self._session.flush()
 
+    async def add_many(self, assignments: list[RetailPointAssignment]) -> None:
+        models = [self._to_model(a) for a in assignments]
+        self._session.add_all(models)
+        await self._session.flush()
+
     async def get_by_id(self, assignment_id: UUID) -> RetailPointAssignment | None:
         result = await self._session.execute(
             select(RetailPointAssignmentModel).where(

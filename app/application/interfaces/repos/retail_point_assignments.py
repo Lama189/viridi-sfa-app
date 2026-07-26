@@ -11,6 +11,10 @@ class IRetailPointAssignmentRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def add_many(self, assignments: list[RetailPointAssignment]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_by_id(self, assignment_id: UUID) -> RetailPointAssignment | None:
         raise NotImplementedError
 

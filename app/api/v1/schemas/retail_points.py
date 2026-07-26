@@ -118,9 +118,19 @@ class InviteCodeResponse(BaseModel):
         "from_attributes": True
     }
 
+
 class RetailPointWithCodeResponse(BaseModel):
     retail_point: RetailPointResponse
     invite_code: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+
+class BulkCreateRetailPointsResponse(BaseModel):
+    created_count: int
+    created: list[RetailPointWithCodeResponse]
 
     model_config = {
         "from_attributes": True

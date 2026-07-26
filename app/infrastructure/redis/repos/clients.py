@@ -1,14 +1,17 @@
 import logging
 
+from pydantic import TypeAdapter, ValidationError
 from redis.asyncio import Redis, RedisError
 
 from app.core.config import get_settings
-from app.api.v1.schemas.clients import ClientCachedDTO
+from app.domain.entities.auth import AuthenticatedClient
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
+
+client_adapter = TypeAdapter(AuthenticatedClient)
 
 
 class ClientsRedisRepository(IClientsCacheRepository):
@@ -47,26 +50,30 @@ class ClientsRedisRepository(IClientsCacheRepository):
     async def set_user(
         self,
         client_id: str,
-        user: ClientCachedDTO,
+        user: AuthenticatedClient,
         expire_seconds: int = 900,
     ) -> None:
         try:
             await self._client.set(
                 f"user:{client_id}",
-                user.model_dump_json(),
+                client_adapter.dump_json(user),
                 ex=expire_seconds,
             )
         except RedisError as e:
             logger.error(f"Failed to set user for {client_id}: {e}")
 
-    async def get_user(self, client_id: str) -> ClientCachedDTO | None:
+    async def get_user(self, client_id: str) -> AuthenticatedClient | None:
         try:
             user_json = await self._client.get(f"user:{client_id}")
             if not user_json:
                 return None
-            return ClientCachedDTO.model_validate_json(user_json)
+            return client_adapter.validate_json(user_json)
         except RedisError as e:
             logger.error(f"Failed to get user for {client_id}: {e}")
+            return None
+        except ValidationError as e:
+            logger.warning(f"Dropping stale cache entry for client {client_id}: {e}")
+            await self.delete_user(client_id)
             return None
 
     async def delete_user(self, client_id: str) -> None:

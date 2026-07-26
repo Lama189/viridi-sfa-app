@@ -74,18 +74,6 @@ class EmployeeResponse(BaseModel):
     }
 
 
-class EmployeeCachedDTO(BaseModel):
-    id: UUID
-    phone: str
-    full_name: str
-    role: EmployeeRole
-    is_active: bool
-
-    model_config = {
-        "from_attributes": True,
-    }
-
-
 class EmployeeLoginDTO(BaseModel):
     phone: str = Field(
         ...,

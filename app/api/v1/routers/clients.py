@@ -13,6 +13,7 @@ from app.api.v1.schemas.clients import (
     ClientUpdate,
     ClientWithTokensResponse,
 )
+from app.api.v1.schemas.tokens import RefreshTokenDTO, TokenResponseDTO
 from app.application.services.clients import (
     ClientsAuthService,
     ClientsService,
@@ -33,6 +34,21 @@ async def register(
     service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)]
 ):
     return await service.register(dto)
+
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponseDTO,
+    status_code=status.HTTP_200_OK,
+)
+async def refresh(
+    dto: RefreshTokenDTO,
+    service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)],
+):
+    try:
+        return await service.refresh(dto.refresh_token)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
 @router.get(

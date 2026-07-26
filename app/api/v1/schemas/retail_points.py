@@ -130,7 +130,7 @@ class RetailPointWithCodeResponse(BaseModel):
 
 class BulkCreateRetailPointsResponse(BaseModel):
     created_count: int
-    created: list[RetailPointWithCodeResponse]
+    created: list[RetailPointResponse]
 
     model_config = {
         "from_attributes": True

@@ -8,8 +8,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from app.domain.entities.clients import Client
-from app.domain.entities.employees import Employee
+from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 from app.domain.entities.orders import Order, OrderItem
 from app.domain.enums import OrderStatus
 from app.infrastructure.postgres.models.enums import EmployeeRole as PGEmployeeRole
@@ -27,7 +26,7 @@ def mock_service():
 
 @pytest.fixture
 def mock_client_entity():
-    return Client(
+    return AuthenticatedClient(
         phone="+998901111111",
         full_name="Test Client",
         id=uuid4(),
@@ -37,10 +36,9 @@ def mock_client_entity():
 
 @pytest.fixture
 def mock_admin_employee():
-    return Employee(
+    return AuthenticatedEmployee(
         id=uuid4(),
         phone="+998900000000",
-        password_hash="h",
         role=PGEmployeeRole.ADMIN,
         full_name="Mock Admin",
         is_active=True,

@@ -9,8 +9,7 @@ from redis.asyncio import Redis
 from app.core.config import get_settings
 from app.core.security import SecurityUtils
 from app.domain.enums import EmployeeRole
-from app.domain.entities.employees import Employee
-from app.domain.entities.clients import Client
+from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
@@ -191,7 +190,7 @@ async def get_current_user(
     employees_service: Annotated[EmployeesService, Depends(get_employees_service)],
     clients_cache: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)],
     employees_cache: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)],
-):
+) -> AuthenticatedEmployee | AuthenticatedClient:
     payload = SecurityUtils.verify_token(token)
 
     user_type = payload["user_type"]
@@ -200,8 +199,8 @@ async def get_current_user(
     if user_type == "client":
         client_id_ctx_var.set(str(user_id))
 
-        if client := await clients_cache.get_user(user_id):
-            return client
+        if cached_client := await clients_cache.get_user(user_id):
+            return cached_client
 
         client = await clients_service.get_client(user_id)
         if client is None:
@@ -210,18 +209,18 @@ async def get_current_user(
                 detail="Client not found",
             )
 
-        return client
+        return AuthenticatedClient.from_entity(client)
 
     if user_type == "employee":
         employee_id_ctx_var.set(str(user_id))
 
-        if employee := await employees_cache.get_employee(user_id):
-            if not employee.is_active:
+        if cached_employee := await employees_cache.get_employee(user_id):
+            if not cached_employee.is_active:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Employee account is inactive",
                 )
-            return employee
+            return cached_employee
 
         employee = await employees_service.get_employee(user_id)
         if employee is None:
@@ -236,7 +235,7 @@ async def get_current_user(
                 detail="Employee account is inactive",
             )
 
-        return employee
+        return AuthenticatedEmployee.from_entity(employee)
 
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
@@ -245,9 +244,9 @@ async def get_current_user(
 
 
 async def get_current_employee(
-    user: Annotated[Employee | Client, Depends(get_current_user)],
-) -> Employee:
-    if not isinstance(user, Employee):
+    user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+) -> AuthenticatedEmployee:
+    if not isinstance(user, AuthenticatedEmployee):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Employees only",
@@ -255,9 +254,9 @@ async def get_current_employee(
     return user
 
 async def get_current_client(
-    user: Annotated[Employee | Client, Depends(get_current_user)],
-) -> Client:
-    if not isinstance(user, Client):
+    user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+) -> AuthenticatedClient:
+    if not isinstance(user, AuthenticatedClient):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Clients only",
@@ -273,9 +272,9 @@ async def get_current_client(
 class RequireEmployee:
     async def __call__(
         self,
-        user: Annotated[Employee | Client, Depends(get_current_user)],
-    ) -> Employee:
-        if not isinstance(user, Employee):
+        user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+    ) -> AuthenticatedEmployee:
+        if not isinstance(user, AuthenticatedEmployee):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Employees only.",
@@ -290,8 +289,8 @@ class RequireEmployeeRoles:
 
     async def __call__(
         self,
-        employee: Annotated[Employee, Depends(RequireEmployee())],
-    ) -> Employee:
+        employee: Annotated[AuthenticatedEmployee, Depends(RequireEmployee())],
+    ) -> AuthenticatedEmployee:
         if employee.role not in self.roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -308,9 +307,9 @@ class RequireOwner:
     async def __call__(
         self,
         request: Request,
-        user: Annotated[Employee | Client, Depends(get_current_user)],
-    ) -> Client:
-        if not isinstance(user, Client):
+        user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+    ) -> AuthenticatedClient:
+        if not isinstance(user, AuthenticatedClient):
             raise HTTPException(
                 status_code=403,
                 detail="Clients only.",
@@ -335,10 +334,10 @@ def allow_staff_or_owner(
 
     async def dependency(
         request: Request,
-        user: Annotated[Employee | Client, Depends(get_current_user)],
-    ) -> Employee | Client:
+        user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+    ) -> AuthenticatedEmployee | AuthenticatedClient:
 
-        if isinstance(user, Employee):
+        if isinstance(user, AuthenticatedEmployee):
             if user.role not in role_set:
                 raise HTTPException(403, "Forbidden")
             return user

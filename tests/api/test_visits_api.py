@@ -9,9 +9,9 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.domain.entities.visits import Visit
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.visit_media import VisitMedia
 from app.domain.entities.visit_debts import VisitDebt
-from app.domain.entities.employees import Employee
 from app.domain.enums import VisitStatus
 from app.infrastructure.postgres.models.enums import EmployeeRole
 from app.api.dependencies import get_visits_service, get_visit_media_service, get_current_user
@@ -29,10 +29,9 @@ def mock_visit_media_service():
 
 @pytest.fixture
 def mock_admin_employee():
-    return Employee(
+    return AuthenticatedEmployee(
         id=uuid4(),
         phone="+998900000000",
-        password_hash="h",
         role=EmployeeRole.ADMIN,
         full_name="Mock Admin",
         is_active=True,

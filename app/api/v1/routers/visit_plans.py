@@ -15,7 +15,7 @@ from app.api.v1.schemas.visit_plans import (
     VisitPlanResponse,
 )
 from app.application.services.visit_plans import VisitPlanService
-from app.domain.entities.employees import Employee
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.visit_plans import VisitPlan
 
 
@@ -52,7 +52,7 @@ async def _to_response(service: VisitPlanService, plan: VisitPlan) -> VisitPlanR
     response_model=VisitPlanResponse,
 )
 async def get_today_plan(
-    employee: Annotated[Employee, Depends(get_current_employee)],
+    employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
     service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
 ):
     plan = await service.get_today_plan(employee.id)
@@ -65,7 +65,7 @@ async def get_today_plan(
 )
 async def get_plan_by_date(
     plan_date: date,
-    employee: Annotated[Employee, Depends(get_current_employee)],
+    employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
     service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
 ):
     plan = await service.get_by_employee_and_date(employee.id, plan_date)

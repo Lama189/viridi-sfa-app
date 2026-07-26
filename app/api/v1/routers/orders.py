@@ -7,7 +7,7 @@ from app.api.v1.schemas.orders import (
     OrderResponse,
 )
 from app.application.services.orders import OrdersService
-from app.domain.entities.clients import Client
+from app.domain.entities.auth import AuthenticatedClient
 from app.api.dependencies import (
     get_current_client,
     get_orders_service,
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 )
 async def create_order(
     dto: CreateOrderRequest,
-    client: Annotated[Client, Depends(get_current_client)],
+    client: Annotated[AuthenticatedClient, Depends(get_current_client)],
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:
@@ -43,7 +43,7 @@ async def create_order(
 )
 async def get_order(
     order_id: UUID,
-    client: Annotated[Client, Depends(get_current_client)],
+    client: Annotated[AuthenticatedClient, Depends(get_current_client)],
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     order = await service._uow.orders.get_by_id(order_id)
@@ -66,7 +66,7 @@ async def get_order(
 )
 async def cancel_order(
     order_id: UUID,
-    client: Annotated[Client, Depends(get_current_client)],
+    client: Annotated[AuthenticatedClient, Depends(get_current_client)],
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:

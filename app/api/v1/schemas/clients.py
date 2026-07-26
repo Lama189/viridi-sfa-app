@@ -105,17 +105,6 @@ class ClientWithTokensResponse(BaseModel):
     }
 
 
-class ClientCachedDTO(BaseModel):
-    id: UUID
-    phone: str                                     
-    is_active: bool                 
-    telegram_chat_id: int | None   
-
-    model_config = {
-        "from_attributes": True,
-    }
-
-
 class ClientConfirm(BaseModel):
     phone: str
     telegram_chat_id: int

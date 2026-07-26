@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.api.v1.schemas.employees import EmployeeCachedDTO
+from app.domain.entities.auth import AuthenticatedEmployee
 
 
 class IEmployeesCacheRepository(ABC):
@@ -27,13 +27,13 @@ class IEmployeesCacheRepository(ABC):
     async def set_employee(
         self,
         employee_id: UUID,
-        employee: EmployeeCachedDTO,
+        employee: AuthenticatedEmployee,
         expire_seconds: int = 900,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_employee(self, employee_id: UUID) -> EmployeeCachedDTO | None:
+    async def get_employee(self, employee_id: UUID) -> AuthenticatedEmployee | None:
         raise NotImplementedError
 
     @abstractmethod

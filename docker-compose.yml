@@ -87,6 +87,7 @@ services:
       - ./models:/app/models
     environment:
       - DATABASE_URL=postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
+      - REDIS_URL=redis://redis:6379
     depends_on:
       migrations:
         condition: service_completed_successfully
@@ -94,14 +95,32 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - app_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: viridi_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pg_data:
   venv_data:
   rabbitmq_data:
   minio_data:
+  redis_data:
 
 networks:
   app_network:

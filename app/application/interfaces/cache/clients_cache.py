@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.api.v1.schemas.clients import ClientCachedDTO
+from app.domain.entities.auth import AuthenticatedClient
 
 
 class IClientsCacheRepository(ABC):
@@ -26,13 +26,13 @@ class IClientsCacheRepository(ABC):
     async def set_user(
         self,
         client_id: str,
-        user: ClientCachedDTO,
+        user: AuthenticatedClient,
         expire_seconds: int = 900,
     ) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_user(self, client_id: str) -> ClientCachedDTO | None:
+    async def get_user(self, client_id: str) -> AuthenticatedClient | None:
         raise NotImplementedError
 
     @abstractmethod

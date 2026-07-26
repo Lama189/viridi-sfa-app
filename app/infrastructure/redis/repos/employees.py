@@ -1,15 +1,18 @@
 import logging
 from uuid import UUID
 
+from pydantic import TypeAdapter, ValidationError
 from redis.asyncio import Redis, RedisError
 
 from app.core.config import get_settings
-from app.api.v1.schemas.employees import EmployeeCachedDTO
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
 
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
+
+employee_adapter = TypeAdapter(AuthenticatedEmployee)
 
 
 class EmployeesRedisRepository(IEmployeesCacheRepository):
@@ -48,26 +51,30 @@ class EmployeesRedisRepository(IEmployeesCacheRepository):
     async def set_employee(
         self,
         employee_id: UUID,
-        employee: EmployeeCachedDTO,
+        employee: AuthenticatedEmployee,
         expire_seconds: int = 900,
     ) -> None:
         try:
             await self._client.set(
                 f"employee:{employee_id}",
-                employee.model_dump_json(),
+                employee_adapter.dump_json(employee),
                 ex=expire_seconds,
             )
         except RedisError as e:
             logger.error(f"Failed to set employee for {employee_id}: {e}")
 
-    async def get_employee(self, employee_id: UUID) -> EmployeeCachedDTO | None:
+    async def get_employee(self, employee_id: UUID) -> AuthenticatedEmployee | None:
         try:
             employee_json = await self._client.get(f"employee:{employee_id}")
             if not employee_json:
                 return None
-            return EmployeeCachedDTO.model_validate_json(employee_json)
+            return employee_adapter.validate_json(employee_json)
         except RedisError as e:
             logger.error(f"Failed to get employee for {employee_id}: {e}")
+            return None
+        except ValidationError as e:
+            logger.warning(f"Dropping stale cache entry for employee {employee_id}: {e}")
+            await self.delete_employee(employee_id)
             return None
 
     async def delete_employee(self, employee_id: UUID) -> None:

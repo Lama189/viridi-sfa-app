@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from app.domain.entities.auth import AuthenticatedClient
 from app.domain.entities.clients import Client
 from app.core.extensions import UserNotFoundError, UserAlreadyExistsError, UserNotActiveError
 from app.core.security import SecurityUtils
@@ -10,9 +11,8 @@ from app.application.interfaces.services.invite_codes import IClientInviteCodesS
 from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
 from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.api.v1.schemas.clients import (
-    ClientUpdate, 
-    ClientCachedDTO, 
-    ClientLoginDTO, 
+    ClientUpdate,
+    ClientLoginDTO,
     ClientResponse,
     ClientWithTokensResponse,
     ClientRegisterRequest
@@ -105,7 +105,7 @@ class ClientsAuthService:
 
         await self._cache.set_user(
             client_id=client_id,
-            user=ClientCachedDTO.model_validate(client),
+            user=AuthenticatedClient.from_entity(client),
         )
 
         return TokenResponseDTO(

@@ -8,7 +8,7 @@ from starlette.responses import StreamingResponse
 from app.api.dependencies import get_media_service, allow_all_staff
 from app.application.services.media import MediaService
 from app.api.v1.schemas.media import MediaUploadResponse
-from app.domain.entities.employees import Employee
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.enums import MediaBucket
 
 
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/v1/media", tags=["Media"])
 )
 async def upload_media(
     service: Annotated[MediaService, Depends(get_media_service)],
-    employee: Annotated[Employee, Depends(allow_all_staff)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
     file: UploadFile = File(...),
     bucket: MediaBucket = Query(...)
 ):

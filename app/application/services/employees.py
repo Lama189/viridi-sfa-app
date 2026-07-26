@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.employees import Employee
 from app.core.extensions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
 from app.core.security import SecurityUtils
@@ -8,9 +9,8 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
 from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.api.v1.schemas.employees import (
-    EmployeeCreate, 
-    EmployeeUpdate, 
-    EmployeeCachedDTO, 
+    EmployeeCreate,
+    EmployeeUpdate,
     EmployeeLoginDTO,
     EmployeeResponse,
     EmployeeWithTokensResponse,
@@ -111,7 +111,7 @@ class EmployeesAuthService:
 
         await self._cache.set_employee(
             employee_id=employee_id_str,
-            employee=EmployeeCachedDTO.model_validate(employee)
+            employee=AuthenticatedEmployee.from_entity(employee)
         )
 
         return TokenResponseDTO(

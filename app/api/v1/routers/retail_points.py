@@ -14,7 +14,7 @@ from app.api.v1.schemas.retail_points import (
 from app.application.services.retail_points import RetailPointsService
 from app.api.dependencies import get_retail_points_service, allow_admin, allow_all_staff
 
-from app.domain.entities.employees import Employee
+from app.domain.entities.auth import AuthenticatedEmployee
 
 
 router = APIRouter(prefix="/api/v1/retail_points", tags=["RetailPoints"])
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/api/v1/retail_points", tags=["RetailPoints"])
 async def create_retail_point(
     dto: CreateRetailPointRequest,
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
-    employee: Annotated[Employee, Depends(allow_all_staff)]
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
 ):
     try:
         point, invite_code = await service.create_retail_point(dto, employee.id)
@@ -45,14 +45,14 @@ async def create_retail_point(
         )
 
 @router.post(
-    path="",
+    path="/bulk",
     response_model=BulkCreateRetailPointsResponse,
     status_code=status.HTTP_201_CREATED
 )
 async def bulk_create_retail_points(
     dto: list[CreateRetailPointRequest],
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
-    employee: Annotated[Employee, Depends(allow_admin)]
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_admin)]
 ):
     try:
         result = await service.bulk_create(employee.id, dto)

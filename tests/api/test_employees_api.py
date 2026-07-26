@@ -7,6 +7,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 from app.domain.entities.employees import Employee
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.api.dependencies import get_employees_service, get_employees_auth_service, get_current_user
 from app.infrastructure.postgres.models.enums import EmployeeRole
 
@@ -21,14 +22,12 @@ def mock_auth_service():
     return AsyncMock()
 
 
-# Мокаем текущего сотрудника (возвращаем админа, чтобы пройти RoleChecker)
 @pytest.fixture
 def mock_admin_employee():
-    return Employee(
+    return AuthenticatedEmployee(
         id=uuid4(),
         phone="+998974227694",
-        password_hash="h",
-        role=EmployeeRole.ADMIN,  # Именно ADMIN, чтобы RoleChecker пропустил
+        role=EmployeeRole.ADMIN, 
         full_name="Mock Admin",
         is_active=True
     )

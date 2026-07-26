@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.application.services.employees import EmployeesService, EmployeesAuthService
 from app.api.dependencies import get_employees_service, get_employees_auth_service, allow_admin
 from app.api.v1.schemas.employees import (
-    EmployeeUpdate, 
-    EmployeeResponse, 
-    EmployeeWithTokensResponse, 
+    EmployeeUpdate,
+    EmployeeResponse,
+    EmployeeWithTokensResponse,
     EmployeeLoginDTO
 )
+from app.api.v1.schemas.tokens import RefreshTokenDTO, TokenResponseDTO
 
 
 
@@ -41,6 +42,21 @@ async def login(
     service: Annotated[EmployeesAuthService, Depends(get_employees_auth_service)],
 ):
     return await service.login(dto)
+
+
+@router.post(
+    path="/refresh",
+    status_code=status.HTTP_200_OK,
+    response_model=TokenResponseDTO,
+)
+async def refresh(
+    dto: RefreshTokenDTO,
+    service: Annotated[EmployeesAuthService, Depends(get_employees_auth_service)],
+):
+    try:
+        return await service.refresh(dto.refresh_token)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
 @router.patch(

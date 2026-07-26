@@ -29,3 +29,11 @@ class IRetailPointRepository(ABC):
     @abstractmethod
     async def delete(self, category: RetailPoint) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def list_by_employee(
+        self,
+        employee_id: UUID,
+        only_active: bool = True,
+    ) -> list[RetailPoint]:
+        raise NotImplementedError

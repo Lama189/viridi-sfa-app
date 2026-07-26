@@ -24,9 +24,11 @@ from app.application.services.members import RetailPointMembersService
 from app.application.services.orders import OrdersService
 from app.application.services.products import ProductsService
 from app.application.services.retail_points import RetailPointsService
+from app.application.services.retail_point_assignments import RetailPointAssignmentService
 from app.application.services.stocks import StockService
 from app.application.services.warehouses import WarehousesService
 from app.application.interfaces.services.stocks import IStockService
+from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
 from app.application.interfaces.object_storage import IObjectStorage
 from app.application.services.media import MediaService
 from app.application.services.visit_media import VisitMediaService
@@ -100,11 +102,18 @@ async def get_retail_point_members_service(
     return RetailPointMembersService(uow, invite_codes)
 
 
+async def get_retail_point_assignment_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> IRetailPointAssignmentService:
+    return RetailPointAssignmentService(uow)
+
+
 async def get_retail_points_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
     invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
+    assignments: Annotated[IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)],
 ) -> RetailPointsService:
-    return RetailPointsService(uow, invite_codes)
+    return RetailPointsService(uow, invite_codes, assignments)
 
 
 async def get_products_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ProductsService:

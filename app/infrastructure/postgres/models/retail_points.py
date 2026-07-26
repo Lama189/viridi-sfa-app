@@ -127,6 +127,7 @@ class RetailPoint(BaseModel):
         back_populates="retail_point",
     )
 
-    assignments: Mapped[list["RetailPointAssignment"]] = relationship(
+    assignment: Mapped["RetailPointAssignment"] = relationship(
         back_populates="retail_point",
+        uselist=False,
     )

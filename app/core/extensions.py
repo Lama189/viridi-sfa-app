@@ -72,3 +72,9 @@ class VisitMediaAlreadyAttachedError(DomainError):
 
 class EmployeeHasActiveVisitError(DomainError):
     pass
+
+class RetailPointAssignmentAlreadyExistsError(DomainError):
+    pass
+
+class RetailPointAssignmentNotFoundError(DomainError):
+    pass

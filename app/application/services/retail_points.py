@@ -1,21 +1,29 @@
 from uuid import UUID
 
-from app.core.extensions import RetailPointNotFoundError, RetailPointImageNotFoundError, RetailPointImageAlreadyExistsError
 from app.domain.entities.retail_points import RetailPoint
-
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
+from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
+from app.core.extensions import (
+    RetailPointNotFoundError, 
+    RetailPointImageNotFoundError, 
+    RetailPointImageAlreadyExistsError
+)
+
 
 
 class RetailPointsService:
+
     def __init__(
         self, 
         uow: IUnitOfWork, 
-        invite_codes: IClientInviteCodesService,
+        invite_codes_service: IClientInviteCodesService,
+        assignments_service: IRetailPointAssignmentService,
     ) -> None:
         self._uow = uow
-        self._invite_codes = invite_codes
+        self._invite_codes_service = invite_codes_service
+        self._assignments_service = assignments_service
 
     async def create_retail_point(
         self, 
@@ -50,9 +58,11 @@ class RetailPointsService:
         )
         
         await self._uow.retail_points.add(point)
-        code = await self._invite_codes.create(agent_id, point.id)
+        code = await self._invite_codes_service.create(agent_id, point.id)
+        await self._assignments_service.create(point.id)
 
         await self._uow.commit()
+
         return point, code
     
     async def update_retail_point(self, retail_point_id: UUID, dto: UpdateRetailPointRequest) -> RetailPoint:
@@ -108,7 +118,9 @@ class RetailPointsService:
             retail_point.is_active = bool(dto.is_active)
 
         await self._uow.retail_points.update(retail_point)
+
         await self._uow.commit()
+
         return retail_point
 
     async def delete_retail_point(self, retail_point_id: UUID) -> None:
@@ -117,6 +129,8 @@ class RetailPointsService:
             raise RetailPointNotFoundError()
 
         await self._uow.retail_points.delete(retail_point)
+        await self._assignments_service.delete(retail_point_id)
+        
         await self._uow.commit()
 
     async def get_by_id(self, retail_point_id: UUID) -> RetailPoint:
@@ -131,7 +145,7 @@ class RetailPointsService:
         if retail_point is None:
             raise RetailPointNotFoundError()
 
-        return await self._invite_codes.get_raw_code(retail_point_id)
+        return await self._invite_codes_service.get_raw_code(retail_point_id)
 
     async def detach_media(self, retail_point_id: UUID) -> UUID:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
@@ -184,3 +198,6 @@ class RetailPointsService:
         await self._uow.commit()
         
         return media_id
+
+    async def list_by_employee(self, employee_id: UUID) -> list[RetailPoint]:
+        return await self._uow.retail_points.list_by_employee(employee_id, True)

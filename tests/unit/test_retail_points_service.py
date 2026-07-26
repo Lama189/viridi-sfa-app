@@ -25,8 +25,13 @@ def mock_invite_codes():
 
 
 @pytest.fixture
-def service(mock_uow, mock_invite_codes):
-    return RetailPointsService(mock_uow, mock_invite_codes)
+def mock_assignments():
+    return AsyncMock()
+
+
+@pytest.fixture
+def service(mock_uow, mock_invite_codes, mock_assignments):
+    return RetailPointsService(mock_uow, mock_invite_codes, mock_assignments)
 
 
 # --- create_retail_point ---

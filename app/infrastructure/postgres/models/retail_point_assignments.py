@@ -37,10 +37,10 @@ class RetailPointAssignment(BaseModel):
         unique=True,
     )
 
-    employee_id: Mapped[UUID] = mapped_column(
+    employee_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="RESTRICT"),
-        nullable=False,
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

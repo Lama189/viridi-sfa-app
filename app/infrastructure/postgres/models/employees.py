@@ -76,7 +76,7 @@ class Employee(BaseModel):
     )
 
     visits: Mapped[list["Visit"]] = relationship(
-        back_populates="agent",
+        back_populates="employee",
     )
 
     retail_point_assignments: Mapped[list["RetailPointAssignment"]] = relationship(

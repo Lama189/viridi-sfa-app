@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.infrastructure.postgres.models.retail_points import RetailPoint
     from app.infrastructure.postgres.models.visit_media import VisitMedia
     from app.infrastructure.postgres.models.visit_debts import VisitDebt
+    from app.infrastructure.postgres.models.orders import Order
 
 
 class Visit(BaseModel):
@@ -67,4 +68,8 @@ class Visit(BaseModel):
     debts: Mapped[list["VisitDebt"]] = relationship(
         back_populates="visit",
         cascade="all, delete-orphan",
+    )
+
+    orders: Mapped[list["Order"]] = relationship(
+        back_populates="visit",
     )

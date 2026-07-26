@@ -21,7 +21,7 @@ class IRetailPointAssignmentRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_employee_id(
+    async def list_by_employee_id(
         self, employee_id: UUID,
     ) -> list[RetailPointAssignment]:
         raise NotImplementedError

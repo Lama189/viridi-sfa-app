@@ -44,7 +44,7 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
 
         return self._to_domain(model)
 
-    async def get_by_employee_id(self, employee_id: UUID) -> list[RetailPointAssignment]:
+    async def list_by_employee_id(self, employee_id: UUID) -> list[RetailPointAssignment]:
         result = await self._session.execute(
             select(RetailPointAssignmentModel).where(
                 RetailPointAssignmentModel.employee_id == employee_id,

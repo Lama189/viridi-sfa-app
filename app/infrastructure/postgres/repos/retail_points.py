@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.domain.entities.retail_points import RetailPoint
 from app.infrastructure.postgres.models.retail_points import RetailPoint as RetailPointModel
+from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment as RetailPointAssignmentModel
 
 
 class PostgresRetailPointRepository(IRetailPointRepository):
@@ -81,6 +82,29 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         )
         await self._session.flush()
 
+    async def list_by_employee(
+        self,
+        employee_id: UUID,
+        only_active: bool = True,
+    ) -> list[RetailPoint]:
+        stmt = (
+            select(RetailPointModel)
+            .join(
+                RetailPointAssignmentModel,
+                RetailPointAssignmentModel.retail_point_id == RetailPointModel.id,
+            )
+            .where(
+                RetailPointAssignmentModel.employee_id == employee_id,
+            )
+        )
+
+        if only_active:
+            stmt = stmt.where(RetailPointModel.is_active.is_(True))
+
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(model) for model in result.scalars().all()]
+    
     def _to_domain(self, model: RetailPointModel) -> RetailPoint:
         return RetailPoint(
             id=model.id,

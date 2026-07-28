@@ -175,6 +175,17 @@ class PostgresRetailPointRepository(IRetailPointRepository):
 
         return [self._to_domain(model) for model in result.scalars().all()]
 
+    async def list_paginated(
+        self,
+        employee_id: UUID,
+        limit: int,
+        offset: int,
+    ) -> list[RetailPoint]:
+        stmt = select(RetailPointModel).limit(limit).offset(offset)
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(model) for model in result.scalars().all()]
+
     def _to_domain(self, model: RetailPointModel) -> RetailPoint:
         return RetailPoint(
             id=model.id,

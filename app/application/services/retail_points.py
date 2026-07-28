@@ -224,6 +224,18 @@ class RetailPointsService:
 
         return BulkCreateRetailPointsResult(created=retail_points)
 
+    async def list_retail_points(
+        self,
+        employee_id: UUID,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[RetailPoint]:
+        return await self._uow.retail_points.list_paginated(
+            employee_id=employee_id,
+            limit=limit,
+            offset=offset,
+        )
+
     async def _prepare_bulk_create(
         self,
         employee_id: UUID,

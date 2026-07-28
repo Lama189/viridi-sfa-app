@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import Annotated
 from dataclasses import asdict
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 
 from app.api.v1.schemas.retail_points import (
     CreateRetailPointRequest,
@@ -125,3 +125,20 @@ async def delete_retail_point(
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
 ):
     await service.delete_retail_point(retail_point_id)
+
+
+@router.get(
+    "",
+    response_model=list[RetailPointResponse],
+)
+async def list_retail_points(
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+    limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0, ge=0),
+):
+    return await service.list_retail_points(
+        employee_id=employee.id,
+        limit=limit,
+        offset=offset,
+    )

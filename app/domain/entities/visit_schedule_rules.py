@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from uuid import UUID, uuid4
-from datetime import date
 
 from app.domain.enums import Weekday
 

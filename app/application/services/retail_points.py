@@ -1,9 +1,16 @@
 from uuid import UUID
 
-from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity, BulkCreateRetailPointsResult
+from app.domain.entities.retail_points import (
+    RetailPoint, 
+    RetailPointIdentity, 
+    BulkCreateRetailPointsResult
+)
+
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
+from app.application.interfaces.services.visit_schedule_rules import IVisitScheduleService
+
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
 from app.core.extensions import (
     RetailPointNotFoundError, 
@@ -23,15 +30,17 @@ class RetailPointsService:
         uow: IUnitOfWork, 
         invite_codes_service: IClientInviteCodesService,
         assignments_service: IRetailPointAssignmentService,
+        visits_rules: IVisitScheduleService,
     ) -> None:
         self._uow = uow
         self._invite_codes_service = invite_codes_service
         self._assignments_service = assignments_service
+        self._visits_rules = visits_rules
 
     async def create_retail_point(
-        self, 
-        dto: CreateRetailPointRequest, 
-        employee_id: UUID
+        self,
+        dto: CreateRetailPointRequest,
+        employee_id: UUID,
     ) -> tuple[RetailPoint, str]:
         point = RetailPoint(
             name=dto.name,
@@ -49,18 +58,13 @@ class RetailPointsService:
             latitude=dto.latitude,
             longitude=dto.longitude,
             photo_id=dto.photo_id,
-            visit_mon=dto.visit_mon,
-            visit_tue=dto.visit_tue,
-            visit_wed=dto.visit_wed,
-            visit_thu=dto.visit_thu,
-            visit_fri=dto.visit_fri,
-            visit_sat=dto.visit_sat,
-            visit_sun=dto.visit_sun,
-            created_by_employee_id=employee_id,  
+            created_by_employee_id=employee_id,
             is_active=True,
         )
-        
+
         await self._uow.retail_points.add(point)
+
+        await self._visits_rules.replace_schedule(point.id, dto.visits)
         code = await self._invite_codes_service.create(employee_id, point.id)
         await self._assignments_service.create(point.id)
 
@@ -68,7 +72,11 @@ class RetailPointsService:
 
         return point, code
     
-    async def update_retail_point(self, retail_point_id: UUID, dto: UpdateRetailPointRequest) -> RetailPoint:
+    async def update_retail_point(
+        self,
+        retail_point_id: UUID,
+        dto: UpdateRetailPointRequest,
+    ) -> RetailPoint:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if not retail_point:
             raise ValueError(f"Retail point {retail_point_id} not found")
@@ -103,24 +111,13 @@ class RetailPointsService:
             retail_point.longitude = dto.longitude
         if dto.photo_id is not None:
             retail_point.photo_id = dto.photo_id
-        if dto.visit_mon is not None:
-            retail_point.visit_mon = dto.visit_mon
-        if dto.visit_tue is not None:
-            retail_point.visit_tue = dto.visit_tue
-        if dto.visit_wed is not None:
-            retail_point.visit_wed = dto.visit_wed
-        if dto.visit_thu is not None:
-            retail_point.visit_thu = dto.visit_thu
-        if dto.visit_fri is not None:
-            retail_point.visit_fri = dto.visit_fri
-        if dto.visit_sat is not None:
-            retail_point.visit_sat = dto.visit_sat
-        if dto.visit_sun is not None:
-            retail_point.visit_sun = dto.visit_sun
         if dto.is_active is not None:
             retail_point.is_active = bool(dto.is_active)
 
         await self._uow.retail_points.update(retail_point)
+
+        if dto.visits is not None:
+            await self._visits_rules.replace_schedule(retail_point.id, dto.visits)
 
         await self._uow.commit()
 
@@ -217,6 +214,13 @@ class RetailPointsService:
         retail_point_ids = [retail_point.id for retail_point in retail_points]
 
         await self._uow.retail_points.add_many(retail_points)
+
+        for retail_point, point_dto in zip(retail_points, dto):
+            await self._visits_rules.replace_schedule(
+                retail_point.id,
+                point_dto.visits,
+            )
+
         await self._invite_codes_service.create_many(employee_id, retail_point_ids)
         await self._assignments_service.create_many(retail_point_ids)
 
@@ -254,10 +258,7 @@ class RetailPointsService:
 
             identities.add(identity)
 
-        existing = await self._uow.retail_points.find_existing_by_identity(
-            list(identities)
-        )
-
+        existing = await self._uow.retail_points.find_existing_by_identity(list(identities))
         if existing:
             raise RetailPointAlreadyExistsError(existing)
 
@@ -278,13 +279,6 @@ class RetailPointsService:
                 latitude=point.latitude,
                 longitude=point.longitude,
                 photo_id=point.photo_id,
-                visit_mon=point.visit_mon,
-                visit_tue=point.visit_tue,
-                visit_wed=point.visit_wed,
-                visit_thu=point.visit_thu,
-                visit_fri=point.visit_fri,
-                visit_sat=point.visit_sat,
-                visit_sun=point.visit_sun,
                 created_by_employee_id=employee_id,
             )
             for point in dto

@@ -51,14 +51,6 @@ class IRetailPointRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def list_by_employee_and_weekday(
-        self,
-        employee_id: UUID,
-        weekday: Weekday,
-    ) -> list[RetailPoint]:
-        raise NotImplementedError
-
-    @abstractmethod
     async def list_paginated(
         self,
         employee_id: UUID,

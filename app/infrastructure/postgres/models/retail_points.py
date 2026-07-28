@@ -88,14 +88,6 @@ class RetailPoint(BaseModel):
         nullable=True,
     )
 
-    visit_mon: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_tue: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_wed: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_thu: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_fri: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_sat: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_sun: Mapped[bool] = mapped_column(Boolean, default=False)
-
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,

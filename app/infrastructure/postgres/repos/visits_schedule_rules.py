@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import date
 
 from sqlalchemy import delete, select, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,6 +72,22 @@ class PostgresVisitScheduleRuleRepository(IVisitScheduleRuleRepository):
         models = [self._to_model(rule) for rule in rules]
         self._session.add_all(models)
         await self._session.flush()
+
+
+    async def get_active_rules_for_day(
+        self,
+        day: date,
+    ) -> list[VisitScheduleRule]:
+        result = await self._session.execute(
+            select(VisitScheduleRuleModel)
+            .where(
+                VisitScheduleRuleModel.is_active.is_(True),
+                VisitScheduleRuleModel.weekday == day.weekday(),
+            )
+            .order_by(VisitScheduleRuleModel.retail_point_id)
+        )
+
+        return [self._to_domain(m) for m in result.scalars().all()]
 
     def _to_domain(self, model: VisitScheduleRuleModel) -> VisitScheduleRule:
         return VisitScheduleRule(

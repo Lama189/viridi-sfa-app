@@ -5,6 +5,16 @@ from pydantic import BaseModel, Field
 from app.domain.enums import ClientType
 
 
+class VisitsDatesDTO(BaseModel):
+    mon: bool = False
+    tue: bool = False
+    wed: bool = False
+    thu: bool = False
+    fri: bool = False
+    sat: bool = False
+    sun: bool = False
+
+
 class CreateRetailPointRequest(BaseModel):
     name: str = Field(max_length=150)
     legal_name: str | None = Field(default=None, max_length=150)
@@ -28,13 +38,7 @@ class CreateRetailPointRequest(BaseModel):
 
     photo_id: UUID | None = None
 
-    visit_mon: bool = False
-    visit_tue: bool = False
-    visit_wed: bool = False
-    visit_thu: bool = False
-    visit_fri: bool = False
-    visit_sat: bool = False
-    visit_sun: bool = False
+    visits: VisitsDatesDTO = Field(default_factory=VisitsDatesDTO)
 
 
 class UpdateRetailPointRequest(BaseModel):
@@ -60,13 +64,7 @@ class UpdateRetailPointRequest(BaseModel):
 
     photo_id: UUID | None = None
 
-    visit_mon: bool | None = None
-    visit_tue: bool | None = None
-    visit_wed: bool | None = None
-    visit_thu: bool | None = None
-    visit_fri: bool | None = None
-    visit_sat: bool | None = None
-    visit_sun: bool | None = None
+    visits: VisitsDatesDTO = Field(default_factory=VisitsDatesDTO)
 
     is_active: bool | None = None
 
@@ -96,13 +94,7 @@ class RetailPointResponse(BaseModel):
 
     photo_id: UUID | None
 
-    visit_mon: bool
-    visit_tue: bool
-    visit_wed: bool
-    visit_thu: bool
-    visit_fri: bool
-    visit_sat: bool
-    visit_sun: bool
+    visits: VisitsDatesDTO = Field(default_factory=VisitsDatesDTO)
 
     is_active: bool
 

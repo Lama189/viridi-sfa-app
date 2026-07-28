@@ -5,20 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
-from app.domain.enums import Weekday
 from app.infrastructure.postgres.models.retail_points import RetailPoint as RetailPointModel
 from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment as RetailPointAssignmentModel
-
-
-_WEEKDAY_COLUMNS = {
-    Weekday.MONDAY: RetailPointModel.visit_mon,
-    Weekday.TUESDAY: RetailPointModel.visit_tue,
-    Weekday.WEDNESDAY: RetailPointModel.visit_wed,
-    Weekday.THURSDAY: RetailPointModel.visit_thu,
-    Weekday.FRIDAY: RetailPointModel.visit_fri,
-    Weekday.SATURDAY: RetailPointModel.visit_sat,
-    Weekday.SUNDAY: RetailPointModel.visit_sun,
-}
 
 
 class PostgresRetailPointRepository(IRetailPointRepository):
@@ -109,13 +97,6 @@ class PostgresRetailPointRepository(IRetailPointRepository):
                 latitude=retail_point.latitude,
                 longitude=retail_point.longitude,
                 photo_id=retail_point.photo_id,
-                visit_mon=retail_point.visit_mon,
-                visit_tue=retail_point.visit_tue,
-                visit_wed=retail_point.visit_wed,
-                visit_thu=retail_point.visit_thu,
-                visit_fri=retail_point.visit_fri,
-                visit_sat=retail_point.visit_sat,
-                visit_sun=retail_point.visit_sun,
                 created_by_employee_id=retail_point.created_by_employee_id,
                 is_active=retail_point.is_active,
             )
@@ -151,29 +132,6 @@ class PostgresRetailPointRepository(IRetailPointRepository):
 
         return [self._to_domain(model) for model in result.scalars().all()]
 
-    async def list_by_employee_and_weekday(
-        self,
-        employee_id: UUID,
-        weekday: Weekday,
-    ) -> list[RetailPoint]:
-        schedule_column = _WEEKDAY_COLUMNS[weekday]
-
-        stmt = (
-            select(RetailPointModel)
-            .join(
-                RetailPointAssignmentModel,
-                RetailPointAssignmentModel.retail_point_id == RetailPointModel.id,
-            )
-            .where(
-                RetailPointAssignmentModel.employee_id == employee_id,
-                RetailPointModel.is_active.is_(True),
-                schedule_column.is_(True),
-            )
-        )
-
-        result = await self._session.execute(stmt)
-
-        return [self._to_domain(model) for model in result.scalars().all()]
 
     async def list_paginated(
         self,
@@ -204,13 +162,6 @@ class PostgresRetailPointRepository(IRetailPointRepository):
             latitude=model.latitude,
             longitude=model.longitude,
             photo_id=model.photo_id,
-            visit_mon=model.visit_mon,
-            visit_tue=model.visit_tue,
-            visit_wed=model.visit_wed,
-            visit_thu=model.visit_thu,
-            visit_fri=model.visit_fri,
-            visit_sat=model.visit_sat,
-            visit_sun=model.visit_sun,
             created_by_employee_id=model.created_by_employee_id,
             is_active=model.is_active,
         )
@@ -233,13 +184,6 @@ class PostgresRetailPointRepository(IRetailPointRepository):
             latitude=retail_point.latitude,
             longitude=retail_point.longitude,
             photo_id=retail_point.photo_id,
-            visit_mon=retail_point.visit_mon,
-            visit_tue=retail_point.visit_tue,
-            visit_wed=retail_point.visit_wed,
-            visit_thu=retail_point.visit_thu,
-            visit_fri=retail_point.visit_fri,
-            visit_sat=retail_point.visit_sat,
-            visit_sun=retail_point.visit_sun,
             created_by_employee_id=retail_point.created_by_employee_id,
             is_active=retail_point.is_active,
         )

@@ -1,11 +1,14 @@
+from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import select, func, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.orders import IOrderRepository
 from app.domain.entities.orders import Order
 from app.infrastructure.postgres.models.orders import Order as OrderModel
+from app.infrastructure.postgres.models.visits import Visit as VisitModel
 
 
 class PostgresOrderRepository(IOrderRepository):
@@ -61,6 +64,29 @@ class PostgresOrderRepository(IOrderRepository):
             sa_delete(OrderModel).where(OrderModel.id == order.id)
         )
         await self._session.flush()
+
+    async def get_statistics_by_employee_and_date(
+        self,
+        employee_id: UUID,
+        target_date: date,
+    ) -> tuple[int, Decimal]:
+        stmt = (
+            select(
+                func.count(OrderModel.id),
+                func.coalesce(func.sum(OrderModel.total_amount), Decimal("0.00")),
+            )
+            .select_from(OrderModel)
+            .join(VisitModel, OrderModel.visit_id == VisitModel.id)
+            .where(
+                VisitModel.employee_id == employee_id,
+                func.date(VisitModel.started_at) == target_date,
+            )
+        )
+
+        result = await self._session.execute(stmt)
+        count, amount = result.one()
+        return count or 0, Decimal(str(amount or "0.00"))
+
 
     def _to_domain(self, model: OrderModel) -> Order:
         return Order(

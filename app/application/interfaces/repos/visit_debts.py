@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 from uuid import UUID
 
 from app.domain.entities.visit_debts import VisitDebt
@@ -25,3 +26,12 @@ class IVisitDebtRepository(ABC):
     @abstractmethod
     async def delete(self, visit_debt: VisitDebt) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def count_by_employee_and_date(
+        self,
+        employee_id: UUID,
+        target_date: date,
+    ) -> int:
+        raise NotImplementedError
+

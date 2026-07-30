@@ -1,11 +1,13 @@
+from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import select, func, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visit_debts import IVisitDebtRepository
 from app.domain.entities.visit_debts import VisitDebt
 from app.infrastructure.postgres.models.visit_debts import VisitDebt as VisitDebtModel
+from app.infrastructure.postgres.models.visits import Visit as VisitModel
 
 
 class PostgresVisitDebtRepository(IVisitDebtRepository):
@@ -53,6 +55,25 @@ class PostgresVisitDebtRepository(IVisitDebtRepository):
             sa_delete(VisitDebtModel).where(VisitDebtModel.id == visit_debt.id)
         )
         await self._session.flush()
+
+    async def count_by_employee_and_date(
+        self,
+        employee_id: UUID,
+        target_date: date,
+    ) -> int:
+        stmt = (
+            select(func.count(VisitDebtModel.id))
+            .select_from(VisitDebtModel)
+            .join(VisitModel, VisitDebtModel.visit_id == VisitModel.id)
+            .where(
+                VisitModel.employee_id == employee_id,
+                func.date(VisitModel.started_at) == target_date,
+            )
+        )
+
+        result = await self._session.execute(stmt)
+        return result.scalar_one() or 0
+
 
     def _to_domain(self, model: VisitDebtModel) -> VisitDebt:
         return VisitDebt(

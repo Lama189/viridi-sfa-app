@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 9c11ab964345
+Revision ID: 55629984a1b9
 Revises: 
-Create Date: 2026-07-26 05:07:20.789092
+Create Date: 2026-07-30 10:40:38.168023
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9c11ab964345'
+revision: str = '55629984a1b9'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -84,6 +84,15 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('visit_plans',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('employee_id', sa.UUID(), nullable=False),
+    sa.Column('plan_date', sa.Date(), nullable=False),
+    sa.Column('status', sa.Enum('PLANNED', 'COMPLETED', 'CANCELLED', name='visit_plan_status'), nullable=False),
+    sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('employee_id', 'plan_date', name='uq_visit_plan_employee_date')
+    )
     op.create_table('retail_points',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(length=150), nullable=False),
@@ -101,26 +110,12 @@ def upgrade() -> None:
     sa.Column('latitude', sa.Numeric(precision=9, scale=6), nullable=True),
     sa.Column('longitude', sa.Numeric(precision=9, scale=6), nullable=True),
     sa.Column('photo_id', sa.UUID(), nullable=True),
-    sa.Column('visit_mon', sa.Boolean(), nullable=False),
-    sa.Column('visit_tue', sa.Boolean(), nullable=False),
-    sa.Column('visit_wed', sa.Boolean(), nullable=False),
-    sa.Column('visit_thu', sa.Boolean(), nullable=False),
-    sa.Column('visit_fri', sa.Boolean(), nullable=False),
-    sa.Column('visit_sat', sa.Boolean(), nullable=False),
-    sa.Column('visit_sun', sa.Boolean(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_by_employee_id', sa.UUID(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_employee_id'], ['employees.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['photo_id'], ['media_objects.id'], ondelete='SET NULL'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_retail_points_fri', 'retail_points', ['visit_fri'], unique=False)
-    op.create_index('idx_retail_points_mon', 'retail_points', ['visit_mon'], unique=False)
-    op.create_index('idx_retail_points_sat', 'retail_points', ['visit_sat'], unique=False)
-    op.create_index('idx_retail_points_sun', 'retail_points', ['visit_sun'], unique=False)
-    op.create_index('idx_retail_points_thu', 'retail_points', ['visit_thu'], unique=False)
-    op.create_index('idx_retail_points_tue', 'retail_points', ['visit_tue'], unique=False)
-    op.create_index('idx_retail_points_wed', 'retail_points', ['visit_wed'], unique=False)
     op.create_table('stock_transactions',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('warehouse_id', sa.UUID(), nullable=False),
@@ -185,6 +180,27 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['client_id'], ['clients.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('visit_plan_items',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('visit_plan_id', sa.UUID(), nullable=False),
+    sa.Column('retail_point_id', sa.UUID(), nullable=False),
+    sa.Column('order', sa.Integer(), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'COMPLETED', 'CANCELLED', name='visit_plan_item_status'), nullable=False),
+    sa.CheckConstraint('"order" >= 0', name='ck_visit_plan_item_order_non_negative'),
+    sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['visit_plan_id'], ['visit_plans.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('visit_plan_id', 'retail_point_id', name='uq_visit_plan_item_point')
+    )
+    op.create_table('visit_schedule_rules',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('retail_point_id', sa.UUID(), nullable=False),
+    sa.Column('weekday', sa.Integer(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('retail_point_id', 'weekday', name='uq_visit_schedule_rule_point_weekday')
     )
     op.create_table('visits',
     sa.Column('id', sa.UUID(), nullable=False),
@@ -253,6 +269,8 @@ def downgrade() -> None:
     op.drop_table('visit_debts')
     op.drop_table('orders')
     op.drop_table('visits')
+    op.drop_table('visit_schedule_rules')
+    op.drop_table('visit_plan_items')
     op.drop_table('retail_point_members')
     op.drop_index('uq_active_invite_per_retail_point', table_name='retail_point_invite_codes', postgresql_where=sa.text('is_active = TRUE'))
     op.drop_table('retail_point_invite_codes')
@@ -261,14 +279,8 @@ def downgrade() -> None:
     op.drop_table('stocks')
     op.drop_index('idx_stock_tx_warehouse_product_created', table_name='stock_transactions')
     op.drop_table('stock_transactions')
-    op.drop_index('idx_retail_points_wed', table_name='retail_points')
-    op.drop_index('idx_retail_points_tue', table_name='retail_points')
-    op.drop_index('idx_retail_points_thu', table_name='retail_points')
-    op.drop_index('idx_retail_points_sun', table_name='retail_points')
-    op.drop_index('idx_retail_points_sat', table_name='retail_points')
-    op.drop_index('idx_retail_points_mon', table_name='retail_points')
-    op.drop_index('idx_retail_points_fri', table_name='retail_points')
     op.drop_table('retail_points')
+    op.drop_table('visit_plans')
     op.drop_table('products')
     op.drop_table('media_objects')
     op.drop_table('warehouses')

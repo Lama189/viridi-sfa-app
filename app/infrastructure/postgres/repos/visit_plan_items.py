@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select, delete as sa_delete
+from sqlalchemy import select, func, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visit_plan_items import IVisitPlanItemRepository
@@ -34,6 +34,15 @@ class PostgresVisitPlanItemRepository(IVisitPlanItemRepository):
             )
         )
         await self._session.flush()
+
+    async def count_by_plan_id(self, plan_id: UUID) -> int:
+        result = await self._session.execute(
+            select(func.count(VisitPlanItemModel.id)).where(
+                VisitPlanItemModel.visit_plan_id == plan_id
+            )
+        )
+        return result.scalar_one() or 0
+
 
     def _to_domain(self, model: VisitPlanItemModel) -> VisitPlanItem:
         return VisitPlanItem(

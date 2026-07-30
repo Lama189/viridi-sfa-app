@@ -17,3 +17,8 @@ class IVisitPlanItemRepository(ABC):
     @abstractmethod
     async def delete_by_plan(self, visit_plan_id: UUID) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def count_by_plan_id(self, plan_id: UUID) -> int:
+        raise NotImplementedError
+

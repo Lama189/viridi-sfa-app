@@ -43,3 +43,12 @@ class IVisitRepository(ABC):
     @abstractmethod
     async def delete(self, visit: Visit) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def count_completed_by_plan(
+        self,
+        plan_id: UUID,
+        employee_id: UUID,
+    ) -> int:
+        raise NotImplementedError
+

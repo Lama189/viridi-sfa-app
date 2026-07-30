@@ -1,12 +1,13 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import select, func, update, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visits import IVisitRepository
 from app.domain.entities.visits import Visit
 from app.domain.enums import VisitStatus
 from app.infrastructure.postgres.models.visits import Visit as VisitModel
+from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem as VisitPlanItemModel
 
 
 class PostgresVisitRepository(IVisitRepository):
@@ -94,6 +95,23 @@ class PostgresVisitRepository(IVisitRepository):
             sa_delete(VisitModel).where(VisitModel.id == visit.id)
         )
         await self._session.flush()
+
+    async def count_completed_by_plan(
+        self,
+        plan_id: UUID,
+        employee_id: UUID,
+    ) -> int:
+        subquery = select(VisitPlanItemModel.retail_point_id).where(
+            VisitPlanItemModel.visit_plan_id == plan_id
+        )
+        stmt = select(func.count(func.distinct(VisitModel.retail_point_id))).where(
+            VisitModel.employee_id == employee_id,
+            VisitModel.status == VisitStatus.COMPLETED,
+            VisitModel.retail_point_id.in_(subquery),
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one() or 0
+
 
     def _to_domain(self, model: VisitModel) -> Visit:
         return Visit(

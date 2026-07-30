@@ -16,6 +16,7 @@ from app.api.v1.routers.retail_points import router as retail_points_router
 from app.api.v1.routers.media import router as media_router
 from app.api.v1.routers.visits import router as visits_router
 from app.api.v1.routers.visit_plans import router as visit_plans_router
+from app.api.v1.routers.dashboard import router as dashboard_router
 
 
 @asynccontextmanager
@@ -58,3 +59,4 @@ app.include_router(retail_points_router)
 app.include_router(media_router)
 app.include_router(visits_router)
 app.include_router(visit_plans_router)
+app.include_router(dashboard_router)

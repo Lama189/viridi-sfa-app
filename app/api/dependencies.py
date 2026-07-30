@@ -34,8 +34,15 @@ from app.application.services.visit_media import VisitMediaService
 from app.application.services.visit_debts import VisitDebtService
 from app.application.services.visits import VisitService
 from app.application.services.visit_plans import VisitPlanService
+from app.application.services.dashboard import DashboardService
+from app.application.services.visit_schedule_rules import VisitScheduleService
+from app.application.services.territories import TerritoryClusteringService
+from app.application.services.routes_generator import RouteGenerationService
 from app.application.interfaces.services.visit_media import IVisitMediaService
 from app.application.interfaces.services.visit_debts import IVisitDebtService
+from app.application.interfaces.services.visit_schedule_rules import IVisitScheduleService
+from app.application.interfaces.services.territories import ITerritoryClusteringService
+
 
 from app.infrastructure.context import client_id_ctx_var, employee_id_ctx_var
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
@@ -108,12 +115,19 @@ async def get_retail_point_assignment_service(
     return RetailPointAssignmentService(uow)
 
 
+async def get_visit_schedule_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> IVisitScheduleService:
+    return VisitScheduleService(uow)
+
+
 async def get_retail_points_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
     invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
     assignments: Annotated[IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)],
+    visits_rules: Annotated[IVisitScheduleService, Depends(get_visit_schedule_service)],
 ) -> RetailPointsService:
-    return RetailPointsService(uow, invite_codes, assignments)
+    return RetailPointsService(uow, invite_codes, assignments, visits_rules)
 
 
 async def get_products_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ProductsService:
@@ -180,9 +194,35 @@ async def get_visit_plans_service(
 ) -> VisitPlanService:
     return VisitPlanService(uow)
 
+
+async def get_dashboard_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> DashboardService:
+    return DashboardService(uow)
+
+
+def get_territory_clustering_service() -> ITerritoryClusteringService:
+    return TerritoryClusteringService()
+
+
+async def get_routes_generator_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    clustering_service: Annotated[ITerritoryClusteringService, Depends(get_territory_clustering_service)],
+    assignments_service: Annotated[IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)],
+    visit_plans_service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
+) -> RouteGenerationService:
+    return RouteGenerationService(
+        uow=uow,
+        clustering_service=clustering_service,
+        assignments_service=assignments_service,
+        visit_plans_service=visit_plans_service,
+    )
+
+
 # ======================================================================
 # 4. AUTHENTICATION & CURRENT USER DEPENDENCIES
 # ======================================================================
+
 
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],

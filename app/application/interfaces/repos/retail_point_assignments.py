@@ -41,3 +41,10 @@ class IRetailPointAssignmentRepository(ABC):
     @abstractmethod
     async def delete(self, assignment: RetailPointAssignment) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def clear_employee_assignments(
+        self,
+        retail_point_ids: list[UUID],
+    ) -> None:
+        raise NotImplementedError

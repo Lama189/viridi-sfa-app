@@ -48,10 +48,15 @@ class _TestProduct(_TestBase):
 
 @pytest_asyncio.fixture(autouse=True)
 async def _create_tables():
+    from app.infrastructure.postgres.models.base_model import BaseModel
+    import app.infrastructure.postgres  # noqa: F401
+
     async with engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.create_all)
         await conn.run_sync(_TestBase.metadata.create_all)
     yield
     async with engine.begin() as conn:
+        await conn.run_sync(BaseModel.metadata.drop_all)
         await conn.run_sync(_TestBase.metadata.drop_all)
 
 
@@ -151,13 +156,6 @@ class _TestRetailPoint(_TestBase):
     latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
     longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
     photo_id: Mapped[UUID | None] = mapped_column(nullable=True)
-    visit_mon: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_tue: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_wed: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_thu: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_fri: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_sat: Mapped[bool] = mapped_column(Boolean, default=False)
-    visit_sun: Mapped[bool] = mapped_column(Boolean, default=False)
     created_by_employee_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("employees.id", ondelete="SET NULL"), nullable=True,
     )

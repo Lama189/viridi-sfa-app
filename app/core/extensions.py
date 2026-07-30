@@ -76,20 +76,39 @@ class VisitMediaAlreadyAttachedError(DomainError):
 class EmployeeHasActiveVisitError(DomainError):
     pass
 
+
 class RetailPointAssignmentAlreadyExistsError(DomainError):
     pass
+
 
 class RetailPointAssignmentNotFoundError(DomainError):
     pass
 
+
 class DuplicateRetailPointError(DomainError):
     pass
+
 
 class BulkCreateRetailPointsRequestIsEmptyError(DomainError):
     pass
 
+
 class VisitPlanNotFoundError(DomainError):
     pass
 
+
 class VisitPlanAlreadyExistsError(DomainError):
+    pass
+
+
+class InvalidEmployeesCountError(DomainError):
+    pass
+
+class NoActiveAgentsFoundError(DomainError):
+    pass
+
+class NoActiveRetailPointsError(DomainError):
+    pass
+
+class TerritoryClustersNotBuiltError(DomainError):
     pass

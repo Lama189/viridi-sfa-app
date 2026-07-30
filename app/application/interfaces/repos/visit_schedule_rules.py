@@ -3,6 +3,7 @@ from uuid import UUID
 from datetime import date
 
 from app.domain.entities.visit_schedule_rules import VisitScheduleRule
+from app.domain.enums import Weekday
 
 
 class IVisitScheduleRuleRepository(ABC):
@@ -15,7 +16,18 @@ class IVisitScheduleRuleRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_by_id(
+        self, 
+        rule_id: UUID
+    ) -> VisitScheduleRule | None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def exists_by(self, **kwargs) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update(self, rule: VisitScheduleRule) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -26,6 +38,13 @@ class IVisitScheduleRuleRepository(ABC):
     async def list_by_retail_point(
         self,
         retail_point_id: UUID,
+    ) -> list[VisitScheduleRule]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_active_rules_by_weekday(
+        self,
+        weekday: Weekday,
     ) -> list[VisitScheduleRule]:
         raise NotImplementedError
 

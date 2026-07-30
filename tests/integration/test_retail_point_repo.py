@@ -101,7 +101,6 @@ async def test_update(
     rp.name = "New"
     rp.address = "New Addr"
     rp.latitude = Decimal("41.311081")
-    rp.visit_mon = True
     await retail_point_repo.update(rp)
     await session.commit()
 
@@ -109,7 +108,6 @@ async def test_update(
     assert found.name == "New"
     assert found.address == "New Addr"
     assert found.latitude == Decimal("41.311081")
-    assert found.visit_mon is True
 
 
 @pytest.mark.asyncio

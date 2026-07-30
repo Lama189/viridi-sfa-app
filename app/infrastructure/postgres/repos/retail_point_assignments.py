@@ -85,6 +85,19 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
         )
         await self._session.flush()
 
+    async def clear_employee_assignments(
+        self,
+        retail_point_ids: list[UUID],
+    ) -> None:
+        await self._session.execute(
+            update(RetailPointAssignmentModel)
+            .where(
+                RetailPointAssignmentModel.retail_point_id.in_(retail_point_ids)
+            )
+            .values(employee_id=None)
+        )
+        await self._session.flush()
+
     def _to_domain(self, model: RetailPointAssignmentModel) -> RetailPointAssignment:
         return RetailPointAssignment(
             id=model.id,

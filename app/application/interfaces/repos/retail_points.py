@@ -31,6 +31,10 @@ class IRetailPointRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def list_by(self, **kwargs) -> list[RetailPoint]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def list_all(self, only_active: bool = True) -> list[RetailPoint]:
         raise NotImplementedError
 
@@ -46,6 +50,15 @@ class IRetailPointRepository(ABC):
     async def list_by_employee(
         self,
         employee_id: UUID,
+        only_active: bool = True,
+    ) -> list[RetailPoint]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def list_by_employee_and_weekday(
+        self,
+        employee_id: UUID,
+        weekday: Weekday,
         only_active: bool = True,
     ) -> list[RetailPoint]:
         raise NotImplementedError

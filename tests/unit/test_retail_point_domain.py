@@ -23,13 +23,6 @@ def test_retail_point_default_values():
     assert rp.latitude is None
     assert rp.longitude is None
     assert rp.photo_id is None
-    assert rp.visit_mon is False
-    assert rp.visit_tue is False
-    assert rp.visit_wed is False
-    assert rp.visit_thu is False
-    assert rp.visit_fri is False
-    assert rp.visit_sat is False
-    assert rp.visit_sun is False
     assert rp.created_by_employee_id is None
     assert rp.is_active is True
 
@@ -55,9 +48,6 @@ def test_retail_point_custom_values():
         latitude=Decimal("41.311081"),
         longitude=Decimal("69.240562"),
         photo_id=photo_id,
-        visit_mon=True,
-        visit_wed=True,
-        visit_fri=True,
         created_by_employee_id=emp_id,
         is_active=False,
     )
@@ -75,33 +65,8 @@ def test_retail_point_custom_values():
     assert rp.latitude == Decimal("41.311081")
     assert rp.longitude == Decimal("69.240562")
     assert rp.photo_id == photo_id
-    assert rp.visit_mon is True
-    assert rp.visit_wed is True
-    assert rp.visit_fri is True
-    assert rp.visit_tue is False
     assert rp.created_by_employee_id == emp_id
     assert rp.is_active is False
-
-
-def test_retail_point_visit_schedule():
-    rp = RetailPoint(
-        name="S",
-        address="A",
-        visit_mon=True,
-        visit_tue=False,
-        visit_wed=True,
-        visit_thu=False,
-        visit_fri=True,
-        visit_sat=False,
-        visit_sun=True,
-    )
-    assert rp.visit_mon is True
-    assert rp.visit_tue is False
-    assert rp.visit_wed is True
-    assert rp.visit_thu is False
-    assert rp.visit_fri is True
-    assert rp.visit_sat is False
-    assert rp.visit_sun is True
 
 
 def test_retail_point_client_type_b():

@@ -83,6 +83,7 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         if assignment is None:
             raise RetailPointAssignmentNotFoundError()
         
+        assignment.assign_employee(employee_id)
         await self._uow.retail_point_assignments.update(assignment)
 
         await self._uow.commit()
@@ -121,3 +122,9 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
             assignments_list.append(assignment)
 
         await self._uow.retail_point_assignments.add_many(assignments_list)
+
+    async def clear_employee_assignments(
+        self,
+        retail_point_ids: list[UUID],
+    ) -> None:
+        await self._uow.retail_point_assignments.clear_employee_assignments(retail_point_ids)

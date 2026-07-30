@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey, Integer
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +21,11 @@ class VisitPlanItem(BaseModel):
             "\"order\" >= 0",
             name="ck_visit_plan_item_order_non_negative",
         ),
+        UniqueConstraint(
+            "visit_plan_id",
+            "retail_point_id",
+            name="uq_visit_plan_item_point",
+        )
     )
 
     id: Mapped[UUID] = mapped_column(

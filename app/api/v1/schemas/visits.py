@@ -7,8 +7,6 @@ from pydantic import BaseModel, UUID4
 from app.domain.enums import VisitStatus
 
 
-# ---- Request schemas ----
-
 class StartVisitRequest(BaseModel):
     retail_point_id: UUID
 
@@ -26,8 +24,6 @@ class UpdateDebtRequest(BaseModel):
     amount: Decimal
     comment: str | None = None
 
-
-# ---- Response schemas ----
 
 class VisitResponse(BaseModel):
     id: UUID4

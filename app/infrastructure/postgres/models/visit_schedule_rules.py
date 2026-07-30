@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, ForeignKey, Integer
+from sqlalchemy import Boolean, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,6 +13,14 @@ if TYPE_CHECKING:
 
 class VisitScheduleRule(BaseModel):
     __tablename__ = "visit_schedule_rules"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "retail_point_id",
+            "weekday",
+            name="uq_visit_schedule_rule_point_weekday",
+        ),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),

@@ -52,7 +52,6 @@ class PostgresOrderRepository(IOrderRepository):
                 total_amount=order.total_amount,
                 total_volume=order.total_volume,
                 visit_id=order.visit_id,
-                updated_at=order.updated_at,
             )
         )
         await self._session.flush()
@@ -85,6 +84,4 @@ class PostgresOrderRepository(IOrderRepository):
             status=order.status,
             total_amount=order.total_amount,
             total_volume=order.total_volume,
-            created_at=order.created_at,
-            updated_at=order.updated_at,
         )

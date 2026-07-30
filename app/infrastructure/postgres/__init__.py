@@ -15,6 +15,9 @@ from app.infrastructure.postgres.models.invite_codes import RetailPointInviteCod
 from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
 from app.infrastructure.postgres.models.media_objects import MediaObject
 from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
+from app.infrastructure.postgres.models.visit_plans import VisitPlan
+from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem
+from app.infrastructure.postgres.models.visit_schedule_rules import VisitScheduleRule
 
 
 __all__ = [
@@ -34,5 +37,8 @@ __all__ = [
     "RetailPointInviteCode",
     "RetailPointMember",
     "MediaObject",
-    "RetailPointAssignment"
+    "RetailPointAssignment",
+    "VisitPlan",
+    "VisitPlanItem",
+    "VisitScheduleRule",
 ]

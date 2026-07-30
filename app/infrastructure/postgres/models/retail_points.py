@@ -6,7 +6,6 @@ from sqlalchemy import (
     Boolean,
     Enum,
     ForeignKey,
-    Index,
     Numeric,
     String,
     Text,
@@ -25,20 +24,11 @@ if TYPE_CHECKING:
     from app.infrastructure.postgres.models.visits import Visit
     from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
     from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem
+    from app.infrastructure.postgres.models.visit_schedule_rules import VisitScheduleRule
 
 
 class RetailPoint(BaseModel):
     __tablename__ = "retail_points"
-
-    __table_args__ = (
-        Index("idx_retail_points_mon", "visit_mon"),
-        Index("idx_retail_points_tue", "visit_tue"),
-        Index("idx_retail_points_wed", "visit_wed"),
-        Index("idx_retail_points_thu", "visit_thu"),
-        Index("idx_retail_points_fri", "visit_fri"),
-        Index("idx_retail_points_sat", "visit_sat"),
-        Index("idx_retail_points_sun", "visit_sun"),
-    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -126,5 +116,9 @@ class RetailPoint(BaseModel):
     )
 
     visit_plan_items: Mapped[list["VisitPlanItem"]] = relationship(
+        back_populates="retail_point",
+    )
+
+    visit_schedule_rules: Mapped[list["VisitScheduleRule"]] = relationship(
         back_populates="retail_point",
     )

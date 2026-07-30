@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visit_plan_items import IVisitPlanItemRepository
@@ -26,6 +26,14 @@ class PostgresVisitPlanItemRepository(IVisitPlanItemRepository):
         )
 
         return [self._to_domain(m) for m in result.scalars().all()]
+
+    async def delete_by_plan(self, visit_plan_id: UUID) -> None:
+        await self._session.execute(
+            sa_delete(VisitPlanItemModel).where(
+                VisitPlanItemModel.visit_plan_id == visit_plan_id
+            )
+        )
+        await self._session.flush()
 
     def _to_domain(self, model: VisitPlanItemModel) -> VisitPlanItem:
         return VisitPlanItem(

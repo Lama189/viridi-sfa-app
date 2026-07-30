@@ -30,12 +30,12 @@ class RetailPointsService:
         uow: IUnitOfWork, 
         invite_codes_service: IClientInviteCodesService,
         assignments_service: IRetailPointAssignmentService,
-        visits_rules: IVisitScheduleService,
+        visits_rules_service: IVisitScheduleService,
     ) -> None:
         self._uow = uow
         self._invite_codes_service = invite_codes_service
         self._assignments_service = assignments_service
-        self._visits_rules = visits_rules
+        self._visits_rules_service = visits_rules_service
 
     async def create_retail_point(
         self,
@@ -64,7 +64,7 @@ class RetailPointsService:
 
         await self._uow.retail_points.add(point)
 
-        await self._visits_rules.replace_schedule(point.id, dto.visits)
+        await self._visits_rules_service.replace_schedule(point.id, dto.visits)
         code = await self._invite_codes_service.create(employee_id, point.id)
         await self._assignments_service.create(point.id)
 
@@ -117,7 +117,7 @@ class RetailPointsService:
         await self._uow.retail_points.update(retail_point)
 
         if dto.visits is not None:
-            await self._visits_rules.replace_schedule(retail_point.id, dto.visits)
+            await self._visits_rules_service.replace_schedule(retail_point.id, dto.visits)
 
         await self._uow.commit()
 
@@ -216,7 +216,7 @@ class RetailPointsService:
         await self._uow.retail_points.add_many(retail_points)
 
         for retail_point, point_dto in zip(retail_points, dto):
-            await self._visits_rules.replace_schedule(
+            await self._visits_rules_service.replace_schedule(
                 retail_point.id,
                 point_dto.visits,
             )

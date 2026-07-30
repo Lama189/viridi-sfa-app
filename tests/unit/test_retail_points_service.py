@@ -4,7 +4,11 @@ from uuid import uuid4
 
 import pytest
 
-from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
+from app.api.v1.schemas.retail_points import (
+    CreateRetailPointRequest,
+    UpdateRetailPointRequest,
+    VisitsDatesDTO,
+)
 from app.application.services.retail_points import RetailPointsService
 from app.core.extensions import RetailPointNotFoundError
 from app.domain.entities.retail_points import RetailPoint
@@ -30,16 +34,26 @@ def mock_assignments():
 
 
 @pytest.fixture
-def service(mock_uow, mock_invite_codes, mock_assignments):
-    return RetailPointsService(mock_uow, mock_invite_codes, mock_assignments)
+def mock_visits_rules():
+    return AsyncMock()
+
+
+@pytest.fixture
+def service(mock_uow, mock_invite_codes, mock_assignments, mock_visits_rules):
+    return RetailPointsService(
+        mock_uow,
+        mock_invite_codes,
+        mock_assignments,
+        mock_visits_rules,
+    )
 
 
 # --- create_retail_point ---
 
 @pytest.mark.asyncio
-async def test_create_retail_point_success(service, mock_uow, mock_invite_codes):
+async def test_create_retail_point_success(service, mock_uow, mock_invite_codes, mock_visits_rules):
     agent_id = uuid4()
-    mock_invite_codes.create.return_value="invite-raw-code"
+    mock_invite_codes.create.return_value = "invite-raw-code"
     dto = CreateRetailPointRequest(name="Store-1", address="ul. Test 1")
 
     point, code = await service.create_retail_point(dto, agent_id)
@@ -50,14 +64,16 @@ async def test_create_retail_point_success(service, mock_uow, mock_invite_codes)
     assert point.is_active is True
     assert code == "invite-raw-code"
     mock_uow.retail_points.add.assert_awaited_once()
+    mock_visits_rules.replace_schedule.assert_awaited_once_with(point.id, dto.visits)
     mock_invite_codes.create.assert_awaited_once_with(agent_id, point.id)
     mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_create_retail_point_with_optional_fields(service, mock_uow, mock_invite_codes):
+async def test_create_retail_point_with_optional_fields(service, mock_uow, mock_invite_codes, mock_visits_rules):
     agent_id = uuid4()
     mock_invite_codes.create.return_value = "code"
+    visits_dto = VisitsDatesDTO(mon=True, wed=True, fri=True)
     dto = CreateRetailPointRequest(
         name="Store-2",
         address="ul. Test 2",
@@ -69,9 +85,7 @@ async def test_create_retail_point_with_optional_fields(service, mock_uow, mock_
         inn="123456789",
         latitude=Decimal("41.311081"),
         longitude=Decimal("69.240562"),
-        visit_mon=True,
-        visit_wed=True,
-        visit_fri=True,
+        visits=visits_dto,
     )
 
     point, _ = await service.create_retail_point(dto, agent_id)
@@ -81,10 +95,7 @@ async def test_create_retail_point_with_optional_fields(service, mock_uow, mock_
     assert point.landmark == "near park"
     assert point.inn == "123456789"
     assert point.latitude == Decimal("41.311081")
-    assert point.visit_mon is True
-    assert point.visit_wed is True
-    assert point.visit_fri is True
-    assert point.visit_tue is False
+    mock_visits_rules.replace_schedule.assert_awaited_once_with(point.id, visits_dto)
 
 
 # --- get_by_id ---
@@ -140,16 +151,16 @@ async def test_update_retail_point_partial(service, mock_uow):
 
 
 @pytest.mark.asyncio
-async def test_update_retail_point_visit_schedule(service, mock_uow):
+async def test_update_retail_point_visit_schedule(service, mock_uow, mock_visits_rules):
     uid = uuid4()
-    point = RetailPoint(name="X", address="A", id=uid, visit_mon=False)
+    point = RetailPoint(name="X", address="A", id=uid)
     mock_uow.retail_points.get_by_id.return_value = point
 
-    dto = UpdateRetailPointRequest(visit_mon=True, visit_sun=True)
-    result = await service.update_retail_point(uid, dto)
+    visits_dto = VisitsDatesDTO(mon=True, sun=True)
+    dto = UpdateRetailPointRequest(visits=visits_dto)
+    await service.update_retail_point(uid, dto)
 
-    assert result.visit_mon is True
-    assert result.visit_sun is True
+    mock_visits_rules.replace_schedule.assert_awaited_once_with(uid, visits_dto)
 
 
 @pytest.mark.asyncio

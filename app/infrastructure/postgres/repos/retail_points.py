@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
+from app.domain.enums import Weekday
 from app.infrastructure.postgres.models.retail_points import RetailPoint as RetailPointModel
 from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment as RetailPointAssignmentModel
+from app.infrastructure.postgres.models.visit_schedule_rules import VisitScheduleRule as VisitScheduleRuleModel
 
 
 class PostgresRetailPointRepository(IRetailPointRepository):
@@ -69,6 +71,12 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         result = await self._session.execute(stmt)
         return bool(result.scalar())
 
+    async def list_by(self, **kwargs) -> list[RetailPoint]:
+        stmt = select(RetailPointModel).filter_by(**kwargs)
+
+        result = await self._session.execute(stmt)
+        return [self._to_domain(m) for m in result.scalars().all()]
+
     async def list_all(self, only_active: bool = True) -> list[RetailPoint]:
         stmt = select(RetailPointModel)
         if only_active:
@@ -122,6 +130,37 @@ class PostgresRetailPointRepository(IRetailPointRepository):
             )
             .where(
                 RetailPointAssignmentModel.employee_id == employee_id,
+            )
+        )
+
+        if only_active:
+            stmt = stmt.where(RetailPointModel.is_active.is_(True))
+
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(model) for model in result.scalars().all()]
+
+    async def list_by_employee_and_weekday(
+        self,
+        employee_id: UUID,
+        weekday: Weekday,
+        only_active: bool = True,
+    ) -> list[RetailPoint]:
+        weekday_val = weekday.value if isinstance(weekday, Weekday) else int(weekday)
+        stmt = (
+            select(RetailPointModel)
+            .join(
+                RetailPointAssignmentModel,
+                RetailPointAssignmentModel.retail_point_id == RetailPointModel.id,
+            )
+            .join(
+                VisitScheduleRuleModel,
+                VisitScheduleRuleModel.retail_point_id == RetailPointModel.id,
+            )
+            .where(
+                RetailPointAssignmentModel.employee_id == employee_id,
+                VisitScheduleRuleModel.weekday == weekday_val,
+                VisitScheduleRuleModel.is_active.is_(True),
             )
         )
 

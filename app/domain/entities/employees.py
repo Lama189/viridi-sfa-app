@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from app.infrastructure.postgres.models.enums import EmployeeRole  
+from app.domain.enums import EmployeeRole  
 
 
 @dataclass(slots=True)

@@ -30,14 +30,6 @@ class RetailPoint:
     longitude: Decimal | None = None
     photo_id: UUID | None = None
 
-    visit_mon: bool = False
-    visit_tue: bool = False
-    visit_wed: bool = False
-    visit_thu: bool = False
-    visit_fri: bool = False
-    visit_sat: bool = False
-    visit_sun: bool = False
-
     created_by_employee_id: UUID | None = None
 
     is_active: bool = True

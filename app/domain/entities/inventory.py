@@ -26,6 +26,7 @@ class Product:
     id: UUID = field(default_factory=uuid4)
     volume: Decimal = field(default=Decimal("0.000"))
     weight: Decimal = field(default=Decimal("0.000"))
+    items_in_box: int = 1
     is_active: bool = True
 
 

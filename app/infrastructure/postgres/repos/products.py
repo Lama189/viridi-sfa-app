@@ -61,6 +61,7 @@ class PostgresProductsRepository(IProductRepository):
                 price=product.price,
                 volume=product.volume,
                 weight=product.weight,
+                items_in_box=product.items_in_box,
                 is_active=product.is_active,
             )
         )
@@ -80,6 +81,7 @@ class PostgresProductsRepository(IProductRepository):
             price=model.price,
             volume=model.volume,
             weight=model.weight,
+            items_in_box=model.items_in_box,
             is_active=model.is_active,
         )
 
@@ -91,5 +93,6 @@ class PostgresProductsRepository(IProductRepository):
             price=product.price,
             volume=product.volume,
             weight=product.weight,
+            items_in_box=product.items_in_box,
             is_active=product.is_active,
         )

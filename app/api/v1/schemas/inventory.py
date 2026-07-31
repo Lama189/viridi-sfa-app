@@ -40,6 +40,7 @@ class ProductCreate(BaseModel):
     category_id: UUID4 = Field(..., description="ID существующей категории")
     volume: Decimal = Field(default=Decimal("0.000"), description="Объем в м³")
     weight: Decimal = Field(default=Decimal("0.000"), description="Вес в кг")
+    items_in_box: int = Field(default=1, gt=0)
 
 
 class ProductUpdate(BaseModel):
@@ -48,6 +49,7 @@ class ProductUpdate(BaseModel):
     category_id: UUID4 | None = Field(None, description="ID существующей категории")
     volume: Decimal | None = Field(None, description="Объем в м³")
     weight: Decimal | None = Field(None, description="Вес в кг")
+    items_in_box: int | None = Field(None, gt=0)
     is_active: bool | None = None
 
 
@@ -58,6 +60,7 @@ class ProductResponse(BaseModel):
     category_id: UUID4
     volume: Decimal
     weight: Decimal
+    items_in_box: int
     photo_url: str | None = Field(None, description="Относительный путь к фото в MinIO")
 
     model_config = {

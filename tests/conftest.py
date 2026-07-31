@@ -1,6 +1,6 @@
 import pytest_asyncio
 from decimal import Decimal
-from sqlalchemy import BigInteger, Boolean, ForeignKey, Numeric, String
+from sqlalchemy import BigInteger, Boolean, ForeignKey, Integer, Numeric, String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from uuid import UUID, uuid4
@@ -43,6 +43,7 @@ class _TestProduct(_TestBase):
     price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
     volume: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False, default=Decimal("0.000"))
     weight: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False, default=Decimal("0.000"))
+    items_in_box: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 

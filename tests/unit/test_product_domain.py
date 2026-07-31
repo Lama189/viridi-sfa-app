@@ -13,6 +13,7 @@ def test_product_default_values():
     assert isinstance(p.id, type(uuid4()))
     assert p.volume == Decimal("0.000")
     assert p.weight == Decimal("0.000")
+    assert p.items_in_box == 1
     assert p.is_active is True
 
 
@@ -26,11 +27,13 @@ def test_product_custom_values():
         id=prod_uid,
         volume=Decimal("0.050"),
         weight=Decimal("25.000"),
+        items_in_box=40,
         is_active=False,
     )
     assert p.id == prod_uid
     assert p.volume == Decimal("0.050")
     assert p.weight == Decimal("25.000")
+    assert p.items_in_box == 40
     assert p.is_active is False
 
 

@@ -35,12 +35,14 @@ async def test_create_product_success(service, mock_uow):
         name="NPK-10",
         price=Decimal("150.00"),
         category_id=cat.id,
+        items_in_box=20,
     )
     result = await service.create_product(dto)
 
     assert result.name == "NPK-10"
     assert result.category_id == cat.id
     assert result.price == Decimal("150.00")
+    assert result.items_in_box == 20
     mock_uow.products.add.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
 
@@ -133,11 +135,12 @@ async def test_update_product_success(service, mock_uow):
     prod = Product(category_id=cat.id, name="Old", price=Decimal("10.00"))
     mock_uow.products.get_by_id.return_value = prod
 
-    dto = ProductUpdate(name="New", price=Decimal("99.99"))
+    dto = ProductUpdate(name="New", price=Decimal("99.99"), items_in_box=10)
     result = await service.update_product(prod.id, dto)
 
     assert result.name == "New"
     assert result.price == Decimal("99.99")
+    assert result.items_in_box == 10
     mock_uow.products.update.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
 

@@ -51,18 +51,20 @@ async def test_create_product_success(client, mock_service):
     cat_id = uuid4()
     prod_id = uuid4()
     mock_service.create_product.return_value = Product(
-        category_id=cat_id, name="NPK-10", price=Decimal("150.00"), id=prod_id,
+        category_id=cat_id, name="NPK-10", price=Decimal("150.00"), items_in_box=20, id=prod_id,
     )
 
     resp = await client.post("/api/v1/products", json={
         "name": "NPK-10",
         "price": 150.00,
         "category_id": str(cat_id),
+        "items_in_box": 20,
     })
     assert resp.status_code == 201
     data = resp.json()
     assert data["name"] == "NPK-10"
     assert data["price"] == "150.00"
+    assert data["items_in_box"] == 20
 
 
 @pytest.mark.asyncio
@@ -120,12 +122,13 @@ async def test_get_product_not_found(client, mock_service):
 async def test_update_product_success(client, mock_service):
     uid = uuid4()
     mock_service.update_product.return_value = Product(
-        category_id=uuid4(), name="New", price=Decimal("99.99"), id=uid,
+        category_id=uuid4(), name="New", price=Decimal("99.99"), items_in_box=10, id=uid,
     )
 
-    resp = await client.patch(f"/api/v1/products/{uid}", json={"name": "New", "price": 99.99})
+    resp = await client.patch(f"/api/v1/products/{uid}", json={"name": "New", "price": 99.99, "items_in_box": 10})
     assert resp.status_code == 200
     assert resp.json()["name"] == "New"
+    assert resp.json()["items_in_box"] == 10
 
 
 @pytest.mark.asyncio

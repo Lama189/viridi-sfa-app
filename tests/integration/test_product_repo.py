@@ -29,6 +29,7 @@ async def test_add_and_get_by_id(
     assert found.price == Decimal("150.00")
     assert found.volume == Decimal("0.000")
     assert found.weight == Decimal("0.000")
+    assert found.items_in_box == 1
     assert found.is_active is True
 
 
@@ -131,7 +132,7 @@ async def test_update(
     await category_repo.add(c)
     await session.flush()
 
-    p = Product(category_id=c.id, name="Old", price=Decimal("10.00"), volume=Decimal("1.000"), weight=Decimal("0.500"))
+    p = Product(category_id=c.id, name="Old", price=Decimal("10.00"), volume=Decimal("1.000"), weight=Decimal("0.500"), items_in_box=10)
     await product_repo.add(p)
     await session.commit()
 
@@ -139,6 +140,7 @@ async def test_update(
     p.price = Decimal("99.99")
     p.volume = Decimal("2.500")
     p.weight = Decimal("1.200")
+    p.items_in_box = 25
     await product_repo.update(p)
     await session.commit()
 
@@ -147,6 +149,7 @@ async def test_update(
     assert found.price == Decimal("99.99")
     assert found.volume == Decimal("2.500")
     assert found.weight == Decimal("1.200")
+    assert found.items_in_box == 25
 
 
 @pytest.mark.asyncio

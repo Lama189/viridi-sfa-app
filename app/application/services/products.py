@@ -27,6 +27,7 @@ class ProductsService:
             category_id=dto.category_id,
             volume=dto.volume,
             weight=dto.weight,
+            items_in_box=dto.items_in_box,
         )
 
         await self._uow.products.add(product)
@@ -60,6 +61,8 @@ class ProductsService:
             product.volume = dto.volume
         if dto.weight is not None:
             product.weight = dto.weight
+        if dto.items_in_box is not None:
+            product.items_in_box = dto.items_in_box
         if dto.is_active is not None:
             product.is_active = bool(dto.is_active)
 

@@ -12,6 +12,7 @@ from app.application.interfaces.services.retail_point_assignments import IRetail
 from app.application.interfaces.services.visit_schedule_rules import IVisitScheduleService
 
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
+from app.domain.enums import Weekday
 from app.core.extensions import (
     RetailPointNotFoundError, 
     RetailPointAlreadyExistsError,
@@ -201,6 +202,17 @@ class RetailPointsService:
 
     async def list_by_employee(self, employee_id: UUID) -> list[RetailPoint]:
         return await self._uow.retail_points.list_by_employee(employee_id, True)
+
+    async def list_by_employee_and_weekday(
+        self,
+        employee_id: UUID,
+        weekday: Weekday,
+    ) -> list[RetailPoint]:
+        return await self._uow.retail_points.list_by_employee_and_weekday(
+            employee_id=employee_id,
+            weekday=weekday,
+            only_active=True,
+        )
 
     async def bulk_create(
         self,

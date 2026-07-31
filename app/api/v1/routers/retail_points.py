@@ -14,10 +14,26 @@ from app.api.v1.schemas.retail_points import (
 from app.application.services.retail_points import RetailPointsService
 from app.api.dependencies import get_retail_points_service, allow_admin, allow_all_staff
 
+from app.domain.enums import Weekday
 from app.domain.entities.auth import AuthenticatedEmployee
 
 
 router = APIRouter(prefix="/api/v1/retail_points", tags=["RetailPoints"])
+
+
+@router.get(
+    "/by-weekday/{weekday}",
+    response_model=list[RetailPointResponse],
+)
+async def list_retail_points_by_weekday(
+    weekday: Weekday,
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
+):
+    return await service.list_by_employee_and_weekday(
+        employee_id=employee.id,
+        weekday=weekday,
+    )
 
 
 @router.post(

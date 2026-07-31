@@ -207,3 +207,22 @@ async def test_delete_retail_point_not_found(service, mock_uow):
         await service.delete_retail_point(uuid4())
 
     mock_uow.retail_points.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_list_by_employee_and_weekday_success(service, mock_uow):
+    from app.domain.enums import Weekday
+    emp_id = uuid4()
+    point = RetailPoint(id=uuid4(), name="Mon Point", address="Addr 1")
+    mock_uow.retail_points.list_by_employee_and_weekday.return_value = [point]
+
+    result = await service.list_by_employee_and_weekday(emp_id, Weekday.MONDAY)
+
+    assert len(result) == 1
+    assert result[0].name == "Mon Point"
+    mock_uow.retail_points.list_by_employee_and_weekday.assert_awaited_once_with(
+        employee_id=emp_id,
+        weekday=Weekday.MONDAY,
+        only_active=True,
+    )
+

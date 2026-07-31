@@ -145,3 +145,24 @@ async def test_delete_retail_point_success(client, mock_service):
     resp = await client.delete(f"/api/v1/retail_points/{uuid4()}")
     assert resp.status_code == 204
     mock_service.delete_retail_point.assert_called_once()
+
+
+# --- GET /api/v1/retail_points/by-weekday/{weekday} ---
+
+@pytest.mark.asyncio
+async def test_list_retail_points_by_weekday(client, mock_service, mock_admin_employee):
+    from app.domain.enums import Weekday
+    point = _retail_point_response(name="Monday Store")
+    mock_service.list_by_employee_and_weekday.return_value = [point]
+
+    resp = await client.get("/api/v1/retail_points/by-weekday/0")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "Monday Store"
+    mock_service.list_by_employee_and_weekday.assert_called_once_with(
+        employee_id=mock_admin_employee.id,
+        weekday=Weekday.MONDAY,
+    )
+
+

@@ -15,6 +15,7 @@ from app.infrastructure.postgres.repos.invite_codes import PostgresInviteCodeRep
 from app.infrastructure.postgres.repos.retail_point_assignments import PostgresRetailPointAssignmentRepository
 from app.infrastructure.postgres.repos.retail_point_members import PostgresRetailPointMemberRepository
 from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
+from app.infrastructure.postgres.repos.sales_reports import SalesReportRepository
 from app.infrastructure.postgres.repos.stocks import PostgresStocksRepository
 from app.infrastructure.postgres.repos.stock_transactions import PostgresStockTransactionRepository
 from app.infrastructure.postgres.repos.warehouses import PostgresWarehousesRepository
@@ -47,6 +48,7 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.stock_transactions = PostgresStockTransactionRepository(self._session)
         self.orders = PostgresOrderRepository(self._session)
         self.order_items = PostgresOrderItemRepository(self._session)
+        self.sales_reports = SalesReportRepository(self._session)
         self.media_objects = PostgresMediaObjectRepository(self._session)
         self.visits = PostgresVisitRepository(self._session)
         self.visit_media = PostgresVisitMediaRepository(self._session)

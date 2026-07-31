@@ -9,6 +9,7 @@ from app.application.interfaces.repos.products import IProductRepository
 from app.application.interfaces.repos.retail_point_assignments import IRetailPointAssignmentRepository
 from app.application.interfaces.repos.retail_point_members import IRetailPointMemberRepository
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
+from app.application.interfaces.repos.sales_reports import ISalesReportRepository
 from app.application.interfaces.repos.stocks import IStockRepository
 from app.application.interfaces.repos.stocks_transactions import IStockTransactionRepository
 from app.application.interfaces.repos.visit_debts import IVisitDebtRepository
@@ -34,6 +35,7 @@ class IUnitOfWork:
     stock_transactions: IStockTransactionRepository
     orders: IOrderRepository
     order_items: IOrderItemRepository
+    sales_reports: ISalesReportRepository
     media_objects: IMediaObjectRepository
     visits: IVisitRepository
     visit_media: IVisitMediaRepository

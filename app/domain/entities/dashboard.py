@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from decimal import Decimal
+from uuid import UUID
 
 
 @dataclass
@@ -13,3 +14,21 @@ class EmployeeDashboard:
     orders_amount: Decimal
 
     debts_count: int
+
+
+@dataclass
+class CategoryReport:
+    category_id: UUID
+    category_name: str
+    quantity_pcs: int
+    volume_boxes: Decimal
+    total_amount: Decimal
+
+
+@dataclass
+class DailyReport:
+    total_amount: Decimal
+    acb_count: int
+    total_quantity_pcs: int
+    total_volume_boxes: Decimal
+    categories: list[CategoryReport]

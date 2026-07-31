@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, datetime, UTC
 from decimal import Decimal
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
 
+from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
 from app.application.services.dashboard import DashboardService
 from app.core.extensions import VisitPlanNotFoundError
 from app.domain.entities.visit_plans import VisitPlan
@@ -18,6 +19,7 @@ def mock_uow():
     uow.visits = AsyncMock()
     uow.orders = AsyncMock()
     uow.visit_debts = AsyncMock()
+    uow.sales_reports = AsyncMock()
     return uow
 
 
@@ -84,3 +86,38 @@ async def test_get_employee_dashboard_success(service, mock_uow):
     assert dashboard.orders_count == 8
     assert dashboard.orders_amount == Decimal("1250000.00")
     assert dashboard.debts_count == 3
+
+
+@pytest.mark.asyncio
+async def test_get_agent_daily_report_success(service, mock_uow):
+    agent_id = uuid4()
+    date_from = datetime(2026, 7, 31, 0, 0, tzinfo=UTC)
+    date_to = datetime(2026, 7, 31, 23, 59, tzinfo=UTC)
+    cat_id = uuid4()
+
+    expected_report = DailyReportDTO(
+        total_amount=Decimal("250000.00"),
+        acb_count=2,
+        total_quantity_pcs=50,
+        total_volume_boxes=Decimal("5.0"),
+        categories=[
+            CategoryReportDTO(
+                category_id=cat_id,
+                category_name="Juice",
+                quantity_pcs=50,
+                volume_boxes=Decimal("5.0"),
+                total_amount=Decimal("250000.00"),
+            )
+        ],
+    )
+    mock_uow.sales_reports.get_agent_daily_report.return_value = expected_report
+
+    result = await service.get_agent_daily_report(agent_id, date_from, date_to)
+
+    assert result == expected_report
+    mock_uow.sales_reports.get_agent_daily_report.assert_awaited_once_with(
+        agent_id,
+        date_from,
+        date_to,
+    )
+

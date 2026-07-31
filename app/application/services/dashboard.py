@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -7,6 +7,7 @@ from app.application.interfaces.services.dashboard import (
     IDashboardService,
 )
 from app.application.interfaces.uow import IUnitOfWork
+from app.api.v1.schemas.dashboard import DailyReportDTO
 from app.core.extensions import VisitPlanNotFoundError
 
 
@@ -47,4 +48,16 @@ class DashboardService(IDashboardService):
             orders_count=orders_count,
             orders_amount=orders_amount,
             debts_count=debts_count,
+        )
+
+    async def get_agent_daily_report(
+        self,
+        agent_id: UUID,
+        date_from: datetime,
+        date_to: datetime,
+    ) -> DailyReportDTO:
+        return await self._uow.sales_reports.get_agent_daily_report(
+            agent_id,
+            date_from,
+            date_to,
         )

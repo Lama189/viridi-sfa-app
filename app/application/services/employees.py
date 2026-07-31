@@ -16,7 +16,7 @@ from app.api.v1.schemas.employees import (
     EmployeeWithTokensResponse,
 )
 
-from app.infrastructure.context import employee_id_ctx_var
+from app.core.context import employee_id_ctx_var
 
 
 class EmployeesService:

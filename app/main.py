@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
+from app.core.observability.logging import configure_logging
+
 from app.infrastructure.minio.client import get_minio_client
 from app.infrastructure.minio.bucket_initializer import ensure_buckets
 
@@ -27,6 +29,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+configure_logging()
 
 app = FastAPI(
     title="Viridi SFA API",
@@ -43,11 +46,9 @@ async def root():
         "message": "Welcome to Viridi SFA API! Database and migrations are ready."
     }
 
-
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
-
 
 app.include_router(categories_router)
 app.include_router(clients_router)

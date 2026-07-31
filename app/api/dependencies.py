@@ -1,3 +1,4 @@
+import structlog
 from collections.abc import AsyncGenerator
 from typing import Annotated
 from minio import Minio
@@ -44,7 +45,6 @@ from app.application.interfaces.services.visit_schedule_rules import IVisitSched
 from app.application.interfaces.services.territories import ITerritoryClusteringService
 
 
-from app.infrastructure.context import client_id_ctx_var, employee_id_ctx_var
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
 from app.infrastructure.redis.client import get_redis_client
 from app.infrastructure.redis.repos.clients import ClientsRedisRepository
@@ -237,7 +237,7 @@ async def get_current_user(
     user_id = payload["sub"]
 
     if user_type == "client":
-        client_id_ctx_var.set(str(user_id))
+        structlog.contextvars.bind_contextvars(user_id=str(user_id), user_type="client")
 
         if cached_client := await clients_cache.get_user(user_id):
             return cached_client
@@ -252,7 +252,7 @@ async def get_current_user(
         return AuthenticatedClient.from_entity(client)
 
     if user_type == "employee":
-        employee_id_ctx_var.set(str(user_id))
+        structlog.contextvars.bind_contextvars(employee_id=str(user_id), user_type="employee")
 
         if cached_employee := await employees_cache.get_employee(user_id):
             if not cached_employee.is_active:

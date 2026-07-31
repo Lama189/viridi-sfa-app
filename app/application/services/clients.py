@@ -18,7 +18,7 @@ from app.api.v1.schemas.clients import (
     ClientRegisterRequest
 )
 
-from app.infrastructure.context import client_id_ctx_var
+from app.core.context import client_id_ctx_var
 
 
 class ClientsService:

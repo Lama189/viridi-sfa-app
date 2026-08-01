@@ -6,6 +6,7 @@ from app.application.interfaces.services.visit_schedule_rules import IVisitSched
 from app.application.interfaces.uow import IUnitOfWork
 from app.domain.entities.visit_schedule_rules import VisitScheduleRule
 from app.domain.enums import Weekday
+from app.core.observability.metrics import visit_schedule_operations_total
 
 
 class VisitScheduleService(IVisitScheduleService):
@@ -37,6 +38,7 @@ class VisitScheduleService(IVisitScheduleService):
             rules,
         )
         await self._uow.commit()
+        visit_schedule_operations_total.labels(action="replace").inc()
 
         logger.info(
             "Visit schedule successfully replaced",
@@ -74,6 +76,7 @@ class VisitScheduleService(IVisitScheduleService):
                     rules,
                 )
                 await self._uow.commit()
+                visit_schedule_operations_total.labels(action="activate").inc()
 
             return
 
@@ -85,6 +88,7 @@ class VisitScheduleService(IVisitScheduleService):
         )
 
         await self._uow.commit()
+        visit_schedule_operations_total.labels(action="add_weekday").inc()
 
         logger.info(
             "Weekday successfully added to visit schedule",
@@ -117,6 +121,7 @@ class VisitScheduleService(IVisitScheduleService):
 
         await self._uow.visit_schedule_rules.delete(rule)
         await self._uow.commit()
+        visit_schedule_operations_total.labels(action="remove_weekday").inc()
 
         logger.info(
             "Weekday successfully removed from visit schedule",
@@ -133,6 +138,7 @@ class VisitScheduleService(IVisitScheduleService):
             rule_id=str(rule_id),
         )
         await self._change_activity(rule_id, True)
+        visit_schedule_operations_total.labels(action="activate").inc()
 
     async def deactivate_rule(
         self,
@@ -143,6 +149,7 @@ class VisitScheduleService(IVisitScheduleService):
             rule_id=str(rule_id),
         )
         await self._change_activity(rule_id, False)
+        visit_schedule_operations_total.labels(action="deactivate").inc()
 
     async def get_schedule(
         self,

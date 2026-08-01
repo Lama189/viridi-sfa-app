@@ -4,6 +4,8 @@ from app.domain.entities.auth import AuthenticatedClient
 from app.domain.entities.clients import Client
 from app.core.extensions import UserNotFoundError, UserAlreadyExistsError, UserNotActiveError
 from app.core.security import SecurityUtils
+from app.core.context import client_id_ctx_var
+from app.core.observability.metrics import client_operations_total
 
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
@@ -17,8 +19,6 @@ from app.api.v1.schemas.clients import (
     ClientWithTokensResponse,
     ClientRegisterRequest
 )
-
-from app.core.context import client_id_ctx_var
 
 
 class ClientsService:
@@ -57,6 +57,7 @@ class ClientsService:
 
         await self._uow.clients.update(client)
         await self._uow.commit()
+        client_operations_total.labels(action="update").inc()
         return client
 
     async def delete_client(self, client_id: UUID) -> None:
@@ -66,6 +67,7 @@ class ClientsService:
 
         await self._uow.clients.delete(client)
         await self._uow.commit()
+        client_operations_total.labels(action="delete").inc()
 
 
 class ClientsAuthService:
@@ -143,6 +145,7 @@ class ClientsAuthService:
         await self._uow.commit()
 
         tokens = await self._generate_auth_session(client)
+        client_operations_total.labels(action="register").inc()
 
         return ClientWithTokensResponse(
             access_token=tokens.access_token,
@@ -169,7 +172,9 @@ class ClientsAuthService:
             await self._uow.clients.update(client)
             await self._uow.commit()
 
-        return await self._generate_auth_session(client)
+        tokens = await self._generate_auth_session(client)
+        client_operations_total.labels(action="login").inc()
+        return tokens
 
     async def refresh(
         self,
@@ -194,6 +199,8 @@ class ClientsAuthService:
             }
         )
 
+        client_operations_total.labels(action="refresh").inc()
+
         return TokenResponseDTO(
             access_token=access,
             refresh_token=refresh_token,
@@ -206,3 +213,4 @@ class ClientsAuthService:
     ) -> None:
         await self._cache.delete_refresh_token(client_id)
         await self._cache.delete_user(client_id)
+        client_operations_total.labels(action="logout").inc()

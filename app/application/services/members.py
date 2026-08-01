@@ -12,6 +12,7 @@ from app.core.extensions import (
     RetailPointNotFoundError,
     RetailPointInactiveError,
 )
+from app.core.observability.metrics import retail_point_member_operations_total
 
 
 class RetailPointMembersService(IRetailPointMembersService):
@@ -64,6 +65,7 @@ class RetailPointMembersService(IRetailPointMembersService):
         )
 
         await self._uow.retail_point_members.add(membership)
+        retail_point_member_operations_total.labels(action="join").inc()
 
         return membership
     
@@ -80,6 +82,7 @@ class RetailPointMembersService(IRetailPointMembersService):
             raise MembershipNotFoundError()
         
         await self._uow.retail_point_members.delete(membership)
+        retail_point_member_operations_total.labels(action="leave").inc()
 
         return membership
     
@@ -96,6 +99,7 @@ class RetailPointMembersService(IRetailPointMembersService):
             raise MembershipNotFoundError()
         
         await self._uow.retail_point_members.delete(membership)
+        retail_point_member_operations_total.labels(action="remove").inc()
 
         return membership
     

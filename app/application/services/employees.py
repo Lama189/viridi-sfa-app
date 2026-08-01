@@ -17,6 +17,7 @@ from app.api.v1.schemas.employees import (
 )
 
 from app.core.context import employee_id_ctx_var
+from app.core.observability.metrics import employee_operations_total
 
 
 class EmployeesService:
@@ -38,6 +39,7 @@ class EmployeesService:
 
         await self._uow.employees.add(employee)
         await self._uow.commit()
+        employee_operations_total.labels(action="create").inc()
         return employee
 
     async def get_employee(self, employee_id: UUID) -> Employee | None:
@@ -74,6 +76,7 @@ class EmployeesService:
 
         await self._uow.employees.update(employee)
         await self._uow.commit()
+        employee_operations_total.labels(action="update").inc()
         return employee
 
     async def delete_employee(self, employee_id: UUID) -> None:
@@ -83,6 +86,7 @@ class EmployeesService:
 
         await self._uow.employees.delete(employee)
         await self._uow.commit()
+        employee_operations_total.labels(action="delete").inc()
 
 
 class EmployeesAuthService:
@@ -132,6 +136,7 @@ class EmployeesAuthService:
             raise UserNotActiveError()
         
         tokens = await self._generate_auth_session(employee)
+        employee_operations_total.labels(action="login").inc()
 
         return EmployeeWithTokensResponse(
             access_token=tokens.access_token,
@@ -156,6 +161,8 @@ class EmployeesAuthService:
             "user_type": "employee"
         })
 
+        employee_operations_total.labels(action="refresh").inc()
+
         return TokenResponseDTO(
             access_token=new_access,
             refresh_token=refresh_token,
@@ -165,3 +172,4 @@ class EmployeesAuthService:
     async def logout(self, employee_id: str) -> None:
         await self._cache.delete_refresh_token(employee_id)
         await self._cache.delete_employee(employee_id)
+        employee_operations_total.labels(action="logout").inc()

@@ -3,6 +3,7 @@ from uuid import UUID
 from app.domain.entities.inventory import Product
 from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.inventory import ProductCreate, ProductUpdate
+from app.core.observability.metrics import product_operations_total
 
 
 class ProductsService:
@@ -32,6 +33,7 @@ class ProductsService:
 
         await self._uow.products.add(product)
         await self._uow.commit()
+        product_operations_total.labels(action="create").inc()
         return product
 
     async def get_by_id(self, product_id: UUID) -> Product | None:
@@ -68,6 +70,7 @@ class ProductsService:
 
         await self._uow.products.update(product)
         await self._uow.commit()
+        product_operations_total.labels(action="update").inc()
         return product
 
     async def delete_product(self, product_id: UUID) -> None:
@@ -77,3 +80,4 @@ class ProductsService:
 
         await self._uow.products.delete(product)
         await self._uow.commit()
+        product_operations_total.labels(action="delete").inc()

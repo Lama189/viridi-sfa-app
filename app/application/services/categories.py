@@ -3,6 +3,7 @@ from uuid import UUID
 from app.domain.entities.inventory import Category
 from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.inventory import CategoryCreate, CategoryUpdate
+from app.core.observability.metrics import category_operations_total
 
 
 class CategoriesService:
@@ -18,6 +19,7 @@ class CategoriesService:
 
         await self._uow.categories.add(category)
         await self._uow.commit()
+        category_operations_total.labels(action="create").inc()
         return category
 
     async def get_by_id(self, category_id: UUID) -> Category | None:
@@ -38,6 +40,7 @@ class CategoriesService:
 
         await self._uow.categories.update(category)
         await self._uow.commit()
+        category_operations_total.labels(action="update").inc()
         return category
 
     async def delete_category(self, category_id: UUID) -> None:
@@ -47,3 +50,4 @@ class CategoriesService:
 
         await self._uow.categories.delete(category)
         await self._uow.commit()
+        category_operations_total.labels(action="delete").inc()

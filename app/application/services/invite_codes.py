@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.core.observability.logging import logger
+from app.core.observability.metrics import invite_code_operations_total
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.extensions import (
@@ -80,6 +81,7 @@ class ClientInviteCodesService(IClientInviteCodesService):
             "Invite code successfully created",
             retail_point_id=str(retail_point_id),
         )
+        invite_code_operations_total.labels(action="create").inc()
 
         return raw_code
 
@@ -121,6 +123,7 @@ class ClientInviteCodesService(IClientInviteCodesService):
             "Invite code successfully regenerated",
             retail_point_id=str(retail_point_id),
         )
+        invite_code_operations_total.labels(action="regenerate").inc()
 
         return raw_code
 
@@ -165,6 +168,7 @@ class ClientInviteCodesService(IClientInviteCodesService):
             invite_code_id=str(invite_code.id),
             retail_point_id=str(invite_code.retail_point_id),
         )
+        invite_code_operations_total.labels(action="activate").inc()
 
         return invite_code
 
@@ -196,6 +200,7 @@ class ClientInviteCodesService(IClientInviteCodesService):
             invite_code_id=str(invite_code_id),
             retail_point_id=str(invite_code.retail_point_id),
         )
+        invite_code_operations_total.labels(action="deactivate").inc()
 
         return invite_code
 
@@ -269,3 +274,4 @@ class ClientInviteCodesService(IClientInviteCodesService):
             "Multiple invite codes created successfully",
             created_count=len(invite_codes),
         )
+        invite_code_operations_total.labels(action="create_many").inc(len(invite_codes))

@@ -3,6 +3,7 @@ from uuid import UUID
 from app.domain.entities.inventory import Warehouse
 from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.inventory import WarehouseCreate, WarehouseUpdate
+from app.core.observability.metrics import warehouse_operations_total
 
 
 class WarehousesService:
@@ -21,6 +22,7 @@ class WarehousesService:
 
         await self._uow.warehouses.add(warehouse)
         await self._uow.commit()
+        warehouse_operations_total.labels(action="create").inc()
         return warehouse
     
     async def get_by_id(self, warehouse_id: UUID) -> Warehouse | None:
@@ -42,6 +44,7 @@ class WarehousesService:
             warehouse.is_active = bool(dto.is_active)
 
         await self._uow.warehouses.update(warehouse)
+        warehouse_operations_total.labels(action="update").inc()
         return warehouse
         
         

@@ -1,6 +1,10 @@
 from uuid import UUID
 
 from app.core.observability.logging import logger
+from app.core.observability.metrics import (
+    retail_point_operations_total,
+    media_operations_total,
+)
 
 from app.domain.entities.retail_points import (
     RetailPoint, 
@@ -75,6 +79,7 @@ class RetailPointsService:
         await self._uow.commit()
 
         logger.info("Retail point succesfully created", retail_point_id=str(point.id))
+        retail_point_operations_total.labels(action="create").inc()
 
         return point, code
     
@@ -137,6 +142,7 @@ class RetailPointsService:
         await self._uow.commit()
 
         logger.info("Retail point succesfully updated", retail_point_id=str(retail_point.id))
+        retail_point_operations_total.labels(action="update").inc()
 
         return retail_point
 
@@ -157,6 +163,7 @@ class RetailPointsService:
         await self._uow.commit()
 
         logger.info("Retail point deleted", retail_point_id=str(retail_point_id))
+        retail_point_operations_total.labels(action="delete").inc()
 
     async def get_by_id(self, retail_point_id: UUID) -> RetailPoint:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
@@ -202,6 +209,7 @@ class RetailPointsService:
             retail_point_id=str(retail_point_id),
             detached_media_id=str(media_id),
         )
+        media_operations_total.labels(action="detach").inc()
 
         return media_id
 
@@ -241,6 +249,7 @@ class RetailPointsService:
             old_media_id=str(old_media_id),
             new_media_id=str(new_media_id),
         )
+        media_operations_total.labels(action="change").inc()
 
         return old_media_id
 
@@ -283,6 +292,7 @@ class RetailPointsService:
             retail_point_id=str(retail_point_id),
             media_id=str(media_id),
         )
+        media_operations_total.labels(action="attach").inc()
         
         return media_id
 
@@ -336,6 +346,7 @@ class RetailPointsService:
             employee_id=str(employee_id),
             created_count=len(retail_points),
         )
+        retail_point_operations_total.labels(action="bulk_create").inc(len(retail_points))
 
         return BulkCreateRetailPointsResult(created=retail_points)
 

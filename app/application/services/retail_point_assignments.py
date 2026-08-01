@@ -12,6 +12,7 @@ from app.core.extensions import (
     UserNotFoundError,
     UserNotActiveError
 )
+from app.core.observability.metrics import retail_point_assignment_operations_total
 
 
 class RetailPointAssignmentService(IRetailPointAssignmentService):
@@ -82,6 +83,7 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
             employee_id=None
         )
         await self._uow.retail_point_assignments.add(assignment)
+        retail_point_assignment_operations_total.labels(action="create").inc()
 
         logger.info(
             "Retail point assignment successfully created",
@@ -110,6 +112,7 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
             raise RetailPointAssignmentNotFoundError()
 
         await self._uow.retail_point_assignments.delete(assignment)
+        retail_point_assignment_operations_total.labels(action="delete").inc()
 
         logger.info(
             "Retail point assignment successfully deleted",
@@ -142,6 +145,7 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         await self._uow.retail_point_assignments.update(assignment)
 
         await self._uow.commit()
+        retail_point_assignment_operations_total.labels(action="assign_employee").inc()
 
         logger.info(
             "Employee successfully assigned to retail point",
@@ -174,6 +178,7 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         await self._uow.retail_point_assignments.update(assignment)
 
         await self._uow.commit()
+        retail_point_assignment_operations_total.labels(action="unassign_employee").inc()
 
         logger.info(
             "Employee successfully unassigned from retail point",
@@ -202,6 +207,9 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
             assignments_list.append(assignment)
 
         await self._uow.retail_point_assignments.add_many(assignments_list)
+        retail_point_assignment_operations_total.labels(
+            action="create_many"
+        ).inc(len(assignments_list))
 
         logger.info(
             "Multiple retail point assignments successfully created",
@@ -218,6 +226,9 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         )
 
         await self._uow.retail_point_assignments.clear_employee_assignments(retail_point_ids)
+        retail_point_assignment_operations_total.labels(
+            action="clear_employee_assignments"
+        ).inc(len(retail_point_ids))
 
         logger.info(
             "Cleared employee assignments for retail points",

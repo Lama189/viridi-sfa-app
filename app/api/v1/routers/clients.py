@@ -10,6 +10,7 @@ from app.api.dependencies import (
 from app.api.v1.schemas.clients import (
     ClientRegisterRequest,
     ClientResponse,
+    ClientTelegramLoginRequest,
     ClientUpdate,
     ClientWithTokensResponse,
 )
@@ -34,6 +35,42 @@ async def register(
     service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)]
 ):
     return await service.register(dto)
+
+
+@router.post(
+    "/telegram-login",
+    response_model=ClientWithTokensResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def telegram_login(
+    dto: ClientTelegramLoginRequest,
+    service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)],
+):
+    try:
+        return await service.telegram_login(dto)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )
+
+
+@router.get(
+    "/by-telegram/{telegram_chat_id}",
+    response_model=ClientResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_by_telegram_chat_id(
+    telegram_chat_id: int,
+    service: Annotated[ClientsService, Depends(get_clients_service)],
+):
+    client = await service.get_by_telegram_chat_id(telegram_chat_id)
+    if client is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )
+    return client
 
 
 @router.post(

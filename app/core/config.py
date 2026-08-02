@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     redis_url: str = ""
     secret_key: str = ""
     invite_code_secret_key: str = ""
+    telegram_bot_token: str = ""
 
     debug: bool = False
     algorithm: str = "HS256"

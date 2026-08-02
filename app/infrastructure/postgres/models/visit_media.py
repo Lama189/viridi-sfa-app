@@ -44,4 +44,6 @@ class VisitMedia(BaseModel):
         back_populates="media",
     )
 
-    media: Mapped["MediaObject"] = relationship()
+    media: Mapped["MediaObject"] = relationship(
+        back_populates="visits",
+    )

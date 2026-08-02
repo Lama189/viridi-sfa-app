@@ -3,9 +3,9 @@ from uuid import uuid4
 
 import pytest
 
-from app.api.v1.schemas.clients import ClientLoginDTO, ClientRegisterRequest
+from app.api.v1.schemas.clients import ClientLoginDTO, ClientRegisterRequest, ClientTelegramLoginRequest
 from app.application.services.clients import ClientsAuthService
-from app.core.extensions import UserNotFoundError, UserAlreadyExistsError, UserNotActiveError
+from app.core.extensions import UserNotFoundError, UserNotActiveError
 from app.domain.entities.clients import Client
 from app.domain.entities.invite_codes import ClientInviteCode
 
@@ -44,6 +44,7 @@ def service(mock_uow, mock_cache, mock_invite_codes, mock_memberships):
 @patch("app.application.services.clients.SecurityUtils.generate_access_token", return_value="access_tok")
 @patch("app.application.services.clients.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
 async def test_register_success(mock_refresh, mock_access, service, mock_uow, mock_cache, mock_invite_codes, mock_memberships):
+    mock_uow.clients.get_by_phone.return_value = None
     mock_uow.clients.exists_by.return_value = False
     mock_invite_codes.activate.return_value = ClientInviteCode(
         retail_point_id=uuid4(),
@@ -71,8 +72,11 @@ async def test_register_success(mock_refresh, mock_access, service, mock_uow, mo
 
 
 @pytest.mark.asyncio
-async def test_register_duplicate_phone(service, mock_uow):
-    mock_uow.clients.exists_by.return_value = True
+@patch("app.application.services.clients.SecurityUtils.generate_access_token", return_value="access_tok")
+@patch("app.application.services.clients.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
+async def test_register_existing_phone_links_telegram(mock_refresh, mock_access, service, mock_uow, mock_cache):
+    existing_client = Client(phone="+998901234567", full_name="Existing", telegram_chat_id=None)
+    mock_uow.clients.get_by_phone.return_value = existing_client
 
     dto = ClientRegisterRequest(
         invite_code="ABC123",
@@ -80,10 +84,13 @@ async def test_register_duplicate_phone(service, mock_uow):
         full_name="Dup",
         telegram_chat_id=111,
     )
-    with pytest.raises(UserAlreadyExistsError):
-        await service.register(dto)
+    result = await service.register(dto)
 
+    assert existing_client.telegram_chat_id == 111
+    assert result.access_token == "access_tok"
     mock_uow.clients.add.assert_not_awaited()
+    mock_uow.clients.update.assert_awaited_once_with(existing_client)
+    mock_uow.commit.assert_awaited_once()
 
 
 # --- login ---
@@ -156,6 +163,60 @@ async def test_login_no_telegram_update_when_same(mock_refresh, mock_access, ser
     mock_uow.clients.update.assert_not_awaited()
 
 
+# --- telegram_login ---
+
+@pytest.mark.asyncio
+@patch("app.application.services.clients.SecurityUtils.verify_telegram_init_data")
+@patch("app.application.services.clients.SecurityUtils.generate_access_token", return_value="access_tok")
+@patch("app.application.services.clients.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
+async def test_telegram_login_success(mock_refresh, mock_access, mock_verify, service, mock_uow, mock_cache):
+    uid = uuid4()
+    client = Client(phone="+998901234567", full_name="Telegram User", id=uid, telegram_chat_id=123456)
+    mock_verify.return_value = {"user": {"id": 123456}}
+    mock_uow.clients.get_by_telegram_chat_id.return_value = client
+
+    dto = ClientTelegramLoginRequest(init_data="valid_init_data")
+    result = await service.telegram_login(dto)
+
+    assert result.access_token == "access_tok"
+    assert result.refresh_token == "refresh_tok"
+    assert result.client.phone == "+998901234567"
+    mock_uow.clients.get_by_telegram_chat_id.assert_awaited_once_with(123456)
+    mock_cache.set_refresh_token.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@patch("app.application.services.clients.SecurityUtils.verify_telegram_init_data")
+async def test_telegram_login_user_not_found(mock_verify, service, mock_uow):
+    mock_verify.return_value = {"user": {"id": 999999}}
+    mock_uow.clients.get_by_telegram_chat_id.return_value = None
+
+    dto = ClientTelegramLoginRequest(init_data="valid_init_data")
+    with pytest.raises(UserNotFoundError):
+        await service.telegram_login(dto)
+
+
+@pytest.mark.asyncio
+@patch("app.application.services.clients.SecurityUtils.verify_telegram_init_data")
+async def test_telegram_login_user_not_active(mock_verify, service, mock_uow):
+    uid = uuid4()
+    client = Client(phone="+998901234567", full_name="Telegram User", id=uid, telegram_chat_id=123456, is_active=False)
+    mock_verify.return_value = {"user": {"id": 123456}}
+    mock_uow.clients.get_by_telegram_chat_id.return_value = client
+
+    dto = ClientTelegramLoginRequest(init_data="valid_init_data")
+    with pytest.raises(UserNotActiveError):
+        await service.telegram_login(dto)
+
+
+@pytest.mark.asyncio
+@patch("app.application.services.clients.SecurityUtils.verify_telegram_init_data", side_effect=ValueError("signature mismatch"))
+async def test_telegram_login_invalid_init_data(mock_verify, service):
+    dto = ClientTelegramLoginRequest(init_data="invalid_init_data")
+    with pytest.raises(ValueError, match="Telegram authentication failed"):
+        await service.telegram_login(dto)
+
+
 # --- refresh ---
 
 @pytest.mark.asyncio
@@ -203,3 +264,4 @@ async def test_logout(service, mock_cache):
 
     mock_cache.delete_refresh_token.assert_awaited_once_with("client-123")
     mock_cache.delete_user.assert_awaited_once_with("client-123")
+

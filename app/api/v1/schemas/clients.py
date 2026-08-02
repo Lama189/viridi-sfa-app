@@ -25,6 +25,14 @@ class ClientLoginDTO(BaseModel):
         return v
     
 
+class ClientTelegramLoginRequest(BaseModel):
+    init_data: str = Field(
+        ...,
+        description="Telegram WebApp initData строка",
+    )
+
+    
+
 class ClientCreate(BaseModel):
     phone: str = Field(
         ...,

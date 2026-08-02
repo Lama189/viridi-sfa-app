@@ -154,3 +154,53 @@ def test_refresh_token_roundtrip(mock_settings):
 
     assert payload["sub"] == "user-456"
     assert payload["type"] == "refresh"
+
+
+# --- verify_telegram_init_data ---
+
+def test_verify_telegram_init_data_success():
+    import hmac
+    import hashlib
+    import json
+    import urllib.parse
+
+    bot_token = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    user_obj = {"id": 123456789, "first_name": "TestUser"}
+    data_dict = {
+        "auth_date": "1600000000",
+        "query_id": "AA...",
+        "user": json.dumps(user_obj),
+    }
+    data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(data_dict.items()))
+    secret_key = hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
+    data_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
+    init_data = urllib.parse.urlencode(data_dict) + f"&hash={data_hash}"
+
+    parsed = SecurityUtils.verify_telegram_init_data(init_data, bot_token)
+    assert parsed["user"]["id"] == 123456789
+    assert parsed["auth_date"] == "1600000000"
+
+
+def test_verify_telegram_init_data_invalid_hash():
+    import urllib.parse
+
+    bot_token = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    data_dict = {"auth_date": "1600000000", "user": '{"id": 123456789}'}
+    init_data = urllib.parse.urlencode(data_dict) + "&hash=badhash"
+
+    with pytest.raises(ValueError, match="signature mismatch"):
+        SecurityUtils.verify_telegram_init_data(init_data, bot_token)
+
+
+def test_verify_telegram_init_data_missing_hash():
+    bot_token = "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    init_data = "auth_date=1600000000"
+
+    with pytest.raises(ValueError, match="missing hash"):
+        SecurityUtils.verify_telegram_init_data(init_data, bot_token)
+
+
+def test_verify_telegram_init_data_empty_bot_token():
+    with pytest.raises(ValueError, match="bot token is not configured"):
+        SecurityUtils.verify_telegram_init_data("auth_date=1600000000&hash=123", "")
+

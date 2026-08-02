@@ -19,6 +19,10 @@ class IClientRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_by_telegram_chat_id(self, telegram_chat_id: int) -> Client | None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def exists_by(self, **kwargs) -> bool:
         raise NotImplementedError
 

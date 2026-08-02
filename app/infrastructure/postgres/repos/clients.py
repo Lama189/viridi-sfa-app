@@ -40,6 +40,18 @@ class PostgresClientRepository(IClientRepository):
 
         return self._to_domain(model)
 
+    async def get_by_telegram_chat_id(self, telegram_chat_id: int) -> Client | None:
+        result = await self._session.execute(
+            select(ClientModel).where(ClientModel.telegram_chat_id == telegram_chat_id)
+        )
+
+        model = result.scalar_one_or_none()
+        if model is None:
+            return None
+
+        return self._to_domain(model)
+
+
     async def exists_by(self, **kwargs) -> bool:
         stmt = select(select(ClientModel).filter_by(**kwargs).exists())
         result = await self._session.execute(stmt)

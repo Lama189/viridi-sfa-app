@@ -97,6 +97,38 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    networks:
+      - app_network
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: viridi_telegram_bot
+    command: python telegram_bot/bot.py
+    environment:
+      PYTHONUNBUFFERED: "1"
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      VIRIDI_API_URL: http://web:8000
+      TELEGRAM_WEB_APP_URL: ${TELEGRAM_WEB_APP_URL}
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 30s
     networks:
       - app_network
 

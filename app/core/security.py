@@ -1,7 +1,10 @@
 import bcrypt
+import hmac
+import json
 import jwt
 import secrets
 import hashlib
+import urllib.parse
 from jwt.exceptions import InvalidTokenError
 from typing import Any
 from fastapi import HTTPException
@@ -96,3 +99,41 @@ class SecurityUtils:
         return hashlib.sha256(
             code.encode()
         ).hexdigest()
+
+    @staticmethod
+    def verify_telegram_init_data(init_data: str, bot_token: str) -> dict[str, Any]:
+        if not bot_token:
+            raise ValueError("Telegram bot token is not configured")
+
+        parsed_data = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
+        if "hash" not in parsed_data:
+            raise ValueError("Invalid initData: missing hash")
+
+        received_hash = parsed_data.pop("hash")
+
+        data_check_string = "\n".join(
+            f"{k}={v}" for k, v in sorted(parsed_data.items())
+        )
+
+        secret_key = hmac.new(
+            b"WebAppData",
+            bot_token.encode("utf-8"),
+            hashlib.sha256,
+        ).digest()
+
+        calculated_hash = hmac.new(
+            secret_key,
+            data_check_string.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        if not hmac.compare_digest(calculated_hash.lower(), received_hash.lower()):
+            raise ValueError("Invalid initData: signature mismatch")
+
+        if "user" in parsed_data:
+            try:
+                parsed_data["user"] = json.loads(parsed_data["user"])
+            except Exception:
+                pass
+
+        return parsed_data

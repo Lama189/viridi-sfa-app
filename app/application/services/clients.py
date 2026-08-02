@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.domain.entities.auth import AuthenticatedClient
 from app.domain.entities.clients import Client
-from app.core.extensions import UserNotFoundError, UserAlreadyExistsError, UserNotActiveError
+from app.core.extensions import UserNotFoundError, UserNotActiveError
 from app.core.security import SecurityUtils
 from app.core.context import client_id_ctx_var
 from app.core.observability.metrics import client_operations_total
@@ -11,14 +11,19 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
+from app.core.config import get_settings
 from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.api.v1.schemas.clients import (
     ClientUpdate,
     ClientLoginDTO,
+    ClientTelegramLoginRequest,
     ClientResponse,
     ClientWithTokensResponse,
     ClientRegisterRequest
 )
+
+settings = get_settings()
+
 
 
 class ClientsService:
@@ -31,6 +36,9 @@ class ClientsService:
 
     async def get_client_by_phone(self, phone: str) -> Client | None:
         return await self._uow.clients.get_by_phone(phone)
+
+    async def get_by_telegram_chat_id(self, telegram_chat_id: int) -> Client | None:
+        return await self._uow.clients.get_by_telegram_chat_id(telegram_chat_id)
 
     async def list_clients(self, only_active: bool = True) -> list[Client]:
         return await self._uow.clients.list_all(only_active)
@@ -120,8 +128,39 @@ class ClientsAuthService:
         self,
         dto: ClientRegisterRequest,
     ) -> ClientWithTokensResponse:
-        if await self._uow.clients.exists_by(phone=dto.phone):
-            raise UserAlreadyExistsError()
+        existing_client = await self._uow.clients.get_by_phone(dto.phone)
+
+        if existing_client is not None:
+            if dto.telegram_chat_id is not None:
+                existing_client.telegram_chat_id = dto.telegram_chat_id
+            if dto.full_name and not existing_client.full_name:
+                existing_client.full_name = dto.full_name
+
+            await self._uow.clients.update(existing_client)
+
+            if dto.invite_code:
+                try:
+                    invite = await self._invite_codes.activate(
+                        dto.invite_code,
+                        existing_client.id,
+                    )
+                    await self._memberships.join(
+                        invite.retail_point_id,
+                        existing_client.id,
+                    )
+                except Exception:
+                    pass
+
+            await self._uow.commit()
+
+            tokens = await self._generate_auth_session(existing_client)
+            client_operations_total.labels(action="register").inc()
+
+            return ClientWithTokensResponse(
+                access_token=tokens.access_token,
+                refresh_token=tokens.refresh_token,
+                client=ClientResponse.model_validate(existing_client),
+            )
 
         client = Client(
             phone=dto.phone,
@@ -175,6 +214,40 @@ class ClientsAuthService:
         tokens = await self._generate_auth_session(client)
         client_operations_total.labels(action="login").inc()
         return tokens
+
+    async def telegram_login(
+        self,
+        dto: ClientTelegramLoginRequest,
+    ) -> ClientWithTokensResponse:
+        try:
+            parsed_data = SecurityUtils.verify_telegram_init_data(
+                dto.init_data,
+                settings.telegram_bot_token,
+            )
+        except ValueError as e:
+            raise ValueError(f"Telegram authentication failed: {e}")
+
+        user_data = parsed_data.get("user")
+        if not isinstance(user_data, dict) or "id" not in user_data:
+            raise ValueError("Invalid initData: missing user information")
+
+        telegram_chat_id = int(user_data["id"])
+
+        client = await self._uow.clients.get_by_telegram_chat_id(telegram_chat_id)
+        if client is None:
+            raise UserNotFoundError()
+
+        if not client.is_active:
+            raise UserNotActiveError()
+
+        tokens = await self._generate_auth_session(client)
+        client_operations_total.labels(action="telegram_login").inc()
+
+        return ClientWithTokensResponse(
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            client=ClientResponse.model_validate(client),
+        )
 
     async def refresh(
         self,

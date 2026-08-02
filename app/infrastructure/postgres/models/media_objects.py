@@ -71,4 +71,6 @@ class MediaObject(BaseModel):
         nullable=False,
     )
 
-    visits: Mapped[list["VisitMedia"]] = relationship()
+    visits: Mapped[list["VisitMedia"]] = relationship(
+        back_populates="media",
+    )

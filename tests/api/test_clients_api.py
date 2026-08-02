@@ -9,6 +9,7 @@ from app.main import app
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.infrastructure.postgres.models.enums import EmployeeRole
 from app.api.dependencies import get_clients_service, get_clients_auth_service, get_current_user
+from app.api.v1.schemas.clients import ClientWithTokensResponse, ClientResponse
 
 
 @pytest.fixture
@@ -74,14 +75,25 @@ async def test_register_success(client, mock_auth_service):
 
 
 @pytest.mark.asyncio
-async def test_register_duplicate_phone(client, mock_auth_service):
-    from app.core.extensions import UserAlreadyExistsError
-    mock_auth_service.register.side_effect = UserAlreadyExistsError()
+async def test_register_existing_phone_returns_201(client, mock_auth_service):
+    mock_auth_service.register.return_value = ClientWithTokensResponse(
+        access_token="acc",
+        refresh_token="ref",
+        client=ClientResponse(
+            id=uuid4(),
+            phone="+998901234567",
+            full_name="Existing Client",
+            telegram_chat_id=111,
+            is_active=True,
+        ),
+    )
 
     resp = await client.post("/api/v1/clients/register", json={
         "invite_code": "ABC123",
         "phone": "+998901234567",
-        "full_name": "Dup",
+        "full_name": "Existing Client",
         "telegram_chat_id": 111,
     })
-    assert resp.status_code == 409
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["access_token"] == "acc"

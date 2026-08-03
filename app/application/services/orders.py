@@ -8,12 +8,16 @@ from app.application.dto.stocks import (
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.extensions import UserNotActiveError, UserNotFoundError
+
 from app.domain.entities.inventory import Product
 from app.domain.entities.orders import Order, OrderItem
+from app.domain.entities.outbox_messages import OutboxMessage
 from app.domain.enums import (
     OrderStatus,
     StockReferenceType,
     TransactionActorType,
+    OrderEventType,
+    AggregateType
 )
 
 
@@ -115,6 +119,20 @@ class OrdersService:
         await self._uow.orders.add(order)
         for item in order_items:
             await self._uow.order_items.add(item)
+
+        event = OutboxMessage.create(
+            event_type=OrderEventType.CREATED,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(client_id),
+            }
+        )
+
+        await self._uow.outbox.add(event)
 
         await self._uow.commit()
 

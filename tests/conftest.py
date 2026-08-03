@@ -213,3 +213,9 @@ def retail_point_repo(session: AsyncSession):
         yield PostgresRetailPointRepository(session)
     finally:
         repo_mod.RetailPointModel = original
+
+
+@pytest_asyncio.fixture
+def outbox_repo(session: AsyncSession):
+    from app.infrastructure.postgres.repos.outbox import PostgresOutboxRepository
+    return PostgresOutboxRepository(session)

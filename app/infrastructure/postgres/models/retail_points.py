@@ -19,6 +19,7 @@ from app.infrastructure.postgres.models.enums import ClientType
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee
     from app.infrastructure.postgres.models.invite_codes import RetailPointInviteCode
+    from app.infrastructure.postgres.models.media_objects import MediaObject
     from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
     from app.infrastructure.postgres.models.visits import Visit
@@ -87,6 +88,10 @@ class RetailPoint(BaseModel):
     created_by_employee_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("employees.id", ondelete="SET NULL"),
+    )
+
+    photo: Mapped["MediaObject | None"] = relationship(
+        foreign_keys=[photo_id],
     )
 
     created_by: Mapped["Employee | None"] = relationship(

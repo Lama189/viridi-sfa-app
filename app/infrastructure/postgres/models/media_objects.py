@@ -15,9 +15,7 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.visit_media import VisitMedia
-
-if TYPE_CHECKING:
-    pass
+    from app.infrastructure.postgres.models.employees import Employee
 
 
 class MediaObject(BaseModel):
@@ -69,6 +67,10 @@ class MediaObject(BaseModel):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
+    )
+
+    uploader: Mapped["Employee"] = relationship(
+        foreign_keys=[uploaded_by],
     )
 
     visits: Mapped[list["VisitMedia"]] = relationship(

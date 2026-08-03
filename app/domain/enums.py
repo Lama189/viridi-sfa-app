@@ -1,4 +1,4 @@
-from enum import Enum, IntEnum
+from enum import StrEnum, IntEnum
 
 
 class Weekday(IntEnum):
@@ -11,24 +11,24 @@ class Weekday(IntEnum):
     SUNDAY = 6
 
 
-class EmployeeRole(str, Enum):
+class EmployeeRole(StrEnum):
     ADMIN = "admin"
     AGENT = "agent"
 
 
-class ClientType(str, Enum):
+class ClientType(StrEnum):
     B = "B"
     C = "C"
 
 
-class OrderStatus(str, Enum):
+class OrderStatus(StrEnum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
     SHIPPED = "shipped"
     CANCELLED = "cancelled"
 
 
-class StockTransactionType(str, Enum):
+class StockTransactionType(StrEnum):
     RECEIPT = "receipt"
     RESERVATION = "reservation"
     CANCEL_RESERVATION = "cancel_reservation"
@@ -38,13 +38,13 @@ class StockTransactionType(str, Enum):
     ADJUSTMENT = "adjustment"
 
 
-class TransactionActorType(str, Enum):
+class TransactionActorType(StrEnum):
     EMPLOYEE = "employee"
     CLIENT = "client"
     SYSTEM = "system"
 
 
-class StockReferenceType(str, Enum):
+class StockReferenceType(StrEnum):
     ORDER = "order"
     RECEIPT = "receipt"
     TRANSFER = "transfer"
@@ -53,26 +53,45 @@ class StockReferenceType(str, Enum):
     WRITEOFF = "writeoff"
 
 
-class VisitStatus(str, Enum):
+class VisitStatus(StrEnum):
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
 
-class VisitPlanStatus(str, Enum):
+class VisitPlanStatus(StrEnum):
     PLANNED = "planned"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
 
-class VisitPlanItemStatus(str, Enum):
+class VisitPlanItemStatus(StrEnum):
     PENDING = "pending"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
 
-class MediaBucket(str, Enum):
+class MediaBucket(StrEnum):
     RETAIL_POINTS = "retail-point-images"
     VISITS = "visit-reports"
     DOCUMENTS = "documents"
     AVATARS = "avatars"
+
+
+class OrderEventType(StrEnum):
+    CREATED = "order.created"
+    ASSEMBLY_STARTED = "order.assembly_started"
+    ASSEMBLED = "order.assembled"
+    TAKEN_BY_AGENT = "order.taken_by_agent"
+    DELIVERED = "order.delivered"
+    CANCELLED = "order.cancelled"
+
+
+EventType = OrderEventType | str
+
+
+class AggregateType(StrEnum):
+    ORDER = "order"
+    STOCK = "stock"
+    CLIENT = "client"
+    RETAIL_POINT = "retail_point"

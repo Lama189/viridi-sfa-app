@@ -25,6 +25,7 @@ from app.infrastructure.postgres.repos.visit_debts import PostgresVisitDebtRepos
 from app.infrastructure.postgres.repos.visit_plans import PostgresVisitPlanRepository
 from app.infrastructure.postgres.repos.visit_plan_items import PostgresVisitPlanItemRepository
 from app.infrastructure.postgres.repos.visits_schedule_rules import PostgresVisitScheduleRuleRepository
+from app.infrastructure.postgres.repos.outbox import PostgresOutboxRepository
 
 
 class PostgresUnitOfWork(IUnitOfWork):
@@ -56,6 +57,7 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.visit_plans = PostgresVisitPlanRepository(self._session)
         self.visit_plan_items = PostgresVisitPlanItemRepository(self._session)
         self.visit_schedule_rules = PostgresVisitScheduleRuleRepository(self._session)
+        self.outbox = PostgresOutboxRepository(self._session)
 
         return self
     

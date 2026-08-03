@@ -18,6 +18,7 @@ from app.infrastructure.postgres.models.retail_point_assignments import RetailPo
 from app.infrastructure.postgres.models.visit_plans import VisitPlan
 from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem
 from app.infrastructure.postgres.models.visit_schedule_rules import VisitScheduleRule
+from app.infrastructure.postgres.models.outbox_messages import OutboxMessage
 
 
 __all__ = [
@@ -41,4 +42,5 @@ __all__ = [
     "VisitPlan",
     "VisitPlanItem",
     "VisitScheduleRule",
+    "OutboxMessage",
 ]

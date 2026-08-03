@@ -19,6 +19,7 @@ from app.application.interfaces.repos.visit_plans import IVisitPlanRepository
 from app.application.interfaces.repos.visit_plan_items import IVisitPlanItemRepository
 from app.application.interfaces.repos.warehouses import IWarehouseRepository
 from app.application.interfaces.repos.visit_schedule_rules import IVisitScheduleRuleRepository
+from app.application.interfaces.repos.outbox import IOutboxRepository
 
 
 class IUnitOfWork:
@@ -43,6 +44,7 @@ class IUnitOfWork:
     visit_plans: IVisitPlanRepository
     visit_plan_items: IVisitPlanItemRepository
     visit_schedule_rules: IVisitScheduleRuleRepository
+    outbox: IOutboxRepository
 
     async def commit(self) -> None: ...
     async def rollback(self) -> None: ...

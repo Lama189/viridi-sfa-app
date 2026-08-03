@@ -1,7 +1,7 @@
 services:
   postgres:
     image: pgvector/pgvector:pg15
-    container_name: rag_db
+    container_name: vividi_postgres
     environment:
       POSTGRES_USER: ${APP__DB__USER}
       POSTGRES_PASSWORD: ${APP__DB__PASSWORD}
@@ -129,6 +129,29 @@ services:
     restart: unless-stopped
     init: true
     stop_grace_period: 30s
+    networks:
+      - app_network
+
+  outbox-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: viridi_outbox_worker
+    command: python -m app.workers.outbox.runner
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
+      RABBITMQ_URL: amqp://guest:123@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
     networks:
       - app_network
 

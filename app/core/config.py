@@ -5,6 +5,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     database_url: str = ""
     redis_url: str = ""
+    rabbitmq_url: str = "amqp://guest:123@localhost:5672/"
     secret_key: str = ""
     invite_code_secret_key: str = ""
     telegram_bot_token: str = ""

@@ -1,5 +1,5 @@
 from types import TracebackType
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.infrastructure.postgres.database import async_session_maker
 from app.application.interfaces.uow import IUnitOfWork
@@ -29,12 +29,20 @@ from app.infrastructure.postgres.repos.outbox import PostgresOutboxRepository
 
 
 class PostgresUnitOfWork(IUnitOfWork):
-    def __init__(self, session: AsyncSession | None = None):
+    def __init__(
+        self,
+        session: AsyncSession | None = None,
+        session_factory: async_sessionmaker[AsyncSession] | None = None,
+    ):
         self._session = session
+        self._session_factory = session_factory
 
     async def __aenter__(self) -> "PostgresUnitOfWork":
         if self._session is None:
-            self._session = async_session_maker()
+            if self._session_factory is not None:
+                self._session = self._session_factory()
+            else:
+                self._session = async_session_maker()
 
         self.warehouses = PostgresWarehousesRepository(self._session)
         self.categories = PostgresCategoriesRepository(self._session)
@@ -73,6 +81,7 @@ class PostgresUnitOfWork(IUnitOfWork):
         finally:
             if self._session:
                 await self._session.close()
+                self._session = None
 
     async def commit(self) -> None:
         if self._session:

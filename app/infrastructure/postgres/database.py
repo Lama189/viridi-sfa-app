@@ -4,6 +4,7 @@ from sqlalchemy.orm import declarative_base
 from app.core.config import get_settings
 
 settings = get_settings()
-engine = create_async_engine(settings.database_url, echo=settings.debug)
+db_url = settings.database_url or "sqlite+aiosqlite:///:memory:"
+engine = create_async_engine(db_url, echo=settings.debug)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 Base = declarative_base()

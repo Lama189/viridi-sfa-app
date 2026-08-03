@@ -1,18 +1,18 @@
 """Initial migration
 
-Revision ID: 77e5c2b63840
+Revision ID: 99d68b0b608c
 Revises: 
-Create Date: 2026-07-31 06:20:01.975804
+Create Date: 2026-08-03 11:22:52.741202
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '77e5c2b63840'
+revision: str = '99d68b0b608c'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -52,6 +52,16 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_employees_phone'), 'employees', ['phone'], unique=True)
+    op.create_table('outbox_messages',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('event_type', sa.String(length=255), nullable=False),
+    sa.Column('aggregate_type', sa.String(length=255), nullable=False),
+    sa.Column('aggregate_id', sa.UUID(), nullable=False),
+    sa.Column('payload', postgresql.JSONB(astext_type=sa.Text()).with_variant(sa.JSON(), 'sqlite'), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('processed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('warehouses',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
@@ -139,6 +149,8 @@ def upgrade() -> None:
     sa.Column('quantity', sa.Integer(), nullable=False),
     sa.Column('reserved_quantity', sa.Integer(), nullable=False),
     sa.CheckConstraint('quantity >= 0', name='ck_stock_quantity_positive'),
+    sa.CheckConstraint('reserved_quantity <= quantity', name='ck_stock_reserved_le_quantity'),
+    sa.CheckConstraint('reserved_quantity >= 0', name='ck_stock_reserved_quantity_positive'),
     sa.ForeignKeyConstraint(['product_id'], ['products.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('warehouse_id', 'product_id')
@@ -285,6 +297,7 @@ def downgrade() -> None:
     op.drop_table('products')
     op.drop_table('media_objects')
     op.drop_table('warehouses')
+    op.drop_table('outbox_messages')
     op.drop_index(op.f('ix_employees_phone'), table_name='employees')
     op.drop_table('employees')
     op.drop_index(op.f('ix_clients_telegram_chat_id'), table_name='clients')

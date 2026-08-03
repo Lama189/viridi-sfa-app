@@ -64,11 +64,6 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         self,
         retail_point_id: UUID,
     ) -> RetailPointAssignment:
-        logger.info(
-            "Creating retail point assignment",
-            retail_point_id=str(retail_point_id),
-        )
-
         await self._validate_retail_point(retail_point_id)
 
         if await self._uow.retail_point_assignments.exists_by_retail_point_id(retail_point_id):
@@ -96,11 +91,6 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         self,
         retail_point_id: UUID
     ) -> None:
-        logger.info(
-            "Deleting retail point assignment",
-            retail_point_id=str(retail_point_id),
-        )
-
         await self._validate_retail_point(retail_point_id)
 
         assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(retail_point_id)
@@ -124,12 +114,6 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         retail_point_id: UUID,
         employee_id: UUID
     ) -> RetailPointAssignment:
-        logger.info(
-            "Assigning employee to retail point",
-            retail_point_id=str(retail_point_id),
-            target_employee_id=str(employee_id),
-        )
-
         await self._validate_retail_point(retail_point_id)
         await self._validate_employee(employee_id)
 
@@ -159,11 +143,6 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         self,
         retail_point_id: UUID
     ) -> RetailPointAssignment:
-        logger.info(
-            "Unassigning employee from retail point",
-            retail_point_id=str(retail_point_id),
-        )
-
         await self._validate_retail_point(retail_point_id)
 
         assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(retail_point_id)
@@ -191,11 +170,6 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         self,
         retail_point_ids: list[UUID]
     ) -> None:
-        logger.info(
-            "Creating multiple retail point assignments",
-            count=len(retail_point_ids),
-        )
-
         assignments_list: list[RetailPointAssignment] = []
 
         for point_id in retail_point_ids:
@@ -220,11 +194,6 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         self,
         retail_point_ids: list[UUID],
     ) -> None:
-        logger.info(
-            "Clearing employee assignments for retail points",
-            count=len(retail_point_ids),
-        )
-
         await self._uow.retail_point_assignments.clear_employee_assignments(retail_point_ids)
         retail_point_assignment_operations_total.labels(
             action="clear_employee_assignments"

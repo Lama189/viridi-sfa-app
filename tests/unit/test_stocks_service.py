@@ -4,14 +4,30 @@ from uuid import uuid4
 
 import pytest
 
-from app.api.v1.schemas.stocks import StockCreateRequest, StockOperationRequest
+from app.application.dto.stocks import (
+    StockBatchItemDTO,
+    StockBatchOperationDTO,
+    StockCreateDTO,
+    StockOperationDTO,
+)
 from app.application.services.stocks import StockService
-from app.domain.entities.inventory import Warehouse, Product
+from app.core.exceptions import (
+    InsufficientReservationError,
+    InsufficientReservedStockError,
+    InsufficientStockError,
+    ProductInactiveError,
+    ProductNotFoundError,
+    StockAlreadyExistsError,
+    StockNotFoundError,
+    WarehouseInactiveError,
+    WarehouseNotFoundError,
+)
+from app.domain.entities.inventory import Product, Warehouse
 from app.domain.entities.stocks import Stock
 from app.domain.enums import (
+    StockReferenceType,
     StockTransactionType,
     TransactionActorType,
-    StockReferenceType,
 )
 
 
@@ -37,8 +53,11 @@ def _warehouse(uid=None, is_active=True):
 
 def _product(uid=None, is_active=True):
     return Product(
-        category_id=uuid4(), name="NPK", price=Decimal("100.00"),
-        id=uid or uuid4(), is_active=is_active,
+        category_id=uuid4(),
+        name="NPK",
+        price=Decimal("100.00"),
+        id=uid or uuid4(),
+        is_active=is_active,
     )
 
 
@@ -53,12 +72,13 @@ def _op_dto(warehouse_id=None, product_id=None, quantity=10, **overrides):
         reference_id=uuid4(),
     )
     defaults.update(overrides)
-    return StockOperationRequest(**defaults)
+    return StockOperationDTO(**defaults)
 
 
 # ---------------------------------------------------------------------------
 # create_stock
 # ---------------------------------------------------------------------------
+
 
 class TestStockServiceCreate:
     @pytest.mark.asyncio
@@ -68,7 +88,7 @@ class TestStockServiceCreate:
         mock_uow.products.get_by_id.return_value = _product(uid=pid)
         mock_uow.stocks.get.return_value = None
 
-        dto = StockCreateRequest(warehouse_id=wid, product_id=pid)
+        dto = StockCreateDTO(warehouse_id=wid, product_id=pid)
         result = await service.create_stock(dto)
 
         assert result.warehouse_id == wid
@@ -80,46 +100,49 @@ class TestStockServiceCreate:
     async def test_create_stock_already_exists(self, service, mock_uow):
         mock_uow.warehouses.get_by_id.return_value = _warehouse()
         mock_uow.products.get_by_id.return_value = _product()
-        mock_uow.stocks.get.return_value = Stock(warehouse_id=uuid4(), product_id=uuid4())
+        mock_uow.stocks.get.return_value = Stock(
+            warehouse_id=uuid4(), product_id=uuid4()
+        )
 
-        dto = StockCreateRequest(warehouse_id=uuid4(), product_id=uuid4())
-        with pytest.raises(ValueError, match="already exists"):
+        dto = StockCreateDTO(warehouse_id=uuid4(), product_id=uuid4())
+        with pytest.raises(StockAlreadyExistsError):
             await service.create_stock(dto)
 
     @pytest.mark.asyncio
     async def test_create_stock_warehouse_not_found(self, service, mock_uow):
         mock_uow.warehouses.get_by_id.return_value = None
-        dto = StockCreateRequest(warehouse_id=uuid4(), product_id=uuid4())
-        with pytest.raises(ValueError, match="Warehouse"):
+        dto = StockCreateDTO(warehouse_id=uuid4(), product_id=uuid4())
+        with pytest.raises(WarehouseNotFoundError):
             await service.create_stock(dto)
 
     @pytest.mark.asyncio
     async def test_create_stock_warehouse_inactive(self, service, mock_uow):
         mock_uow.warehouses.get_by_id.return_value = _warehouse(is_active=False)
-        dto = StockCreateRequest(warehouse_id=uuid4(), product_id=uuid4())
-        with pytest.raises(ValueError, match="inactive"):
+        dto = StockCreateDTO(warehouse_id=uuid4(), product_id=uuid4())
+        with pytest.raises(WarehouseInactiveError):
             await service.create_stock(dto)
 
     @pytest.mark.asyncio
     async def test_create_stock_product_not_found(self, service, mock_uow):
         mock_uow.warehouses.get_by_id.return_value = _warehouse()
         mock_uow.products.get_by_id.return_value = None
-        dto = StockCreateRequest(warehouse_id=uuid4(), product_id=uuid4())
-        with pytest.raises(ValueError, match="Product"):
+        dto = StockCreateDTO(warehouse_id=uuid4(), product_id=uuid4())
+        with pytest.raises(ProductNotFoundError):
             await service.create_stock(dto)
 
     @pytest.mark.asyncio
     async def test_create_stock_product_inactive(self, service, mock_uow):
         mock_uow.warehouses.get_by_id.return_value = _warehouse()
         mock_uow.products.get_by_id.return_value = _product(is_active=False)
-        dto = StockCreateRequest(warehouse_id=uuid4(), product_id=uuid4())
-        with pytest.raises(ValueError, match="inactive"):
+        dto = StockCreateDTO(warehouse_id=uuid4(), product_id=uuid4())
+        with pytest.raises(ProductInactiveError):
             await service.create_stock(dto)
 
 
 # ---------------------------------------------------------------------------
 # add_stock
 # ---------------------------------------------------------------------------
+
 
 class TestStockServiceAdd:
     @pytest.mark.asyncio
@@ -142,7 +165,7 @@ class TestStockServiceAdd:
     async def test_add_stock_warehouse_not_found(self, service, mock_uow):
         mock_uow.warehouses.get_by_id.return_value = None
         dto = _op_dto()
-        with pytest.raises(ValueError, match="Warehouse"):
+        with pytest.raises(WarehouseNotFoundError):
             await service.add_stock(dto)
 
     @pytest.mark.asyncio
@@ -150,13 +173,14 @@ class TestStockServiceAdd:
         mock_uow.warehouses.get_by_id.return_value = _warehouse()
         mock_uow.products.get_by_id.return_value = None
         dto = _op_dto()
-        with pytest.raises(ValueError, match="Product"):
+        with pytest.raises(ProductNotFoundError):
             await service.add_stock(dto)
 
 
 # ---------------------------------------------------------------------------
-# reserve_stock
+# reserve_stock & batch
 # ---------------------------------------------------------------------------
+
 
 class TestStockServiceReserve:
     @pytest.mark.asyncio
@@ -175,12 +199,39 @@ class TestStockServiceReserve:
         assert tx_call.transaction_type == StockTransactionType.RESERVATION
 
     @pytest.mark.asyncio
+    async def test_reserve_batch_success(self, service, mock_uow):
+        wid, pid1, pid2 = uuid4(), uuid4(), uuid4()
+        stock1 = Stock(warehouse_id=wid, product_id=pid1, quantity=50)
+        stock2 = Stock(warehouse_id=wid, product_id=pid2, quantity=30)
+        mock_uow.stocks.get_many_for_update.return_value = [stock1, stock2]
+
+        dto = StockBatchOperationDTO(
+            warehouse_id=wid,
+            items=[
+                StockBatchItemDTO(product_id=pid1, quantity=10),
+                StockBatchItemDTO(product_id=pid2, quantity=5),
+            ],
+            actor_type=TransactionActorType.CLIENT,
+            reference_type=StockReferenceType.ORDER,
+            reference_id=uuid4(),
+        )
+
+        results = await service.reserve_stocks_batch(dto)
+
+        assert len(results) == 2
+        assert stock1.reserved_quantity == 10
+        assert stock2.reserved_quantity == 5
+        mock_uow.stocks.get_many_for_update.assert_awaited_once_with(
+            wid, [pid1, pid2]
+        )
+
+    @pytest.mark.asyncio
     async def test_reserve_insufficient_stock(self, service, mock_uow):
         stock = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=5)
         mock_uow.stocks.get_for_update.return_value = stock
 
         dto = _op_dto(quantity=10)
-        with pytest.raises(ValueError, match="Insufficient stock"):
+        with pytest.raises(InsufficientStockError):
             await service.reserve_stock(dto)
 
 
@@ -188,11 +239,14 @@ class TestStockServiceReserve:
 # release_reservation
 # ---------------------------------------------------------------------------
 
+
 class TestStockServiceRelease:
     @pytest.mark.asyncio
     async def test_release_success(self, service, mock_uow):
         wid, pid = uuid4(), uuid4()
-        stock = Stock(warehouse_id=wid, product_id=pid, quantity=50, reserved_quantity=20)
+        stock = Stock(
+            warehouse_id=wid, product_id=pid, quantity=50, reserved_quantity=20
+        )
         mock_uow.stocks.get_for_update.return_value = stock
 
         dto = _op_dto(warehouse_id=wid, product_id=pid, quantity=10)
@@ -200,15 +254,19 @@ class TestStockServiceRelease:
 
         assert result.reserved_quantity == 10
         tx_call = mock_uow.stock_transactions.add.call_args[0][0]
-        assert tx_call.transaction_type == StockTransactionType.CANCEL_RESERVATION
+        assert (
+            tx_call.transaction_type == StockTransactionType.CANCEL_RESERVATION
+        )
 
     @pytest.mark.asyncio
     async def test_release_exceeds_reservation(self, service, mock_uow):
-        stock = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=50, reserved_quantity=5)
+        stock = Stock(
+            warehouse_id=uuid4(), product_id=uuid4(), quantity=50, reserved_quantity=5
+        )
         mock_uow.stocks.get_for_update.return_value = stock
 
         dto = _op_dto(quantity=10)
-        with pytest.raises(ValueError, match="Insufficient reservation"):
+        with pytest.raises(InsufficientReservedStockError):
             await service.release_reservation(dto)
 
 
@@ -216,11 +274,14 @@ class TestStockServiceRelease:
 # confirm_sale
 # ---------------------------------------------------------------------------
 
+
 class TestStockServiceConfirmSale:
     @pytest.mark.asyncio
     async def test_confirm_sale_success(self, service, mock_uow):
         wid, pid = uuid4(), uuid4()
-        stock = Stock(warehouse_id=wid, product_id=pid, quantity=50, reserved_quantity=20)
+        stock = Stock(
+            warehouse_id=wid, product_id=pid, quantity=50, reserved_quantity=20
+        )
         mock_uow.stocks.get_for_update.return_value = stock
 
         dto = _op_dto(warehouse_id=wid, product_id=pid, quantity=10)
@@ -233,18 +294,23 @@ class TestStockServiceConfirmSale:
         assert tx_call.quantity_delta == -10
 
     @pytest.mark.asyncio
-    async def test_confirm_sale_insufficient_reservation(self, service, mock_uow):
-        stock = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=50, reserved_quantity=5)
+    async def test_confirm_sale_insufficient_reservation(
+        self, service, mock_uow
+    ):
+        stock = Stock(
+            warehouse_id=uuid4(), product_id=uuid4(), quantity=50, reserved_quantity=5
+        )
         mock_uow.stocks.get_for_update.return_value = stock
 
         dto = _op_dto(quantity=10)
-        with pytest.raises(ValueError, match="Insufficient reservation"):
+        with pytest.raises(InsufficientReservationError):
             await service.confirm_sale(dto)
 
 
 # ---------------------------------------------------------------------------
 # write_off
 # ---------------------------------------------------------------------------
+
 
 class TestStockServiceWriteOff:
     @pytest.mark.asyncio
@@ -263,17 +329,20 @@ class TestStockServiceWriteOff:
 
     @pytest.mark.asyncio
     async def test_write_off_insufficient(self, service, mock_uow):
-        stock = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=5, reserved_quantity=3)
+        stock = Stock(
+            warehouse_id=uuid4(), product_id=uuid4(), quantity=5, reserved_quantity=3
+        )
         mock_uow.stocks.get_for_update.return_value = stock
 
         dto = _op_dto(quantity=5)
-        with pytest.raises(ValueError, match="Insufficient stock"):
+        with pytest.raises(InsufficientStockError):
             await service.write_off(dto)
 
 
 # ---------------------------------------------------------------------------
 # return_stock
 # ---------------------------------------------------------------------------
+
 
 class TestStockServiceReturn:
     @pytest.mark.asyncio
@@ -295,5 +364,5 @@ class TestStockServiceReturn:
         mock_uow.stocks.get_for_update.return_value = None
 
         dto = _op_dto()
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(StockNotFoundError):
             await service.return_stock(dto)

@@ -91,7 +91,7 @@ class TestOrdersServiceCreate:
         mock_uow.orders.add.assert_awaited_once()
         mock_uow.order_items.add.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
-        mock_stocks.reserve_stock.assert_awaited_once()
+        mock_stocks.reserve_stocks_batch.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_create_warehouse_not_found(self, service, mock_uow, mock_stocks):
@@ -186,7 +186,7 @@ class TestOrdersServiceCreate:
         result = await service.create(uuid4(), dto)
 
         assert len(result.items) == 2
-        assert mock_stocks.reserve_stock.await_count == 2
+        mock_stocks.reserve_stocks_batch.assert_awaited_once()
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +203,7 @@ class TestOrdersServiceConfirm:
 
         result = await service.confirm(oid)
         assert result.status == OrderStatus.CONFIRMED
-        mock_stocks.confirm_sale.assert_awaited_once()
+        mock_stocks.confirm_sales_batch.assert_awaited_once()
         mock_uow.orders.update.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
 
@@ -237,7 +237,7 @@ class TestOrdersServiceCancel:
 
         result = await service.cancel(oid)
         assert result.status == OrderStatus.CANCELLED
-        mock_stocks.release_reservation.assert_awaited_once()
+        mock_stocks.release_reservations_batch.assert_awaited_once()
         mock_uow.orders.update.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
 
@@ -253,7 +253,7 @@ class TestOrdersServiceCancel:
         order = _pending_order_with_item(oid)
         order.status = OrderStatus.CONFIRMED
         mock_uow.orders.get_by_id.return_value = order
-        with pytest.raises(ValueError, match="Cannot confirm"):
+        with pytest.raises(ValueError, match="Cannot cancel"):
             await service.cancel(oid)
 
 
@@ -285,7 +285,7 @@ class TestOrdersServiceShip:
         oid = uuid4()
         order = _pending_order_with_item(oid)
         mock_uow.orders.get_by_id.return_value = order
-        with pytest.raises(ValueError, match="Cannot confirm"):
+        with pytest.raises(ValueError, match="Cannot ship"):
             await service.ship(oid)
 
 

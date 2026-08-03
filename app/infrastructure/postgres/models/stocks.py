@@ -16,6 +16,8 @@ class Stock(BaseModel):
 
     __table_args__ = (
         CheckConstraint("quantity >= 0", name="ck_stock_quantity_positive"),
+        CheckConstraint("reserved_quantity >= 0", name="ck_stock_reserved_quantity_positive"),
+        CheckConstraint("reserved_quantity <= quantity", name="ck_stock_reserved_le_quantity"),
     )
 
     warehouse_id: Mapped[PG_UUID] = mapped_column(

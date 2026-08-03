@@ -29,6 +29,17 @@ from app.core.extensions import (
     VisitPlanNotFoundError,
     VisitPlanAlreadyExistsError,
 )
+from app.core.exceptions import (
+    WarehouseNotFoundError,
+    WarehouseInactiveError,
+    ProductNotFoundError,
+    ProductInactiveError,
+    StockNotFoundError,
+    StockAlreadyExistsError,
+    InsufficientStockError,
+    InsufficientReservedStockError,
+    InsufficientReservationError,
+)
 
 ERROR_MAPPING = {
     UserNotFoundError: (404, "User not found"),
@@ -56,6 +67,15 @@ ERROR_MAPPING = {
     BulkCreateRetailPointsRequestIsEmptyError: (400, "Bulk create request is empty"),
     VisitPlanNotFoundError: (404, "Visit plan not found"),
     VisitPlanAlreadyExistsError: (409, "Visit plan already exists for this date"),
+    WarehouseNotFoundError: (404, "Warehouse not found"),
+    WarehouseInactiveError: (409, "Warehouse is inactive"),
+    ProductNotFoundError: (404, "Product not found"),
+    ProductInactiveError: (409, "Product is inactive"),
+    StockNotFoundError: (404, "Stock not found"),
+    StockAlreadyExistsError: (409, "Stock already exists"),
+    InsufficientStockError: (400, "Insufficient stock"),
+    InsufficientReservedStockError: (400, "Insufficient reserved stock"),
+    InsufficientReservationError: (400, "Insufficient reservation"),
 }
 
 

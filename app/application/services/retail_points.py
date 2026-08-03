@@ -48,8 +48,6 @@ class RetailPointsService:
         dto: CreateRetailPointRequest,
         employee_id: UUID,
     ) -> tuple[RetailPoint, str]:
-        logger.info("Creating retail point", name=dto.name, adress=dto.address)
-        
         point = RetailPoint(
             name=dto.name,
             address=dto.address,
@@ -88,11 +86,6 @@ class RetailPointsService:
         retail_point_id: UUID,
         dto: UpdateRetailPointRequest,
     ) -> RetailPoint:
-        logger.info(
-            "Updating retail point",
-            retail_point_id=str(retail_point_id),
-        )
-        
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if not retail_point:
             logger.warning(
@@ -147,8 +140,6 @@ class RetailPointsService:
         return retail_point
 
     async def delete_retail_point(self, retail_point_id: UUID) -> None:
-        logger.info("Deleting retail point", retail_point_id=str(retail_point_id))
-
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if not retail_point:
             logger.warning(
@@ -188,8 +179,6 @@ class RetailPointsService:
         return await self._invite_codes_service.get_raw_code(retail_point_id)
 
     async def detach_media(self, retail_point_id: UUID) -> UUID:
-        logger.info("Detaching media from retail point", retail_point_id=str(retail_point_id))
-
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
             logger.warning("Retail point not found", retail_point_id=str(retail_point_id))
@@ -214,12 +203,6 @@ class RetailPointsService:
         return media_id
 
     async def change_media(self, retail_point_id: UUID, new_media_id: UUID) -> UUID:
-        logger.info(
-            "Changing media for retail point",
-            retail_point_id=str(retail_point_id),
-            new_media_id=str(new_media_id),
-        )
-
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         exists = await self._uow.media_objects.exists_by(id=new_media_id)
 
@@ -254,12 +237,6 @@ class RetailPointsService:
         return old_media_id
 
     async def setup_media(self, retail_point_id: UUID, media_id: UUID) -> UUID:
-        logger.info(
-            "Setting up media for retail point",
-            retail_point_id=str(retail_point_id),
-            media_id=str(media_id),
-        )
-
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
             logger.warning("Retail point not found", retail_point_id=str(retail_point_id))
@@ -315,12 +292,6 @@ class RetailPointsService:
         employee_id: UUID,
         dto: list[CreateRetailPointRequest],
     ) -> BulkCreateRetailPointsResult:
-        logger.info(
-            "Starting bulk creation of retail points",
-            employee_id=str(employee_id),
-            count=len(dto),
-        )
-
         if not dto:
             logger.warning("Bulk create request is empty", employee_id=str(employee_id))
             raise BulkCreateRetailPointsRequestIsEmptyError()

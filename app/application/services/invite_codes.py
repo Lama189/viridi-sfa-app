@@ -59,11 +59,6 @@ class ClientInviteCodesService(IClientInviteCodesService):
         employee_id: UUID,
         retail_point_id: UUID,
     ) -> str:
-        logger.info(
-            "Creating invite code",
-            retail_point_id=str(retail_point_id),
-        )
-
         await self._validate_retail_point(retail_point_id)
 
         raw_code, encrypted_code, code_hash = SecurityUtils.generate_invite_code()
@@ -90,11 +85,6 @@ class ClientInviteCodesService(IClientInviteCodesService):
         employee_id: UUID,
         retail_point_id: UUID,
     ) -> str:
-        logger.info(
-            "Regenerating invite code",
-            retail_point_id=str(retail_point_id),
-        )
-
         await self._validate_employee(employee_id)
         await self._validate_retail_point(retail_point_id)
 
@@ -132,11 +122,6 @@ class ClientInviteCodesService(IClientInviteCodesService):
         raw_code: str,
         client_id: UUID,
     ) -> ClientInviteCode:
-        logger.info(
-            "Activating invite code",
-            client_id=str(client_id),
-        )
-
         invite_code = await self._uow.invite_codes.get_by_code_hash(
             SecurityUtils.hash_invite_code(raw_code)
         )
@@ -176,11 +161,6 @@ class ClientInviteCodesService(IClientInviteCodesService):
         self,
         invite_code_id: UUID,
     ) -> ClientInviteCode:
-        logger.info(
-            "Deactivating invite code",
-            invite_code_id=str(invite_code_id),
-        )
-
         invite_code = await self._uow.invite_codes.get_by_id(invite_code_id)
 
         if invite_code is None:
@@ -249,11 +229,6 @@ class ClientInviteCodesService(IClientInviteCodesService):
         employee_id: UUID,
         retail_point_ids: list[UUID],
     ) -> None:
-        logger.info(
-            "Creating multiple invite codes",
-            count=len(retail_point_ids),
-        )
-
         invite_codes: list[ClientInviteCode] = []
 
         for point_id in retail_point_ids:

@@ -111,3 +111,33 @@ visit_schedule_operations_total = Counter(
     documentation="Total number of visit schedule operations.",
     labelnames=("action",)
 )
+
+
+# ============================================================================
+# Stock Operations Metrics
+# ============================================================================
+
+
+stock_operations_total = Counter(
+    name="stock_operations_total",
+    documentation="Total number of successful stock operations.",
+    labelnames=("operation",),
+)
+
+stock_operation_units_total = Counter(
+    name="stock_operation_units_total",
+    documentation="Total number of physical product units involved in stock operations.",
+    labelnames=("operation",),
+)
+
+stock_operation_failures_total = Counter(
+    name="stock_operation_failures_total",
+    documentation="Total number of failed stock operations.",
+    labelnames=("operation", "reason"),
+)
+
+stock_operation_duration_seconds = Histogram(
+    name="stock_operation_duration_seconds",
+    documentation="Stock operation duration in seconds.",
+    labelnames=("operation",),
+)

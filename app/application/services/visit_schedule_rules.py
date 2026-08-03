@@ -19,11 +19,6 @@ class VisitScheduleService(IVisitScheduleService):
         retail_point_id: UUID,
         dto: VisitsDatesDTO,
     ) -> None:
-        logger.info(
-            "Replacing visit schedule for retail point",
-            retail_point_id=str(retail_point_id),
-        )
-
         rules = [
             VisitScheduleRule(
                 retail_point_id=retail_point_id,
@@ -51,12 +46,6 @@ class VisitScheduleService(IVisitScheduleService):
         retail_point_id: UUID,
         weekday: Weekday,
     ) -> None:
-        logger.info(
-            "Adding weekday to visit schedule",
-            retail_point_id=str(retail_point_id),
-            weekday=str(weekday.value if hasattr(weekday, "value") else weekday),
-        )
-
         rules = await self._uow.visit_schedule_rules.list_by_retail_point(
             retail_point_id,
         )
@@ -101,12 +90,6 @@ class VisitScheduleService(IVisitScheduleService):
         retail_point_id: UUID,
         weekday: Weekday,
     ) -> None:
-        logger.info(
-            "Removing weekday from visit schedule",
-            retail_point_id=str(retail_point_id),
-            weekday=str(weekday.value if hasattr(weekday, "value") else weekday),
-        )
-
         rules = await self._uow.visit_schedule_rules.list_by_retail_point(retail_point_id)
 
         rule = self._find_rule_by_weekday(rules, weekday)
@@ -133,10 +116,6 @@ class VisitScheduleService(IVisitScheduleService):
         self,
         rule_id: UUID,
     ) -> None:
-        logger.info(
-            "Activating visit schedule rule",
-            rule_id=str(rule_id),
-        )
         await self._change_activity(rule_id, True)
         visit_schedule_operations_total.labels(action="activate").inc()
 
@@ -144,10 +123,6 @@ class VisitScheduleService(IVisitScheduleService):
         self,
         rule_id: UUID,
     ) -> None:
-        logger.info(
-            "Deactivating visit schedule rule",
-            rule_id=str(rule_id),
-        )
         await self._change_activity(rule_id, False)
         visit_schedule_operations_total.labels(action="deactivate").inc()
 

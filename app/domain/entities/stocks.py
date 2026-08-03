@@ -1,11 +1,17 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
-from app.domain.enums import StockTransactionType, TransactionActorType, StockReferenceType
-
-
-from datetime import timezone
+from app.core.exceptions import (
+    InsufficientReservationError,
+    InsufficientReservedStockError,
+    InsufficientStockError,
+)
+from app.domain.enums import (
+    StockReferenceType,
+    StockTransactionType,
+    TransactionActorType,
+)
 
 
 @dataclass(slots=True)
@@ -14,7 +20,9 @@ class Stock:
     product_id: UUID
     quantity: int = 0
     reserved_quantity: int = 0
-    updated_at: datetime = datetime.now(timezone.utc)
+    updated_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
     def __post_init__(self) -> None:
         if self.quantity < 0:
@@ -24,9 +32,7 @@ class Stock:
             raise ValueError("Reserved quantity cannot be negative")
 
         if self.reserved_quantity > self.quantity:
-            raise ValueError(
-                "Reserved quantity cannot exceed quantity"
-            )
+            raise ValueError("Reserved quantity cannot exceed quantity")
 
     @property
     def available_quantity(self) -> int:
@@ -44,7 +50,9 @@ class Stock:
             raise ValueError("Amount must be positive")
 
         if self.available_quantity < amount:
-            raise ValueError("Insufficient stock")
+            raise InsufficientStockError(
+                f"Insufficient stock: available={self.available_quantity}, required={amount}"
+            )
 
         self.reserved_quantity += amount
         self._touch()
@@ -54,7 +62,9 @@ class Stock:
             raise ValueError("Amount must be positive")
 
         if self.reserved_quantity < amount:
-            raise ValueError("Insufficient reservation")
+            raise InsufficientReservedStockError(
+                f"Insufficient reserved stock: reserved={self.reserved_quantity}, requested_release={amount}"
+            )
 
         self.reserved_quantity -= amount
         self._touch()
@@ -64,7 +74,9 @@ class Stock:
             raise ValueError("Amount must be positive")
 
         if self.reserved_quantity < amount:
-            raise ValueError("Insufficient reservation")
+            raise InsufficientReservationError(
+                f"Insufficient reservation for sale: reserved={self.reserved_quantity}, required={amount}"
+            )
 
         self.quantity -= amount
         self.reserved_quantity -= amount
@@ -75,7 +87,9 @@ class Stock:
             raise ValueError("Amount must be positive")
 
         if self.available_quantity < amount:
-            raise ValueError("Insufficient stock")
+            raise InsufficientStockError(
+                f"Insufficient stock for write-off: available={self.available_quantity}, required={amount}"
+            )
 
         self.quantity -= amount
         self._touch()
@@ -102,4 +116,6 @@ class StockTransaction:
     id: UUID = field(default_factory=uuid4)
     actor_type: TransactionActorType = TransactionActorType.SYSTEM
     created_by_id: UUID | None = None
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )

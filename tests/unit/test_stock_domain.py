@@ -2,10 +2,15 @@ from uuid import uuid4
 
 import pytest
 
+from app.core.exceptions import (
+    InsufficientReservationError,
+    InsufficientReservedStockError,
+    InsufficientStockError,
+)
 from app.domain.entities.stocks import Stock, StockTransaction
 from app.domain.enums import (
-    StockTransactionType,
     StockReferenceType,
+    StockTransactionType,
     TransactionActorType,
 )
 
@@ -101,7 +106,7 @@ class TestStockReserve:
 
     def test_reserve_insufficient_stock_raises(self):
         s = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=10, reserved_quantity=5)
-        with pytest.raises(ValueError, match="Insufficient stock"):
+        with pytest.raises(InsufficientStockError):
             s.reserve(10)
 
     def test_reserve_cumulative(self):
@@ -134,7 +139,7 @@ class TestStockRelease:
 
     def test_release_exceeds_reservation_raises(self):
         s = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=50, reserved_quantity=5)
-        with pytest.raises(ValueError, match="Insufficient reservation"):
+        with pytest.raises(InsufficientReservedStockError):
             s.release_reservation(10)
 
 
@@ -162,7 +167,7 @@ class TestStockSell:
 
     def test_sell_exceeds_reservation_raises(self):
         s = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=50, reserved_quantity=5)
-        with pytest.raises(ValueError, match="Insufficient reservation"):
+        with pytest.raises(InsufficientReservationError):
             s.sell(10)
 
 
@@ -183,7 +188,7 @@ class TestStockWriteOff:
 
     def test_write_off_insufficient_stock_raises(self):
         s = Stock(warehouse_id=uuid4(), product_id=uuid4(), quantity=5, reserved_quantity=3)
-        with pytest.raises(ValueError, match="Insufficient stock"):
+        with pytest.raises(InsufficientStockError):
             s.write_off(5)
 
     def test_write_off_available_only(self):

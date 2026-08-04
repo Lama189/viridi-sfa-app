@@ -8,7 +8,7 @@ import pytest
 from app.application.services.visits import VisitService
 from app.domain.entities.visits import Visit
 from app.domain.enums import VisitStatus
-from app.core.extensions import (
+from app.core.exceptions import (
     VisitNotFoundError,
     VisitNotActiveError,
     MediaNotFoundError,

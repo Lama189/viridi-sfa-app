@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import os
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
@@ -83,7 +82,7 @@ def create_router(api_url: str, web_app_url: str) -> Router:
                             )
                             return
             except ClientError:
-                logging.exception("Failed to check existing user status")
+                pass
 
         await state.set_state(Registration.invite_code)
         await message.answer(
@@ -93,6 +92,9 @@ def create_router(api_url: str, web_app_url: str) -> Router:
 
     @router.message(Registration.invite_code, F.text)
     async def save_invite_code(message: Message, state: FSMContext) -> None:
+        if not message.text:
+            return
+
         invite_code = message.text.strip()
         if not invite_code:
             await message.answer("Код не должен быть пустым. Отправьте код активации ещё раз.")
@@ -136,7 +138,7 @@ def create_router(api_url: str, web_app_url: str) -> Router:
 
     @router.message(Registration.full_name, F.text)
     async def register_client(message: Message, state: FSMContext) -> None:
-        if message.from_user is None:
+        if message.from_user is None or message.text is None:
             return
 
         full_name = message.text.strip()
@@ -161,7 +163,6 @@ def create_router(api_url: str, web_app_url: str) -> Router:
                     response_text = await response.text()
                     is_success = response.ok
         except ClientError:
-            logging.exception("Client registration request failed")
             await message.answer("Сервис временно недоступен. Попробуйте ещё раз позже.")
             return
 
@@ -191,7 +192,6 @@ def create_router(api_url: str, web_app_url: str) -> Router:
 
 
 async def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     token = get_required_env("TELEGRAM_BOT_TOKEN")
     api_url = get_required_env("VIRIDI_API_URL")
     web_app_url = get_required_env("TELEGRAM_WEB_APP_URL")
@@ -205,4 +205,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    from telegram_bot.runner import main as runner_main
+    asyncio.run(runner_main())

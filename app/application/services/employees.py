@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.employees import Employee
-from app.core.extensions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
+from app.core.exceptions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
 from app.core.security import SecurityUtils
 
 from app.application.interfaces.uow import IUnitOfWork

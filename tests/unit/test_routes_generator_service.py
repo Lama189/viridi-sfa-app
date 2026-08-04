@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.routes_generator import RouteGenerationService
-from app.core.extensions import (
+from app.core.exceptions import (
     NoActiveAgentsFoundError,
     NoActiveRetailPointsError,
     TerritoryClustersNotBuiltError,

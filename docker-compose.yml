@@ -123,8 +123,14 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       VIRIDI_API_URL: http://web:8000
       TELEGRAM_WEB_APP_URL: ${TELEGRAM_WEB_APP_URL}
+      DATABASE_URL: postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
+      RABBITMQ_URL: amqp://guest:123@rabbitmq:5672/
     depends_on:
       web:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     restart: unless-stopped
     init: true

@@ -125,7 +125,7 @@ class TestOrdersClientEndpoints:
 
     @pytest.mark.asyncio
     async def test_create_order_client_not_found(self, client, mock_service):
-        from app.core.extensions import UserNotFoundError
+        from app.core.exceptions import UserNotFoundError
         mock_service.create.side_effect = UserNotFoundError()
 
         resp = await client.post("/api/v1/orders", json={

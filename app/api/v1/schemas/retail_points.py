@@ -128,3 +128,14 @@ class BulkCreateRetailPointsResponse(BaseModel):
         "from_attributes": True
     }
 
+
+class RetailPointMemberResponse(BaseModel):
+    id: UUID
+    retail_point_id: UUID
+    client_id: UUID
+
+    model_config = {
+        "from_attributes": True
+    }
+
+

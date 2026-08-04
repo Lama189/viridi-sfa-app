@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.visit_media import VisitMediaService
-from app.core.extensions import (
+from app.core.exceptions import (
     VisitNotFoundError,
     MediaNotFoundError,
     VisitMediaNotFoundError,

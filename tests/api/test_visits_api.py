@@ -105,7 +105,7 @@ async def test_start_visit_success(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_start_visit_already_active(client, mock_visits_service):
-    from app.core.extensions import EmployeeHasActiveVisitError
+    from app.core.exceptions import EmployeeHasActiveVisitError
     mock_visits_service.start_visit.side_effect = EmployeeHasActiveVisitError()
 
     resp = await client.post(
@@ -117,7 +117,7 @@ async def test_start_visit_already_active(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_start_visit_retail_point_not_found(client, mock_visits_service):
-    from app.core.extensions import RetailPointNotFoundError
+    from app.core.exceptions import RetailPointNotFoundError
     mock_visits_service.start_visit.side_effect = RetailPointNotFoundError()
 
     resp = await client.post(
@@ -129,7 +129,7 @@ async def test_start_visit_retail_point_not_found(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_start_visit_retail_point_inactive(client, mock_visits_service):
-    from app.core.extensions import RetailPointInactiveError
+    from app.core.exceptions import RetailPointInactiveError
     mock_visits_service.start_visit.side_effect = RetailPointInactiveError()
 
     resp = await client.post(
@@ -153,7 +153,7 @@ async def test_finish_visit_success(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_finish_visit_not_found(client, mock_visits_service):
-    from app.core.extensions import VisitNotFoundError
+    from app.core.exceptions import VisitNotFoundError
     mock_visits_service.finish_visit.side_effect = VisitNotFoundError()
 
     resp = await client.post(f"/api/v1/visits/{uuid4()}/finish")
@@ -182,7 +182,7 @@ async def test_cancel_visit_success(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_cancel_visit_not_found(client, mock_visits_service):
-    from app.core.extensions import VisitNotFoundError
+    from app.core.exceptions import VisitNotFoundError
     mock_visits_service.cancel_visit.side_effect = VisitNotFoundError()
 
     resp = await client.post(f"/api/v1/visits/{uuid4()}/cancel")
@@ -211,7 +211,7 @@ async def test_get_visit_success(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_get_visit_not_found(client, mock_visits_service):
-    from app.core.extensions import VisitNotFoundError
+    from app.core.exceptions import VisitNotFoundError
     mock_visits_service.get_visit.side_effect = VisitNotFoundError()
 
     resp = await client.get(f"/api/v1/visits/{uuid4()}")
@@ -269,7 +269,7 @@ async def test_attach_media_success(client, mock_visit_media_service):
 
 @pytest.mark.asyncio
 async def test_attach_media_visit_not_found(client, mock_visit_media_service):
-    from app.core.extensions import VisitNotFoundError
+    from app.core.exceptions import VisitNotFoundError
     mock_visit_media_service.attach.side_effect = VisitNotFoundError()
 
     resp = await client.post(
@@ -281,7 +281,7 @@ async def test_attach_media_visit_not_found(client, mock_visit_media_service):
 
 @pytest.mark.asyncio
 async def test_attach_media_already_attached(client, mock_visit_media_service):
-    from app.core.extensions import VisitMediaAlreadyAttachedError
+    from app.core.exceptions import VisitMediaAlreadyAttachedError
     mock_visit_media_service.attach.side_effect = VisitMediaAlreadyAttachedError()
 
     resp = await client.post(
@@ -293,7 +293,7 @@ async def test_attach_media_already_attached(client, mock_visit_media_service):
 
 @pytest.mark.asyncio
 async def test_attach_media_not_active(client, mock_visit_media_service):
-    from app.core.extensions import VisitNotActiveError
+    from app.core.exceptions import VisitNotActiveError
     mock_visit_media_service.attach.side_effect = VisitNotActiveError()
 
     resp = await client.post(
@@ -315,7 +315,7 @@ async def test_detach_media_success(client, mock_visit_media_service):
 
 @pytest.mark.asyncio
 async def test_detach_media_not_found(client, mock_visit_media_service):
-    from app.core.extensions import VisitMediaNotFoundError
+    from app.core.exceptions import VisitMediaNotFoundError
     mock_visit_media_service.detach.side_effect = VisitMediaNotFoundError()
 
     resp = await client.delete(f"/api/v1/visits/{uuid4()}/media/{uuid4()}")
@@ -357,7 +357,7 @@ async def test_add_debt_success(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_add_debt_visit_not_found(client, mock_visits_service):
-    from app.core.extensions import VisitNotFoundError
+    from app.core.exceptions import VisitNotFoundError
     mock_visits_service.add_debt.side_effect = VisitNotFoundError()
 
     resp = await client.post(
@@ -369,7 +369,7 @@ async def test_add_debt_visit_not_found(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_add_debt_visit_not_active(client, mock_visits_service):
-    from app.core.extensions import VisitNotActiveError
+    from app.core.exceptions import VisitNotActiveError
     mock_visits_service.add_debt.side_effect = VisitNotActiveError()
 
     resp = await client.post(
@@ -398,7 +398,7 @@ async def test_update_debt_success(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_update_debt_not_found(client, mock_visits_service):
-    from app.core.extensions import VisitDebtNotFoundError
+    from app.core.exceptions import VisitDebtNotFoundError
     mock_visits_service.update_debt.side_effect = VisitDebtNotFoundError()
 
     resp = await client.patch(
@@ -420,7 +420,7 @@ async def test_delete_debt_success(client, mock_visits_service):
 
 @pytest.mark.asyncio
 async def test_delete_debt_not_found(client, mock_visits_service):
-    from app.core.extensions import VisitDebtNotFoundError
+    from app.core.exceptions import VisitDebtNotFoundError
     mock_visits_service.delete_debt.side_effect = VisitDebtNotFoundError()
 
     resp = await client.delete(f"/api/v1/visits/debts/{uuid4()}")

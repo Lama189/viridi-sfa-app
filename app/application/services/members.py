@@ -4,7 +4,7 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
 from app.domain.entities.retail_point_members import RetailPointMember
-from app.core.extensions import (
+from app.core.exceptions import (
     UserNotFoundError,
     UserNotActiveError,
     MembershipAlreadyExistsError,

@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.retail_point_assignments import RetailPointAssignmentService
-from app.core.extensions import (
+from app.core.exceptions import (
     RetailPointNotFoundError,
     RetailPointInactiveError,
     RetailPointAssignmentNotFoundError,

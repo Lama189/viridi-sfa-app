@@ -106,7 +106,7 @@ async def test_login_success(client, mock_auth_service):
 
 @pytest.mark.asyncio
 async def test_login_not_found(client, mock_auth_service):
-    from app.core.extensions import UserNotFoundError
+    from app.core.exceptions import UserNotFoundError
     mock_auth_service.login.side_effect = UserNotFoundError()
 
     resp = await client.post("/api/v1/employees/login", json={
@@ -118,7 +118,7 @@ async def test_login_not_found(client, mock_auth_service):
 
 @pytest.mark.asyncio
 async def test_login_invalid_password(client, mock_auth_service):
-    from app.core.extensions import InvalidPasswordError
+    from app.core.exceptions import InvalidPasswordError
     mock_auth_service.login.side_effect = InvalidPasswordError()
 
     resp = await client.post("/api/v1/employees/login", json={
@@ -130,7 +130,7 @@ async def test_login_invalid_password(client, mock_auth_service):
 
 @pytest.mark.asyncio
 async def test_login_inactive_account(client, mock_auth_service):
-    from app.core.extensions import UserNotActiveError
+    from app.core.exceptions import UserNotActiveError
     mock_auth_service.login.side_effect = UserNotActiveError()
 
     resp = await client.post("/api/v1/employees/login", json={

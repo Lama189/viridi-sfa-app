@@ -122,7 +122,7 @@ async def test_get_media_content_success(client, mock_service):
 
 @pytest.mark.asyncio
 async def test_get_media_content_not_found(client, mock_service):
-    from app.core.extensions import MediaNotFoundError
+    from app.core.exceptions import MediaNotFoundError
     mock_service.get_content.side_effect = MediaNotFoundError()
 
     resp = await client.get(f"/api/v1/media/{uuid4()}/content")
@@ -142,7 +142,7 @@ async def test_get_media_thumbnail_success(client, mock_service):
 
 @pytest.mark.asyncio
 async def test_get_media_thumbnail_not_found(client, mock_service):
-    from app.core.extensions import MediaNotFoundError
+    from app.core.exceptions import MediaNotFoundError
     mock_service.get_thumbnail.side_effect = MediaNotFoundError()
 
     resp = await client.get(f"/api/v1/media/{uuid4()}/thumbnail")

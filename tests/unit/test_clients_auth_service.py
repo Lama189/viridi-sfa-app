@@ -5,7 +5,7 @@ import pytest
 
 from app.api.v1.schemas.clients import ClientLoginDTO, ClientRegisterRequest, ClientTelegramLoginRequest
 from app.application.services.clients import ClientsAuthService
-from app.core.extensions import UserNotFoundError, UserNotActiveError
+from app.core.exceptions import UserNotFoundError, UserNotActiveError
 from app.domain.entities.clients import Client
 from app.domain.entities.invite_codes import ClientInviteCode
 

@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from app.core.extensions import (
+from app.core.exceptions import (
     NoActiveAgentsFoundError,
     NoActiveRetailPointsError,
     TerritoryClustersNotBuiltError,

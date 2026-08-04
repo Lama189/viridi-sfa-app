@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.visit_debts import VisitDebtService
-from app.core.extensions import VisitDebtNotFoundError
+from app.core.exceptions import VisitDebtNotFoundError
 
 
 @pytest.fixture

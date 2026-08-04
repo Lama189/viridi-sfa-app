@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.invite_codes import ClientInviteCodesService
-from app.core.extensions import InvalidInviteCodeError, UserNotFoundError, UserNotActiveError, RetailPointNotFoundError, RetailPointInactiveError
+from app.core.exceptions import InvalidInviteCodeError, UserNotFoundError, UserNotActiveError, RetailPointNotFoundError, RetailPointInactiveError
 from app.domain.entities.employees import Employee
 from app.domain.entities.invite_codes import ClientInviteCode
 from app.domain.entities.retail_points import RetailPoint

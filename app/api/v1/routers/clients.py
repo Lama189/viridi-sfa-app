@@ -91,7 +91,6 @@ async def refresh(
 @router.get(
     "/{client_id}",
     response_model=ClientResponse,
-    dependencies=[Depends(allow_all_staff)],
 )
 async def get_client(
     client_id: str,

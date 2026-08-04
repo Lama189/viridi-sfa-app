@@ -134,7 +134,7 @@ async def test_get_content_success(service, mock_uow, mock_storage):
 
 @pytest.mark.asyncio
 async def test_get_content_not_found(service, mock_uow):
-    from app.core.extensions import MediaNotFoundError
+    from app.core.exceptions import MediaNotFoundError
 
     mock_uow.media_objects.get_by_id.return_value = None
 
@@ -163,7 +163,7 @@ async def test_get_thumbnail_success(service, mock_uow, mock_storage):
 
 @pytest.mark.asyncio
 async def test_get_thumbnail_not_found(service, mock_uow):
-    from app.core.extensions import MediaNotFoundError
+    from app.core.exceptions import MediaNotFoundError
 
     mock_uow.media_objects.get_by_id.return_value = None
 

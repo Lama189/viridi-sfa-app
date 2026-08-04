@@ -9,10 +9,17 @@ from app.api.v1.schemas.retail_points import (
     RetailPointResponse,
     InviteCodeResponse,
     RetailPointWithCodeResponse,
-    BulkCreateRetailPointsResponse
+    BulkCreateRetailPointsResponse,
+    RetailPointMemberResponse,
 )
 from app.application.services.retail_points import RetailPointsService
-from app.api.dependencies import get_retail_points_service, allow_admin, allow_all_staff
+from app.application.services.members import RetailPointMembersService
+from app.api.dependencies import (
+    allow_admin, 
+    allow_all_staff,
+    get_retail_points_service, 
+    get_retail_point_members_service, 
+)
 
 from app.domain.enums import Weekday
 from app.domain.entities.auth import AuthenticatedEmployee
@@ -158,3 +165,14 @@ async def list_retail_points(
         limit=limit,
         offset=offset,
     )
+
+
+@router.get(
+    "/{retail_point_id}/members",
+    response_model=list[RetailPointMemberResponse],
+)
+async def list_retail_point_members(
+    retail_point_id: UUID,
+    service: Annotated[RetailPointMembersService, Depends(get_retail_point_members_service)],
+):
+    return await service.list_members(retail_point_id)

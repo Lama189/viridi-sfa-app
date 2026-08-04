@@ -19,7 +19,7 @@ from app.application.interfaces.services.visit_schedule_rules import IVisitSched
 
 from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
 from app.domain.enums import Weekday
-from app.core.extensions import (
+from app.core.exceptions import (
     RetailPointNotFoundError, 
     RetailPointAlreadyExistsError,
     RetailPointImageNotFoundError, 

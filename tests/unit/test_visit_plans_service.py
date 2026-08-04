@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.visit_plans import VisitPlanService
-from app.core.extensions import VisitPlanAlreadyExistsError, VisitPlanNotFoundError
+from app.core.exceptions import VisitPlanAlreadyExistsError, VisitPlanNotFoundError
 from app.domain.entities.retail_points import RetailPoint
 from app.domain.entities.visit_plans import VisitPlan
 

@@ -5,7 +5,7 @@ import pytest
 
 from app.api.v1.schemas.employees import EmployeeLoginDTO
 from app.application.services.employees import EmployeesAuthService
-from app.core.extensions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
+from app.core.exceptions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
 from app.domain.entities.employees import Employee
 
 

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from app.domain.entities.auth import AuthenticatedClient
 from app.domain.entities.clients import Client
-from app.core.extensions import UserNotFoundError, UserNotActiveError
+from app.core.exceptions import UserNotFoundError, UserNotActiveError
 from app.core.security import SecurityUtils
 from app.core.context import client_id_ctx_var
 from app.core.observability.metrics import client_operations_total

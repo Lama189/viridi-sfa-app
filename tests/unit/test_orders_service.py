@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.extensions import UserNotFoundError, UserNotActiveError
+from app.core.exceptions import UserNotFoundError, UserNotActiveError
 from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest
 from app.application.services.orders import OrdersService
 from app.domain.entities.inventory import Warehouse, Product

@@ -3,7 +3,7 @@ from decimal import Decimal
 import pytest
 
 from app.application.services.territories import TerritoryClusteringService
-from app.core.extensions import InvalidEmployeesCountError
+from app.core.exceptions import InvalidEmployeesCountError
 from app.domain.entities.retail_points import RetailPoint
 
 

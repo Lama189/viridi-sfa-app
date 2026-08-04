@@ -4,7 +4,7 @@ from app.core.observability.logging import logger
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
 from app.domain.entities.retail_point_assignments import RetailPointAssignment
-from app.core.extensions import (
+from app.core.exceptions import (
     RetailPointNotFoundError,
     RetailPointInactiveError,
     RetailPointAssignmentNotFoundError,

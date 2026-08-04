@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
-from app.core.extensions import MediaNotFoundError
+from app.core.exceptions import MediaNotFoundError
 from app.application.interfaces.object_storage import IObjectStorage
 from app.application.interfaces.uow import IUnitOfWork
 from app.domain.entities.media import MediaFile

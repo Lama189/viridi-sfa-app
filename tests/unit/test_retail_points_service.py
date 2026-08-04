@@ -10,7 +10,7 @@ from app.api.v1.schemas.retail_points import (
     VisitsDatesDTO,
 )
 from app.application.services.retail_points import RetailPointsService
-from app.core.extensions import RetailPointNotFoundError
+from app.core.exceptions import RetailPointNotFoundError
 from app.domain.entities.retail_points import RetailPoint
 from app.domain.enums import ClientType
 

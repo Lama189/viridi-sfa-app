@@ -11,7 +11,7 @@ from app.domain.entities.visit_media import VisitMedia
 from app.domain.entities.visit_debts import VisitDebt
 from app.domain.enums import VisitStatus
 
-from app.core.extensions import (
+from app.core.exceptions import (
     EmployeeHasActiveVisitError,
     VisitNotFoundError,
     VisitNotActiveError,

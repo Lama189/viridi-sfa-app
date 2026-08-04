@@ -7,7 +7,7 @@ from app.domain.entities.retail_points import RetailPoint
 from app.domain.entities.territories import TerritoryCluster
 
 from app.application.interfaces.services.territories import ITerritoryClusteringService
-from app.core.extensions import InvalidEmployeesCountError
+from app.core.exceptions import InvalidEmployeesCountError
 
 class TerritoryClusteringService(ITerritoryClusteringService):
 

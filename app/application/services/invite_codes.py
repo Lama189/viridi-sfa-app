@@ -4,7 +4,7 @@ from app.core.observability.logging import logger
 from app.core.observability.metrics import invite_code_operations_total
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.uow import IUnitOfWork
-from app.core.extensions import (
+from app.core.exceptions import (
     InvalidInviteCodeError,
     UserNotActiveError,
     UserNotFoundError,

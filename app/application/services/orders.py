@@ -7,7 +7,7 @@ from app.application.dto.stocks import (
 )
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.uow import IUnitOfWork
-from app.core.extensions import UserNotActiveError, UserNotFoundError
+from app.core.exceptions import UserNotActiveError, UserNotFoundError
 
 from app.domain.entities.inventory import Product
 from app.domain.entities.orders import Order, OrderItem

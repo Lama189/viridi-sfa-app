@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.members import RetailPointMembersService
-from app.core.extensions import (
+from app.core.exceptions import (
     UserNotFoundError,
     UserNotActiveError,
     MembershipAlreadyExistsError,

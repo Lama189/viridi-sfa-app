@@ -3,7 +3,7 @@ from uuid import UUID
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.visit_media import IVisitMediaService
 from app.domain.entities.visit_media import VisitMedia
-from app.core.extensions import (
+from app.core.exceptions import (
     VisitNotFoundError, 
     MediaNotFoundError, 
     VisitMediaNotFoundError,

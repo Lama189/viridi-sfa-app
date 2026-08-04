@@ -13,3 +13,9 @@ class Client:
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
+
+    @property
+    def telegram_id(self) -> int | None:
+        return self.telegram_chat_id
+
+

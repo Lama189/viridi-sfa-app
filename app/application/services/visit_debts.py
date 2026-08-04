@@ -1,7 +1,7 @@
 from uuid import UUID
 from decimal import Decimal
 
-from app.core.extensions import VisitDebtNotFoundError
+from app.core.exceptions import VisitDebtNotFoundError
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.interfaces.services.visit_debts import IVisitDebtService
 from app.domain.entities.visit_debts import VisitDebt

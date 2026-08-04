@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.dependencies import allow_all_staff, get_current_user, get_dashboard_service
 from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
 from app.application.interfaces.services.dashboard import EmployeeDashboard
-from app.core.extensions import VisitPlanNotFoundError
+from app.core.exceptions import VisitPlanNotFoundError
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.infrastructure.postgres.models.enums import EmployeeRole
 from app.main import app

@@ -8,7 +8,7 @@ from app.application.interfaces.services.dashboard import (
 )
 from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.dashboard import DailyReportDTO
-from app.core.extensions import VisitPlanNotFoundError
+from app.core.exceptions import VisitPlanNotFoundError
 
 
 class DashboardService(IDashboardService):

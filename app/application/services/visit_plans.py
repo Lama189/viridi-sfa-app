@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.application.interfaces.services.visit_plans import IVisitPlanService
 from app.application.interfaces.uow import IUnitOfWork
-from app.core.extensions import (
+from app.core.exceptions import (
     VisitPlanAlreadyExistsError,
     VisitPlanNotFoundError,
 )

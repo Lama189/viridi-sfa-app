@@ -96,7 +96,7 @@ async def test_get_retail_point_found(client, mock_service):
 
 @pytest.mark.asyncio
 async def test_get_retail_point_not_found(client, mock_service):
-    from app.core.extensions import RetailPointNotFoundError
+    from app.core.exceptions import RetailPointNotFoundError
     mock_service.get_by_id.side_effect = RetailPointNotFoundError()
 
     resp = await client.get(f"/api/v1/retail_points/{uuid4()}")

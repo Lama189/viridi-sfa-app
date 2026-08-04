@@ -7,7 +7,7 @@ import pytest
 
 from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
 from app.application.services.dashboard import DashboardService
-from app.core.extensions import VisitPlanNotFoundError
+from app.core.exceptions import VisitPlanNotFoundError
 from app.domain.entities.visit_plans import VisitPlan
 
 

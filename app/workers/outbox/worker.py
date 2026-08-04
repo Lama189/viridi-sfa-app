@@ -27,7 +27,9 @@ class OutboxWorker:
                     for message in messages:
                         await self._process(message, uow)
 
-            except Exception as exc:  # noqa: BLE001
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
                 logger.exception("Outbox worker failed", error=str(exc))
                 await asyncio.sleep(5)
 

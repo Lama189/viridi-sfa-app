@@ -1,3 +1,7 @@
+from abc import ABC, abstractmethod
+from types import TracebackType
+from typing import Self
+
 from app.application.interfaces.repos.categories import ICategoryRepository
 from app.application.interfaces.repos.clients import IClientRepository
 from app.application.interfaces.repos.employees import IEmployeeRepository
@@ -30,7 +34,7 @@ from app.application.interfaces.repos.visits import IVisitRepository
 from app.application.interfaces.repos.warehouses import IWarehouseRepository
 
 
-class IUnitOfWork:
+class IUnitOfWork(ABC):
     warehouses: IWarehouseRepository
     categories: ICategoryRepository
     products: IProductRepository
@@ -54,5 +58,23 @@ class IUnitOfWork:
     visit_schedule_rules: IVisitScheduleRuleRepository
     outbox: IOutboxRepository
 
-    async def commit(self) -> None: ...
-    async def rollback(self) -> None: ...
+    @abstractmethod
+    async def __aenter__(self) -> Self:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def commit(self) -> None: 
+        raise NotImplementedError
+
+    @abstractmethod
+    async def rollback(self) -> None:
+        raise NotImplementedError

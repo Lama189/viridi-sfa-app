@@ -18,8 +18,8 @@ class TimingMiddleWare(BaseHTTPMiddleware):
         start = perf_counter()
 
         try:
-            respose = await call_next(request)
-            return respose
+            response = await call_next(request)
+            return response
         finally:
             duration = perf_counter() - start
 
@@ -28,7 +28,7 @@ class TimingMiddleWare(BaseHTTPMiddleware):
             http_requests_total.labels(
                 method=request.method,
                 path=path,
-                status_code=(respose.status_code if "respose" in locals() else 500),
+                status_code=(response.status_code if "response" in locals() else 500),
             ).inc()
 
             http_request_duration_seconds.labels(

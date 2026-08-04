@@ -17,7 +17,8 @@ from app.application.interfaces.services.retail_point_members import (
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.config import get_settings
 from app.core.context import client_id_ctx_var
-from app.core.exceptions import UserNotActiveError, UserNotFoundError
+from app.core.exceptions import DomainError, UserNotActiveError, UserNotFoundError
+from app.core.observability.logging import logger
 from app.core.observability.metrics import client_operations_total
 from app.core.security import SecurityUtils
 from app.domain.entities.auth import AuthenticatedClient
@@ -146,8 +147,12 @@ class ClientsAuthService:
                         invite.retail_point_id,
                         existing_client.id,
                     )
-                except Exception:  # noqa: BLE001, S110
-                    pass
+                except DomainError as exc:
+                    logger.warning(
+                        "Failed to process invite code for existing client",
+                        client_id=str(existing_client.id),
+                        error=str(exc),
+                    )
 
             await self._uow.commit()
 

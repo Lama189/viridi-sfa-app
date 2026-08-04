@@ -1,3 +1,4 @@
+import importlib
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -55,7 +56,7 @@ class _TestProduct(_TestBase):
 
 @pytest_asyncio.fixture(autouse=True)
 async def _create_tables():
-    import app.infrastructure.postgres  # noqa: F401
+    importlib.import_module("app.infrastructure.postgres")
     from app.infrastructure.postgres.models.base_model import BaseModel
 
     async with engine.begin() as conn:

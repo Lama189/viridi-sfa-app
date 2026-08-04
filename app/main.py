@@ -4,6 +4,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.exceptions_handlers import register_exception_handlers
+from app.api.middlewares import (
+    ExceptionLoggingMiddleware,
+    LoggingMiddleware,
+    RequestMiddleware,
+    SecurityHeadersMiddleWare,
+    TimingMiddleWare,
+)
 from app.api.v1.routers.categories import router as categories_router
 from app.api.v1.routers.clients import router as clients_router
 from app.api.v1.routers.dashboard import router as dashboard_router
@@ -33,6 +40,11 @@ configure_logging()
 
 app = FastAPI(title="Viridi SFA API", version="0.1.0", lifespan=lifespan)
 
+app.add_middleware(SecurityHeadersMiddleWare)
+app.add_middleware(TimingMiddleWare)
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(ExceptionLoggingMiddleware)
+app.add_middleware(RequestMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

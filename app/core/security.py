@@ -1,3 +1,4 @@
+import contextlib
 import hashlib
 import hmac
 import json
@@ -34,7 +35,7 @@ class SecurityUtils:
             hashed_bytes = hashed_password.encode("utf-8")
 
             return bcrypt.checkpw(password_bytes, hashed_bytes)
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError):
             return False
 
     @staticmethod
@@ -133,10 +134,8 @@ class SecurityUtils:
         if not hmac.compare_digest(calculated_hash.lower(), received_hash.lower()):
             raise ValueError("Invalid initData: signature mismatch")
 
-        if "user" in parsed_data:
-            try:
+        if "user" in parsed_data and isinstance(parsed_data["user"], str):
+            with contextlib.suppress(json.JSONDecodeError, TypeError):
                 parsed_data["user"] = json.loads(parsed_data["user"])
-            except Exception:  # noqa: BLE001, S110
-                pass
 
         return parsed_data

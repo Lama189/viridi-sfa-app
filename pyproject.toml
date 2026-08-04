@@ -43,4 +43,7 @@ exclude = ["alembic"]
 [tool.ruff.lint]
 ignore = ["B008", "DTZ011"]
 
+[tool.ruff.lint.per-file-ignores]
+"app/workers/*" = ["BLE001"]
+
 

@@ -14,11 +14,11 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 from app.infrastructure.postgres.models.enums import OrderStatus
 
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.clients import Client 
-    from app.infrastructure.postgres.models.warehouses import Warehouse
+    from app.infrastructure.postgres.models.clients import Client
+    from app.infrastructure.postgres.models.order_items import OrderItem
     from app.infrastructure.postgres.models.retail_points import RetailPoint
     from app.infrastructure.postgres.models.visits import Visit
-    from app.infrastructure.postgres.models.order_items import OrderItem
+    from app.infrastructure.postgres.models.warehouses import Warehouse
 
 
 class Order(BaseModel):
@@ -72,23 +72,23 @@ class Order(BaseModel):
         default=Decimal("0.000"),
     )
 
-    warehouse: Mapped["Warehouse"] = relationship(
+    warehouse: Mapped[Warehouse] = relationship(
         back_populates="orders",
     )
 
-    created_by: Mapped["Client"] = relationship(
+    created_by: Mapped[Client] = relationship(
         back_populates="orders",
     )
 
-    retail_point: Mapped["RetailPoint"] = relationship(
+    retail_point: Mapped[RetailPoint] = relationship(
         back_populates="orders",
     )
 
-    visit: Mapped["Visit | None"] = relationship(
+    visit: Mapped[Visit | None] = relationship(
         back_populates="orders",
     )
 
-    items: Mapped[list["OrderItem"]] = relationship(
+    items: Mapped[list[OrderItem]] = relationship(
         back_populates="order",
         cascade="all, delete-orphan",
     )

@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -7,7 +7,11 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.api.dependencies import allow_all_staff, get_current_user, get_dashboard_service
+from app.api.dependencies import (
+    allow_all_staff,
+    get_current_user,
+    get_dashboard_service,
+)
 from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
 from app.application.interfaces.services.dashboard import EmployeeDashboard
 from app.core.exceptions import VisitPlanNotFoundError
@@ -49,12 +53,14 @@ async def client():
 
 
 @pytest.mark.asyncio
-async def test_get_dashboard_success(client, mock_dashboard_service, mock_agent_employee):
+async def test_get_dashboard_success(
+    client, mock_dashboard_service, mock_agent_employee
+):
     mock_dashboard_service.get_employee_dashboard.return_value = EmployeeDashboard(
         total_points=25,
         completed_points=12,
         remaining_points=13,
-        completion_percentage=Decimal("48"),
+        completion_percentage=Decimal(48),
         orders_count=8,
         orders_amount=Decimal("1250000.00"),
         debts_count=3,
@@ -67,7 +73,11 @@ async def test_get_dashboard_success(client, mock_dashboard_service, mock_agent_
     assert data["total_points"] == 25
     assert data["completed_points"] == 12
     assert data["remaining_points"] == 13
-    assert data["completion_percentage"] == "48" or data["completion_percentage"] == 48 or float(data["completion_percentage"]) == 48.0
+    assert (
+        data["completion_percentage"] == "48"
+        or data["completion_percentage"] == 48
+        or float(data["completion_percentage"]) == 48.0
+    )
     assert data["orders_count"] == 8
     assert float(data["orders_amount"]) == 1250000.0
     assert data["debts_count"] == 3
@@ -89,7 +99,9 @@ async def test_get_dashboard_plan_not_found(client, mock_dashboard_service):
 
 
 @pytest.mark.asyncio
-async def test_get_daily_report_success(client, mock_dashboard_service, mock_agent_employee):
+async def test_get_daily_report_success(
+    client, mock_dashboard_service, mock_agent_employee
+):
     date_from = "2026-07-31T00:00:00Z"
     date_to = "2026-07-31T23:59:59Z"
     cat_id = uuid4()
@@ -129,4 +141,3 @@ async def test_get_daily_report_success(client, mock_dashboard_service, mock_age
         datetime(2026, 7, 31, 0, 0, tzinfo=UTC),
         datetime(2026, 7, 31, 23, 59, 59, tzinfo=UTC),
     )
-

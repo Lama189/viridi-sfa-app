@@ -5,10 +5,10 @@ import pytest
 
 from app.application.services.visit_media import VisitMediaService
 from app.core.exceptions import (
-    VisitNotFoundError,
     MediaNotFoundError,
-    VisitMediaNotFoundError,
     VisitMediaAlreadyAttachedError,
+    VisitMediaNotFoundError,
+    VisitNotFoundError,
 )
 
 
@@ -28,6 +28,7 @@ def service(mock_uow):
 
 
 # --- attach ---
+
 
 @pytest.mark.asyncio
 async def test_attach_success(service, mock_uow):
@@ -75,6 +76,7 @@ async def test_attach_already_attached(service, mock_uow):
 
 # --- detach ---
 
+
 @pytest.mark.asyncio
 async def test_detach_success(service, mock_uow):
     from app.domain.entities.visit_media import VisitMedia
@@ -100,6 +102,7 @@ async def test_detach_not_found(service, mock_uow):
 
 
 # --- list_media ---
+
 
 @pytest.mark.asyncio
 async def test_list_media(service, mock_uow):

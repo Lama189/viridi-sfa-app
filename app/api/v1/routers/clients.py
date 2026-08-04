@@ -20,8 +20,6 @@ from app.application.services.clients import (
     ClientsService,
 )
 
-
-
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 
 
@@ -32,7 +30,7 @@ router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 )
 async def register(
     dto: ClientRegisterRequest,
-    service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)]
+    service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)],
 ):
     return await service.register(dto)
 
@@ -116,7 +114,7 @@ async def get_client(
     dependencies=[Depends(allow_all_staff)],
 )
 async def list_clients(
-    service: Annotated[ClientsService, Depends(get_clients_service)]
+    service: Annotated[ClientsService, Depends(get_clients_service)],
 ):
     return await service.list_clients()
 
@@ -129,7 +127,7 @@ async def list_clients(
 async def update_client(
     client_id: str,
     dto: ClientUpdate,
-    service: Annotated[ClientsService, Depends(get_clients_service)]
+    service: Annotated[ClientsService, Depends(get_clients_service)],
 ):
     try:
         return await service.update_client(client_id, dto)
@@ -146,7 +144,6 @@ async def update_client(
     dependencies=[Depends(allow_all_staff)],
 )
 async def delete_client(
-    client_id: str,
-    service: Annotated[ClientsService, Depends(get_clients_service)]
+    client_id: str, service: Annotated[ClientsService, Depends(get_clients_service)]
 ):
     await service.delete_client(client_id)

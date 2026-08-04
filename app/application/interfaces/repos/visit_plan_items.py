@@ -5,7 +5,6 @@ from app.domain.entities.visit_plan_items import VisitPlanItem
 
 
 class IVisitPlanItemRepository(ABC):
-
     @abstractmethod
     async def add_many(self, items: list[VisitPlanItem]) -> None:
         raise NotImplementedError
@@ -21,4 +20,3 @@ class IVisitPlanItemRepository(ABC):
     @abstractmethod
     async def count_by_plan_id(self, plan_id: UUID) -> int:
         raise NotImplementedError
-

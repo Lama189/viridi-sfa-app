@@ -33,7 +33,6 @@ from app.domain.enums import (
 
 
 class StockService(IStockService):
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -71,9 +70,7 @@ class StockService(IStockService):
                 "Warehouse not found for stock operation",
                 warehouse_id=str(warehouse_id),
             )
-            raise WarehouseNotFoundError(
-                f"Warehouse with ID {warehouse_id} not found"
-            )
+            raise WarehouseNotFoundError(f"Warehouse with ID {warehouse_id} not found")
 
         if not warehouse.is_active:
             logger.warning(
@@ -88,9 +85,7 @@ class StockService(IStockService):
                 "Product not found for stock operation",
                 product_id=str(product_id),
             )
-            raise ProductNotFoundError(
-                f"Product with ID {product_id} not found"
-            )
+            raise ProductNotFoundError(f"Product with ID {product_id} not found")
 
         if not product.is_active:
             logger.warning(
@@ -257,7 +252,9 @@ class StockService(IStockService):
                 available_quantity=stock.available_quantity,
             )
             stock_operations_total.labels(operation="reserve_stock").inc()
-            stock_operation_units_total.labels(operation="reserve_stock").inc(dto.quantity)
+            stock_operation_units_total.labels(operation="reserve_stock").inc(
+                dto.quantity
+            )
             return stock
         except Exception as exc:
             logger.error(
@@ -271,9 +268,7 @@ class StockService(IStockService):
             ).inc()
             raise
 
-    async def reserve_stocks_batch(
-        self, dto: StockBatchOperationDTO
-    ) -> list[Stock]:
+    async def reserve_stocks_batch(self, dto: StockBatchOperationDTO) -> list[Stock]:
         units = sum(item.quantity for item in dto.items) if dto.items else 0
         try:
             if not dto.items:
@@ -323,7 +318,9 @@ class StockService(IStockService):
             )
             stock_operations_total.labels(operation="reserve_stocks_batch").inc()
             if units > 0:
-                stock_operation_units_total.labels(operation="reserve_stocks_batch").inc(units)
+                stock_operation_units_total.labels(
+                    operation="reserve_stocks_batch"
+                ).inc(units)
             return updated_stocks
         except Exception as exc:
             logger.error(
@@ -332,7 +329,8 @@ class StockService(IStockService):
                 error=str(exc),
             )
             stock_operation_failures_total.labels(
-                operation="reserve_stocks_batch", reason=self._map_exception_to_reason(exc)
+                operation="reserve_stocks_batch",
+                reason=self._map_exception_to_reason(exc),
             ).inc()
             raise
 
@@ -363,7 +361,9 @@ class StockService(IStockService):
                 reserved_quantity=stock.reserved_quantity,
             )
             stock_operations_total.labels(operation="release_reservation").inc()
-            stock_operation_units_total.labels(operation="release_reservation").inc(dto.quantity)
+            stock_operation_units_total.labels(operation="release_reservation").inc(
+                dto.quantity
+            )
             return stock
         except Exception as exc:
             logger.error(
@@ -373,7 +373,8 @@ class StockService(IStockService):
                 error=str(exc),
             )
             stock_operation_failures_total.labels(
-                operation="release_reservation", reason=self._map_exception_to_reason(exc)
+                operation="release_reservation",
+                reason=self._map_exception_to_reason(exc),
             ).inc()
             raise
 
@@ -387,7 +388,9 @@ class StockService(IStockService):
                     "Batch release reservation requested with empty items list",
                     warehouse_id=str(dto.warehouse_id),
                 )
-                stock_operations_total.labels(operation="release_reservations_batch").inc()
+                stock_operations_total.labels(
+                    operation="release_reservations_batch"
+                ).inc()
                 return []
 
             product_ids = [item.product_id for item in dto.items]
@@ -429,7 +432,9 @@ class StockService(IStockService):
             )
             stock_operations_total.labels(operation="release_reservations_batch").inc()
             if units > 0:
-                stock_operation_units_total.labels(operation="release_reservations_batch").inc(units)
+                stock_operation_units_total.labels(
+                    operation="release_reservations_batch"
+                ).inc(units)
             return updated_stocks
         except Exception as exc:
             logger.error(
@@ -438,7 +443,8 @@ class StockService(IStockService):
                 error=str(exc),
             )
             stock_operation_failures_total.labels(
-                operation="release_reservations_batch", reason=self._map_exception_to_reason(exc)
+                operation="release_reservations_batch",
+                reason=self._map_exception_to_reason(exc),
             ).inc()
             raise
 
@@ -470,7 +476,9 @@ class StockService(IStockService):
                 reserved_quantity=stock.reserved_quantity,
             )
             stock_operations_total.labels(operation="confirm_sale").inc()
-            stock_operation_units_total.labels(operation="confirm_sale").inc(dto.quantity)
+            stock_operation_units_total.labels(operation="confirm_sale").inc(
+                dto.quantity
+            )
             return stock
         except Exception as exc:
             logger.error(
@@ -484,9 +492,7 @@ class StockService(IStockService):
             ).inc()
             raise
 
-    async def confirm_sales_batch(
-        self, dto: StockBatchOperationDTO
-    ) -> list[Stock]:
+    async def confirm_sales_batch(self, dto: StockBatchOperationDTO) -> list[Stock]:
         units = sum(item.quantity for item in dto.items) if dto.items else 0
         try:
             if not dto.items:
@@ -536,7 +542,9 @@ class StockService(IStockService):
             )
             stock_operations_total.labels(operation="confirm_sales_batch").inc()
             if units > 0:
-                stock_operation_units_total.labels(operation="confirm_sales_batch").inc(units)
+                stock_operation_units_total.labels(operation="confirm_sales_batch").inc(
+                    units
+                )
             return updated_stocks
         except Exception as exc:
             logger.error(
@@ -545,7 +553,8 @@ class StockService(IStockService):
                 error=str(exc),
             )
             stock_operation_failures_total.labels(
-                operation="confirm_sales_batch", reason=self._map_exception_to_reason(exc)
+                operation="confirm_sales_batch",
+                reason=self._map_exception_to_reason(exc),
             ).inc()
             raise
 
@@ -617,7 +626,9 @@ class StockService(IStockService):
                 new_quantity=stock.quantity,
             )
             stock_operations_total.labels(operation="return_stock").inc()
-            stock_operation_units_total.labels(operation="return_stock").inc(dto.quantity)
+            stock_operation_units_total.labels(operation="return_stock").inc(
+                dto.quantity
+            )
             return stock
         except Exception as exc:
             logger.error(

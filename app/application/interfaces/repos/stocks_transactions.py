@@ -5,7 +5,6 @@ from app.domain.entities.stocks import StockTransaction
 
 
 class IStockTransactionRepository(ABC):
-
     @abstractmethod
     async def add(self, transaction: StockTransaction) -> None:
         raise NotImplementedError

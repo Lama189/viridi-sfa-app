@@ -1,13 +1,13 @@
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
-from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    ForeignKey,
-    String,
     Boolean,
     DateTime,
+    ForeignKey,
     Index,
+    String,
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -15,11 +15,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
 
-
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.retail_points import RetailPoint
-    from app.infrastructure.postgres.models.employees import Employee
     from app.infrastructure.postgres.models.clients import Client
+    from app.infrastructure.postgres.models.employees import Employee
+    from app.infrastructure.postgres.models.retail_points import RetailPoint
 
 
 class RetailPointInviteCode(BaseModel):
@@ -91,23 +90,23 @@ class RetailPointInviteCode(BaseModel):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
-    retail_point: Mapped["RetailPoint"] = relationship(
+    retail_point: Mapped[RetailPoint] = relationship(
         back_populates="invite_codes",
     )
 
-    last_activated_client: Mapped["Client | None"] = relationship(
+    last_activated_client: Mapped[Client | None] = relationship(
         foreign_keys=[last_activated_client_id],
     )
 
-    created_by: Mapped["Employee"] = relationship()
+    created_by: Mapped[Employee] = relationship()

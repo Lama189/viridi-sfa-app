@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
@@ -28,7 +28,7 @@ def test_outbox_message_creation():
 
 def test_outbox_message_create_classmethod():
     agg_id = uuid4()
-    now = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
 
     msg = OutboxMessage.create(
         event_type=OrderEventType.CREATED,
@@ -47,7 +47,7 @@ def test_outbox_message_create_classmethod():
 
 
 def test_outbox_message_mark_processed():
-    now = datetime(2026, 1, 1, 12, 5, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 1, 1, 12, 5, 0, tzinfo=UTC)
     msg = OutboxMessage.create(
         event_type=OrderEventType.CREATED,
         aggregate_type=AggregateType.ORDER,

@@ -1,11 +1,10 @@
-from uuid import UUID
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.domain.entities.inventory import Category
 
 
 class ICategoryRepository(ABC):
-
     @abstractmethod
     async def add(self, category: Category) -> None:
         raise NotImplementedError

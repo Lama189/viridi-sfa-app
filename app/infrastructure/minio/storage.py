@@ -9,7 +9,6 @@ from app.application.interfaces.object_storage import IObjectStorage
 
 
 class MinioStorage(IObjectStorage):
-
     def __init__(
         self,
         client: Minio,
@@ -74,11 +73,7 @@ class MinioStorage(IObjectStorage):
 
             raw_filename = headers.get("x-amz-meta-original-name")
 
-            filename = (
-                unquote(raw_filename)
-                if raw_filename
-                else None
-            )
+            filename = unquote(raw_filename) if raw_filename else None
 
             return file_bytes, filename
 

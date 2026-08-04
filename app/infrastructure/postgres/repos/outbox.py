@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import select, update
@@ -12,7 +12,6 @@ from app.infrastructure.postgres.models.outbox_messages import (
 
 
 class PostgresOutboxRepository(IOutboxRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -41,7 +40,7 @@ class PostgresOutboxRepository(IOutboxRepository):
         stmt = (
             update(OutboxMessageModel)
             .where(OutboxMessageModel.id == message_id)
-            .values(processed_at=datetime.now(timezone.utc))
+            .values(processed_at=datetime.now(UTC))
         )
         await self._session.execute(stmt)
         await self._session.flush()

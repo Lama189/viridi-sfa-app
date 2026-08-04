@@ -4,8 +4,14 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.stocks import StockTransaction
-from app.domain.enums import StockReferenceType, StockTransactionType, TransactionActorType
-from app.infrastructure.postgres.repos.stock_transactions import PostgresStockTransactionRepository
+from app.domain.enums import (
+    StockReferenceType,
+    StockTransactionType,
+    TransactionActorType,
+)
+from app.infrastructure.postgres.repos.stock_transactions import (
+    PostgresStockTransactionRepository,
+)
 
 
 @pytest.mark.asyncio

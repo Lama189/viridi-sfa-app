@@ -40,10 +40,10 @@ class VisitMedia(BaseModel):
         nullable=False,
     )
 
-    visit: Mapped["Visit"] = relationship(
+    visit: Mapped[Visit] = relationship(
         back_populates="media",
     )
 
-    media: Mapped["MediaObject"] = relationship(
+    media: Mapped[MediaObject] = relationship(
         back_populates="visits",
     )

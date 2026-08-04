@@ -40,7 +40,12 @@ def mock_visit_plans_service():
 
 
 @pytest.fixture
-def service(mock_uow, mock_clustering_service, mock_assignments_service, mock_visit_plans_service):
+def service(
+    mock_uow,
+    mock_clustering_service,
+    mock_assignments_service,
+    mock_visit_plans_service,
+):
     return RouteGenerationService(
         uow=mock_uow,
         clustering_service=mock_clustering_service,
@@ -59,7 +64,9 @@ async def test_generate_no_active_agents(service, mock_uow):
 
 @pytest.mark.asyncio
 async def test_generate_no_retail_points(service, mock_uow):
-    mock_uow.employees.list_by.return_value = [Employee(phone="1", password_hash="1", full_name="A")]
+    mock_uow.employees.list_by.return_value = [
+        Employee(phone="1", password_hash="1", full_name="A")
+    ]
     mock_uow.retail_points.list_all.return_value = []
 
     with pytest.raises(NoActiveRetailPointsError):
@@ -68,8 +75,12 @@ async def test_generate_no_retail_points(service, mock_uow):
 
 @pytest.mark.asyncio
 async def test_generate_clusters_not_built(service, mock_uow, mock_clustering_service):
-    mock_uow.employees.list_by.return_value = [Employee(phone="1", password_hash="1", full_name="A")]
-    mock_uow.retail_points.list_all.return_value = [RetailPoint(name="P1", address="A1")]
+    mock_uow.employees.list_by.return_value = [
+        Employee(phone="1", password_hash="1", full_name="A")
+    ]
+    mock_uow.retail_points.list_all.return_value = [
+        RetailPoint(name="P1", address="A1")
+    ]
     mock_clustering_service.build_clusters.return_value = []
 
     with pytest.raises(TerritoryClustersNotBuiltError):
@@ -84,7 +95,9 @@ async def test_generate_success(
     mock_assignments_service,
     mock_visit_plans_service,
 ):
-    agent1 = Employee(phone="1", password_hash="1", full_name="A1", role=EmployeeRole.AGENT)
+    agent1 = Employee(
+        phone="1", password_hash="1", full_name="A1", role=EmployeeRole.AGENT
+    )
     point1 = RetailPoint(name="P1", address="A1")
     cluster1 = TerritoryCluster(
         id=uuid4(),
@@ -99,7 +112,9 @@ async def test_generate_success(
 
     await service.generate()
 
-    mock_assignments_service.clear_employee_assignments.assert_awaited_once_with([point1.id])
+    mock_assignments_service.clear_employee_assignments.assert_awaited_once_with(
+        [point1.id]
+    )
     mock_assignments_service.assign_employee.assert_awaited_once_with(
         retail_point_id=point1.id,
         employee_id=agent1.id,

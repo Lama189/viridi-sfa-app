@@ -13,7 +13,6 @@ from app.domain.enums import Weekday
 
 
 class VisitPlanService(IVisitPlanService):
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -35,7 +34,9 @@ class VisitPlanService(IVisitPlanService):
         plan_date: date,
         overwrite: bool = True,
     ) -> VisitPlan:
-        existing = await self._uow.visit_plans.get_by_employee_and_date(employee_id, plan_date)
+        existing = await self._uow.visit_plans.get_by_employee_and_date(
+            employee_id, plan_date
+        )
         if existing:
             if not overwrite:
                 raise VisitPlanAlreadyExistsError()
@@ -49,8 +50,10 @@ class VisitPlanService(IVisitPlanService):
             )
 
         weekday = Weekday(plan_date.weekday())
-        
-        retail_points = await self._uow.retail_points.list_by_employee_and_weekday(employee_id, weekday)
+
+        retail_points = await self._uow.retail_points.list_by_employee_and_weekday(
+            employee_id, weekday
+        )
 
         for position, retail_point in enumerate(
             sorted(retail_points, key=lambda rp: rp.address),
@@ -79,11 +82,15 @@ class VisitPlanService(IVisitPlanService):
         employee_id: UUID,
         plan_date: date,
     ) -> VisitPlan:
-        plan = await self._uow.visit_plans.get_by_employee_and_date(employee_id, plan_date)
+        plan = await self._uow.visit_plans.get_by_employee_and_date(
+            employee_id, plan_date
+        )
         if plan is None:
             raise VisitPlanNotFoundError()
 
-        plan.items = await self._uow.visit_plan_items.list_by_plan(plan.id,)
+        plan.items = await self._uow.visit_plan_items.list_by_plan(
+            plan.id,
+        )
 
         return plan
 

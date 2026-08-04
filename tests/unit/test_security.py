@@ -1,13 +1,13 @@
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
 
 from app.core.security import SecurityUtils
 
-
 # --- hash_password / verify_password ---
+
 
 def test_hash_and_verify_password():
     hashed = SecurityUtils.hash_password("my_secret")
@@ -24,6 +24,7 @@ def test_verify_password_exception_returns_false():
 
 
 # --- generate_access_token / generate_refresh_token ---
+
 
 @patch("app.core.security.get_settings")
 def test_generate_access_token(mock_settings):
@@ -51,6 +52,7 @@ def test_generate_refresh_token(mock_settings):
 
 # --- verify_token ---
 
+
 @patch("app.core.security.get_settings")
 def test_verify_token_success(mock_settings):
     mock_settings.return_value = MagicMock(
@@ -73,7 +75,8 @@ def test_verify_token_missing_sub(mock_settings):
         access_token_expire_minutes=15,
     )
     import jwt as _jwt
-    now = datetime.now(timezone.utc)
+
+    now = datetime.now(UTC)
     token = _jwt.encode(
         {"exp": now + timedelta(minutes=15), "type": "access"},
         "test-secret",
@@ -108,7 +111,8 @@ def test_verify_token_expired(mock_settings):
         access_token_expire_minutes=15,
     )
     import jwt
-    now = datetime.now(timezone.utc)
+
+    now = datetime.now(UTC)
     expired_token = jwt.encode(
         {"sub": "user-123", "type": "access", "exp": now - timedelta(hours=1)},
         "test-secret",
@@ -128,7 +132,8 @@ def test_verify_token_invalid_signature(mock_settings):
         access_token_expire_minutes=15,
     )
     import jwt
-    now = datetime.now(timezone.utc)
+
+    now = datetime.now(UTC)
     token = jwt.encode(
         {"sub": "user-123", "type": "access", "exp": now + timedelta(minutes=15)},
         "wrong-secret",
@@ -141,6 +146,7 @@ def test_verify_token_invalid_signature(mock_settings):
 
 
 # --- refresh token roundtrip ---
+
 
 @patch("app.core.security.get_settings")
 def test_refresh_token_roundtrip(mock_settings):
@@ -158,9 +164,10 @@ def test_refresh_token_roundtrip(mock_settings):
 
 # --- verify_telegram_init_data ---
 
+
 def test_verify_telegram_init_data_success():
-    import hmac
     import hashlib
+    import hmac
     import json
     import urllib.parse
 
@@ -172,8 +179,12 @@ def test_verify_telegram_init_data_success():
         "user": json.dumps(user_obj),
     }
     data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(data_dict.items()))
-    secret_key = hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
-    data_hash = hmac.new(secret_key, data_check_string.encode("utf-8"), hashlib.sha256).hexdigest()
+    secret_key = hmac.new(
+        b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256
+    ).digest()
+    data_hash = hmac.new(
+        secret_key, data_check_string.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
     init_data = urllib.parse.urlencode(data_dict) + f"&hash={data_hash}"
 
     parsed = SecurityUtils.verify_telegram_init_data(init_data, bot_token)
@@ -203,4 +214,3 @@ def test_verify_telegram_init_data_missing_hash():
 def test_verify_telegram_init_data_empty_bot_token():
     with pytest.raises(ValueError, match="bot token is not configured"):
         SecurityUtils.verify_telegram_init_data("auth_date=1600000000&hash=123", "")
-

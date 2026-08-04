@@ -11,8 +11,8 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.categories import Category
     from app.infrastructure.postgres.models.order_items import OrderItem
-    from app.infrastructure.postgres.models.stocks import Stock
     from app.infrastructure.postgres.models.stock_transactions import StockTransaction
+    from app.infrastructure.postgres.models.stocks import Stock
 
 
 class Product(BaseModel):
@@ -64,19 +64,19 @@ class Product(BaseModel):
         default=True,
     )
 
-    category: Mapped["Category"] = relationship(
+    category: Mapped[Category] = relationship(
         back_populates="products",
     )
 
-    stocks: Mapped[list["Stock"]] = relationship(
+    stocks: Mapped[list[Stock]] = relationship(
         back_populates="product",
         cascade="all, delete-orphan",
     )
 
-    order_items: Mapped[list["OrderItem"]] = relationship(
+    order_items: Mapped[list[OrderItem]] = relationship(
         back_populates="product",
     )
 
-    transactions: Mapped[list["StockTransaction"]] = relationship(
+    transactions: Mapped[list[StockTransaction]] = relationship(
         back_populates="product"
     )

@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import select, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visit_media import IVisitMediaRepository
@@ -9,7 +10,6 @@ from app.infrastructure.postgres.models.visit_media import VisitMedia as VisitMe
 
 
 class PostgresVisitMediaRepository(IVisitMediaRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -33,9 +33,7 @@ class PostgresVisitMediaRepository(IVisitMediaRepository):
         return self._to_domain(model)
 
     async def list_by_visit(self, visit_id: UUID) -> list[VisitMedia]:
-        stmt = select(VisitMediaModel).where(
-            VisitMediaModel.visit_id == visit_id
-        )
+        stmt = select(VisitMediaModel).where(VisitMediaModel.visit_id == visit_id)
 
         result = await self._session.execute(stmt)
         return [self._to_domain(m) for m in result.scalars().all()]
@@ -48,9 +46,7 @@ class PostgresVisitMediaRepository(IVisitMediaRepository):
 
     async def delete_all_for_visit(self, visit_id: UUID) -> None:
         await self._session.execute(
-            sa_delete(VisitMediaModel).where(
-                VisitMediaModel.visit_id == visit_id
-            )
+            sa_delete(VisitMediaModel).where(VisitMediaModel.visit_id == visit_id)
         )
         await self._session.flush()
 

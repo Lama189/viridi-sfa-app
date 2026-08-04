@@ -23,6 +23,7 @@ def service(mock_uow):
 
 # --- add ---
 
+
 @pytest.mark.asyncio
 async def test_add_success(service, mock_uow):
     visit_id = uuid4()
@@ -49,6 +50,7 @@ async def test_add_without_comment(service, mock_uow):
 
 
 # --- update ---
+
 
 @pytest.mark.asyncio
 async def test_update_success(service, mock_uow):
@@ -81,6 +83,7 @@ async def test_update_not_found(service, mock_uow):
 
 # --- delete ---
 
+
 @pytest.mark.asyncio
 async def test_delete_success(service, mock_uow):
     from app.domain.entities.visit_debts import VisitDebt
@@ -112,6 +115,7 @@ async def test_delete_not_found(service, mock_uow):
 
 # --- list_by_visit ---
 
+
 @pytest.mark.asyncio
 async def test_list_by_visit(service, mock_uow):
     visit_id = uuid4()
@@ -124,6 +128,7 @@ async def test_list_by_visit(service, mock_uow):
 
 
 # --- get_by_id ---
+
 
 @pytest.mark.asyncio
 async def test_get_by_id_found(service, mock_uow):

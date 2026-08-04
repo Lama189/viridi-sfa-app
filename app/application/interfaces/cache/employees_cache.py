@@ -5,7 +5,6 @@ from app.domain.entities.auth import AuthenticatedEmployee
 
 
 class IEmployeesCacheRepository(ABC):
-
     @abstractmethod
     async def get_refresh_token(self, employee_id: UUID) -> str | None:
         raise NotImplementedError

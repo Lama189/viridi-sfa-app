@@ -26,9 +26,7 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
 
     async def get_by_id(self, invite_code_id: UUID) -> ClientInviteCode | None:
         result = await self._session.execute(
-            select(InviteCodeModel).where(
-                InviteCodeModel.id == invite_code_id
-            )
+            select(InviteCodeModel).where(InviteCodeModel.id == invite_code_id)
         )
 
         model = result.scalar_one_or_none()
@@ -55,9 +53,7 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
 
     async def get_by_code_hash(self, code_hash: str) -> ClientInviteCode | None:
         result = await self._session.execute(
-            select(InviteCodeModel).where(
-                InviteCodeModel.code_hash == code_hash
-            )
+            select(InviteCodeModel).where(InviteCodeModel.code_hash == code_hash)
         )
 
         model = result.scalar_one_or_none()
@@ -82,9 +78,7 @@ class PostgresInviteCodeRepository(IInviteCodeRepository):
     async def update(self, invite_code: ClientInviteCode) -> None:
         await self._session.execute(
             update(InviteCodeModel)
-            .where(
-                InviteCodeModel.id == invite_code.id
-            )
+            .where(InviteCodeModel.id == invite_code.id)
             .values(
                 encrypted_code=invite_code.encrypted_code,
                 code_hash=invite_code.code_hash,

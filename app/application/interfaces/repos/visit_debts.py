@@ -6,7 +6,6 @@ from app.domain.entities.visit_debts import VisitDebt
 
 
 class IVisitDebtRepository(ABC):
-
     @abstractmethod
     async def add(self, visit_debt: VisitDebt) -> None:
         raise NotImplementedError
@@ -34,4 +33,3 @@ class IVisitDebtRepository(ABC):
         target_date: date,
     ) -> int:
         raise NotImplementedError
-

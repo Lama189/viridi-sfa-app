@@ -6,7 +6,6 @@ from app.domain.enums import VisitStatus
 
 
 class IVisitRepository(ABC):
-
     @abstractmethod
     async def add(self, visit: Visit) -> None:
         raise NotImplementedError
@@ -16,7 +15,9 @@ class IVisitRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def list_by_employee(self, employee_id: UUID, active: bool = True, limit: int = 1) -> list[Visit]:
+    async def list_by_employee(
+        self, employee_id: UUID, active: bool = True, limit: int = 1
+    ) -> list[Visit]:
         raise NotImplementedError
 
     @abstractmethod
@@ -51,4 +52,3 @@ class IVisitRepository(ABC):
         employee_id: UUID,
     ) -> int:
         raise NotImplementedError
-

@@ -1,4 +1,4 @@
-from app.domain.enums import EmployeeRole, ClientType, OrderStatus, VisitStatus
+from app.domain.enums import ClientType, EmployeeRole, OrderStatus, VisitStatus
 
 
 def test_employee_role_values():

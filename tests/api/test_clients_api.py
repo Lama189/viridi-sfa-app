@@ -5,11 +5,15 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
+from app.api.dependencies import (
+    get_clients_auth_service,
+    get_clients_service,
+    get_current_user,
+)
+from app.api.v1.schemas.clients import ClientResponse, ClientWithTokensResponse
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.infrastructure.postgres.models.enums import EmployeeRole
-from app.api.dependencies import get_clients_service, get_clients_auth_service, get_current_user
-from app.api.v1.schemas.clients import ClientWithTokensResponse, ClientResponse
+from app.main import app
 
 
 @pytest.fixture
@@ -51,22 +55,30 @@ async def client():
 
 @pytest.mark.asyncio
 async def test_register_success(client, mock_auth_service):
-    from app.api.v1.schemas.clients import ClientWithTokensResponse, ClientResponse
+    from app.api.v1.schemas.clients import ClientResponse, ClientWithTokensResponse
+
     uid = uuid4()
     mock_auth_service.register.return_value = ClientWithTokensResponse(
         access_token="acc",
         refresh_token="ref",
         client=ClientResponse(
-            id=uid, phone="+998901234567", full_name="Test", telegram_chat_id=None, is_active=True,
+            id=uid,
+            phone="+998901234567",
+            full_name="Test",
+            telegram_chat_id=None,
+            is_active=True,
         ),
     )
 
-    resp = await client.post("/api/v1/clients/register", json={
-        "invite_code": "ABC123",
-        "phone": "+998901234567",
-        "full_name": "Test",
-        "telegram_chat_id": 123,
-    })
+    resp = await client.post(
+        "/api/v1/clients/register",
+        json={
+            "invite_code": "ABC123",
+            "phone": "+998901234567",
+            "full_name": "Test",
+            "telegram_chat_id": 123,
+        },
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert data["access_token"] == "acc"
@@ -88,12 +100,15 @@ async def test_register_existing_phone_returns_201(client, mock_auth_service):
         ),
     )
 
-    resp = await client.post("/api/v1/clients/register", json={
-        "invite_code": "ABC123",
-        "phone": "+998901234567",
-        "full_name": "Existing Client",
-        "telegram_chat_id": 111,
-    })
+    resp = await client.post(
+        "/api/v1/clients/register",
+        json={
+            "invite_code": "ABC123",
+            "phone": "+998901234567",
+            "full_name": "Existing Client",
+            "telegram_chat_id": 111,
+        },
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert data["access_token"] == "acc"

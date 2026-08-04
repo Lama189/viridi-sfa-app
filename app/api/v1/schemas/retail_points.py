@@ -1,5 +1,6 @@
-from uuid import UUID
 from decimal import Decimal
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from app.domain.enums import ClientType
@@ -98,35 +99,27 @@ class RetailPointResponse(BaseModel):
 
     is_active: bool
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class InviteCodeResponse(BaseModel):
     invite_code: str
-    
-    model_config = {
-        "from_attributes": True
-    }
+
+    model_config = {"from_attributes": True}
 
 
 class RetailPointWithCodeResponse(BaseModel):
     retail_point: RetailPointResponse
     invite_code: str
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class BulkCreateRetailPointsResponse(BaseModel):
     created_count: int
     created: list[RetailPointResponse]
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class RetailPointMemberResponse(BaseModel):
@@ -134,8 +127,4 @@ class RetailPointMemberResponse(BaseModel):
     retail_point_id: UUID
     client_id: UUID
 
-    model_config = {
-        "from_attributes": True
-    }
-
-
+    model_config = {"from_attributes": True}

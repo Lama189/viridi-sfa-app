@@ -5,7 +5,6 @@ from app.domain.entities.visit_media import VisitMedia
 
 
 class IVisitMediaService(ABC):
-
     @abstractmethod
     async def attach(self, visit_id: UUID, media_id: UUID) -> VisitMedia:
         raise NotImplementedError

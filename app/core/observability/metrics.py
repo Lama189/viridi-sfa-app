@@ -1,5 +1,4 @@
-from prometheus_client import Counter, Histogram, Gauge
-
+from prometheus_client import Counter, Gauge, Histogram
 
 # ============================================================================
 # HTTP
@@ -9,35 +8,23 @@ from prometheus_client import Counter, Histogram, Gauge
 http_requests_total = Counter(
     name="http_requests_total",
     documentation="Total number of HTTP requests.",
-    labelnames=(
-        "method",
-        "path",
-        "status_code"
-    )
+    labelnames=("method", "path", "status_code"),
 )
 
 http_request_duration_seconds = Histogram(
     name="http_request_duration_seconds",
     documentation="HTTP request duration",
-    labelnames=(
-        "method",
-        "path"
-    )
+    labelnames=("method", "path"),
 )
 
 http_requests_in_progress = Gauge(
-    name="http_requests_in_progress",
-    documentation="Current HTTP requests in progress"
+    name="http_requests_in_progress", documentation="Current HTTP requests in progress"
 )
 
 http_exceptions_total = Counter(
     name="http_exceptions_total",
     documentation="Total number of unhandled exceptions.",
-    labelnames=(
-        "method",
-        "path",
-        "exception"
-    )
+    labelnames=("method", "path", "exception"),
 )
 
 
@@ -49,67 +36,67 @@ http_exceptions_total = Counter(
 retail_point_operations_total = Counter(
     name="retail_point_operations_total",
     documentation="Total number of retail point operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 invite_code_operations_total = Counter(
     name="invite_code_operations_total",
     documentation="Total number of invite code operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 media_operations_total = Counter(
     name="media_operations_total",
     documentation="Total number of media operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 category_operations_total = Counter(
     name="category_operations_total",
     documentation="Total number of category operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 product_operations_total = Counter(
     name="product_operations_total",
     documentation="Total number of product operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 warehouse_operations_total = Counter(
     name="warehouse_operations_total",
     documentation="Total number of warehouse operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 employee_operations_total = Counter(
     name="employee_operations_total",
     documentation="Total number of employee operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 client_operations_total = Counter(
     name="client_operations_total",
     documentation="Total number of client operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 retail_point_member_operations_total = Counter(
     name="retail_point_member_operations_total",
     documentation="Total number of retail point member operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 retail_point_assignment_operations_total = Counter(
     name="retail_point_assignment_operations_total",
     documentation="Total number of retail point assignment operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 visit_schedule_operations_total = Counter(
     name="visit_schedule_operations_total",
     documentation="Total number of visit schedule operations.",
-    labelnames=("action",)
+    labelnames=("action",),
 )
 
 

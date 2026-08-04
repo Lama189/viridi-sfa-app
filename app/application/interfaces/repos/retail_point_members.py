@@ -5,7 +5,6 @@ from app.domain.entities.retail_point_members import RetailPointMember
 
 
 class IRetailPointMemberRepository(ABC):
-
     @abstractmethod
     async def add(self, member: RetailPointMember) -> None:
         raise NotImplementedError
@@ -19,12 +18,16 @@ class IRetailPointMemberRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_retail_point(self, retail_point_id: UUID) -> list[RetailPointMember]:
+    async def get_by_retail_point(
+        self, retail_point_id: UUID
+    ) -> list[RetailPointMember]:
         raise NotImplementedError
 
     @abstractmethod
     async def get_by_retail_point_and_client(
-        self, retail_point_id: UUID, client_id: UUID,
+        self,
+        retail_point_id: UUID,
+        client_id: UUID,
     ) -> RetailPointMember | None:
         raise NotImplementedError
 

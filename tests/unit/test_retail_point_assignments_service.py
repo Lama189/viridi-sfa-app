@@ -3,14 +3,16 @@ from uuid import uuid4
 
 import pytest
 
-from app.application.services.retail_point_assignments import RetailPointAssignmentService
+from app.application.services.retail_point_assignments import (
+    RetailPointAssignmentService,
+)
 from app.core.exceptions import (
-    RetailPointNotFoundError,
-    RetailPointInactiveError,
-    RetailPointAssignmentNotFoundError,
     RetailPointAssignmentAlreadyExistsError,
-    UserNotFoundError,
+    RetailPointAssignmentNotFoundError,
+    RetailPointInactiveError,
+    RetailPointNotFoundError,
     UserNotActiveError,
+    UserNotFoundError,
 )
 
 
@@ -30,6 +32,7 @@ def service(mock_uow):
 
 
 # --- create ---
+
 
 @pytest.mark.asyncio
 async def test_create_success(service, mock_uow):
@@ -73,6 +76,7 @@ async def test_create_already_exists(service, mock_uow):
 
 # --- delete ---
 
+
 @pytest.mark.asyncio
 async def test_delete_success(service, mock_uow):
     retail_point_id = uuid4()
@@ -105,6 +109,7 @@ async def test_delete_assignment_not_found(service, mock_uow):
 
 
 # --- assign_employee ---
+
 
 @pytest.mark.asyncio
 async def test_assign_employee_success(service, mock_uow):
@@ -169,6 +174,7 @@ async def test_assign_employee_assignment_not_found(service, mock_uow):
 
 
 # --- unassign_employee ---
+
 
 @pytest.mark.asyncio
 async def test_unassign_employee_success(service, mock_uow):

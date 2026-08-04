@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.employees import IEmployeeRepository
@@ -9,7 +10,6 @@ from app.infrastructure.postgres.models.employees import Employee as EmployeeMod
 
 
 class PostgresEmployeeRepository(IEmployeeRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -30,9 +30,7 @@ class PostgresEmployeeRepository(IEmployeeRepository):
         return self._to_domain(model)
 
     async def get_by(self, **kwargs) -> Employee | None:
-        result = await self._session.execute(
-            select(EmployeeModel).filter_by(**kwargs)
-        )
+        result = await self._session.execute(select(EmployeeModel).filter_by(**kwargs))
 
         model = result.scalar_one_or_none()
         if model is None:

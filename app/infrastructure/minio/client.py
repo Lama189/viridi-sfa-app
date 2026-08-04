@@ -2,7 +2,6 @@ from minio import Minio
 
 from app.core.config import get_settings
 
-
 _client: Minio | None = None
 
 

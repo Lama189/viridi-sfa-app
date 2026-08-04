@@ -1,15 +1,15 @@
 from io import BytesIO
+from typing import ClassVar
 from uuid import UUID, uuid4
 
 from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
-from app.core.exceptions import MediaNotFoundError
 from app.application.interfaces.object_storage import IObjectStorage
 from app.application.interfaces.uow import IUnitOfWork
+from app.core.exceptions import MediaNotFoundError
 from app.domain.entities.media import MediaFile
 from app.domain.enums import MediaBucket
-
 
 register_heif_opener()
 
@@ -27,7 +27,7 @@ class MediaService:
     OUTPUT_QUALITY = 85
     THUMBNAIL_QUALITY = 75
 
-    ALLOWED_CONTENT_TYPES = {
+    ALLOWED_CONTENT_TYPES: ClassVar[set[str]] = {
         "image/jpeg",
         "image/png",
         "image/webp",
@@ -35,7 +35,11 @@ class MediaService:
         "image/heif",
     }
 
-    def __init__(self, uow: IUnitOfWork, storage: IObjectStorage,) -> None:
+    def __init__(
+        self,
+        uow: IUnitOfWork,
+        storage: IObjectStorage,
+    ) -> None:
         self._uow = uow
         self._storage = storage
 
@@ -108,7 +112,9 @@ class MediaService:
         if not media:
             raise MediaNotFoundError()
 
-        data, _ = await self._storage.download(media.bucket, media.thumbnail_object_name)
+        data, _ = await self._storage.download(
+            media.bucket, media.thumbnail_object_name
+        )
 
         return data, media.content_type
 
@@ -118,7 +124,7 @@ class MediaService:
 
         if len(data) > self.MAX_FILE_SIZE:
             raise ValueError("Image is too large.")
-        
+
         try:
             image = Image.open(BytesIO(data))
         except Exception as exc:
@@ -170,7 +176,7 @@ class MediaService:
     def _normalize_image(self, image: Image.Image) -> Image.Image:
         image = ImageOps.exif_transpose(image)
 
-        if image.mode not in ("RGB","RGBA"):
+        if image.mode not in ("RGB", "RGBA"):
             image = image.convert("RGB")
 
         if image.mode == "RGBA":
@@ -179,7 +185,10 @@ class MediaService:
                 image.size,
                 (255, 255, 255),
             )
-            background.paste(image, mask=image.getchannel("A"),)
+            background.paste(
+                image,
+                mask=image.getchannel("A"),
+            )
             image = background
 
         return image

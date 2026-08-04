@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, Field, UUID4
+from pydantic import UUID4, BaseModel, Field
 
 from app.domain.enums import OrderStatus
 
@@ -27,9 +27,7 @@ class OrderItemResponse(BaseModel):
     price_at_order: Decimal
     total_volume: Decimal
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class OrderResponse(BaseModel):
@@ -45,6 +43,4 @@ class OrderResponse(BaseModel):
     updated_at: datetime
     items: list[OrderItemResponse] = []
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}

@@ -17,5 +17,3 @@ class Client:
     @property
     def telegram_id(self) -> int | None:
         return self.telegram_chat_id
-
-

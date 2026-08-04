@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from uuid import UUID
 from decimal import Decimal
+from uuid import UUID
 
 from app.domain.entities.visit_debts import VisitDebt
 
 
 class IVisitDebtService(ABC):
-
     @abstractmethod
     async def add(
         self,

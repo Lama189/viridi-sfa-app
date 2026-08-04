@@ -3,10 +3,9 @@ import logging
 from pydantic import TypeAdapter, ValidationError
 from redis.asyncio import Redis, RedisError
 
+from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.core.config import get_settings
 from app.domain.entities.auth import AuthenticatedClient
-from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
-
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

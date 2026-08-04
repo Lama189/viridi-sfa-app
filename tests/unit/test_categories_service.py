@@ -23,6 +23,7 @@ def service(mock_uow):
 
 # --- create_category ---
 
+
 @pytest.mark.asyncio
 async def test_create_category_success(service, mock_uow):
     mock_uow.categories.exists_by.return_value = False
@@ -50,6 +51,7 @@ async def test_create_category_duplicate_name(service, mock_uow):
 
 # --- get_by_id ---
 
+
 @pytest.mark.asyncio
 async def test_get_by_id_found(service, mock_uow):
     uid = uuid4()
@@ -70,6 +72,7 @@ async def test_get_by_id_not_found(service, mock_uow):
 
 # --- get_all_categories ---
 
+
 @pytest.mark.asyncio
 async def test_get_all_categories(service, mock_uow):
     mock_uow.categories.list_all.return_value = [
@@ -83,6 +86,7 @@ async def test_get_all_categories(service, mock_uow):
 
 
 # --- update_category ---
+
 
 @pytest.mark.asyncio
 async def test_update_category_success(service, mock_uow):
@@ -121,6 +125,7 @@ async def test_update_category_not_found(service, mock_uow):
 
 
 # --- delete_category ---
+
 
 @pytest.mark.asyncio
 async def test_delete_category_success(service, mock_uow):

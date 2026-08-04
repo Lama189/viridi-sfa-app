@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from app.core.exceptions import (
@@ -20,9 +20,7 @@ class Stock:
     product_id: UUID
     quantity: int = 0
     reserved_quantity: int = 0
-    updated_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
         if self.quantity < 0:
@@ -102,7 +100,7 @@ class Stock:
         self._touch()
 
     def _touch(self) -> None:
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
 
 @dataclass(slots=True)
@@ -116,6 +114,4 @@ class StockTransaction:
     id: UUID = field(default_factory=uuid4)
     actor_type: TransactionActorType = TransactionActorType.SYSTEM
     created_by_id: UUID | None = None
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))

@@ -1,21 +1,23 @@
-from datetime import date, datetime, UTC
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.entities.visit_plans import VisitPlan
-from app.domain.entities.visit_plan_items import VisitPlanItem
-from app.domain.entities.visits import Visit
 from app.domain.entities.orders import Order
 from app.domain.entities.visit_debts import VisitDebt
+from app.domain.entities.visit_plan_items import VisitPlanItem
+from app.domain.entities.visit_plans import VisitPlan
+from app.domain.entities.visits import Visit
 from app.domain.enums import VisitStatus
-from app.infrastructure.postgres.repos.visit_plans import PostgresVisitPlanRepository
-from app.infrastructure.postgres.repos.visit_plan_items import PostgresVisitPlanItemRepository
-from app.infrastructure.postgres.repos.visits import PostgresVisitRepository
 from app.infrastructure.postgres.repos.orders import PostgresOrderRepository
 from app.infrastructure.postgres.repos.visit_debts import PostgresVisitDebtRepository
+from app.infrastructure.postgres.repos.visit_plan_items import (
+    PostgresVisitPlanItemRepository,
+)
+from app.infrastructure.postgres.repos.visit_plans import PostgresVisitPlanRepository
+from app.infrastructure.postgres.repos.visits import PostgresVisitRepository
 
 
 @pytest.mark.asyncio
@@ -36,7 +38,7 @@ async def test_dashboard_repos_aggregations(session: AsyncSession):
     # 1. Create visit plan & items
     plan = VisitPlan(employee_id=emp_id, plan_date=today)
     await plan_repo.add(plan)
-    
+
     item1 = VisitPlanItem(visit_plan_id=plan.id, retail_point_id=rp_id1, order=1)
     item2 = VisitPlanItem(visit_plan_id=plan.id, retail_point_id=rp_id2, order=2)
     await item_repo.add_many([item1, item2])
@@ -70,7 +72,9 @@ async def test_dashboard_repos_aggregations(session: AsyncSession):
     await order_repo.add(order1)
     await session.commit()
 
-    orders_count, orders_amount = await order_repo.get_statistics_by_employee_and_date(emp_id, today)
+    orders_count, orders_amount = await order_repo.get_statistics_by_employee_and_date(
+        emp_id, today
+    )
     assert orders_count == 1
     assert orders_amount == Decimal("50000.00")
 

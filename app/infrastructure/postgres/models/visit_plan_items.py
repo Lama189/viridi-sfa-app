@@ -9,8 +9,8 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 from app.infrastructure.postgres.models.enums import VisitPlanItemStatus
 
 if TYPE_CHECKING:
-    from app.infrastructure.postgres.models.visit_plans import VisitPlan
     from app.infrastructure.postgres.models.retail_points import RetailPoint
+    from app.infrastructure.postgres.models.visit_plans import VisitPlan
 
 
 class VisitPlanItem(BaseModel):
@@ -18,14 +18,14 @@ class VisitPlanItem(BaseModel):
 
     __table_args__ = (
         CheckConstraint(
-            "\"order\" >= 0",
+            '"order" >= 0',
             name="ck_visit_plan_item_order_non_negative",
         ),
         UniqueConstraint(
             "visit_plan_id",
             "retail_point_id",
             name="uq_visit_plan_item_point",
-        )
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -58,10 +58,10 @@ class VisitPlanItem(BaseModel):
         nullable=False,
     )
 
-    visit_plan: Mapped["VisitPlan"] = relationship(
+    visit_plan: Mapped[VisitPlan] = relationship(
         back_populates="items",
     )
 
-    retail_point: Mapped["RetailPoint"] = relationship(
+    retail_point: Mapped[RetailPoint] = relationship(
         back_populates="visit_plan_items",
     )

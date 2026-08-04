@@ -5,12 +5,12 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
-from app.domain.entities.retail_points import RetailPoint
+from app.api.dependencies import get_current_user, get_retail_points_service
 from app.domain.entities.auth import AuthenticatedEmployee
+from app.domain.entities.retail_points import RetailPoint
 from app.domain.enums import ClientType
 from app.infrastructure.postgres.models.enums import EmployeeRole
-from app.api.dependencies import get_retail_points_service, get_current_user
+from app.main import app
 
 
 @pytest.fixture
@@ -56,15 +56,19 @@ def _retail_point_response(name="Test Point", address="123 Main St"):
 
 # --- POST /api/v1/retail_points ---
 
+
 @pytest.mark.asyncio
 async def test_create_retail_point_success(client, mock_service):
     point = _retail_point_response()
     mock_service.create_retail_point.return_value = (point, "INVITE123")
 
-    resp = await client.post("/api/v1/retail_points", json={
-        "name": "Test Point",
-        "address": "123 Main St",
-    })
+    resp = await client.post(
+        "/api/v1/retail_points",
+        json={
+            "name": "Test Point",
+            "address": "123 Main St",
+        },
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert data["retail_point"]["name"] == "Test Point"
@@ -75,14 +79,18 @@ async def test_create_retail_point_success(client, mock_service):
 async def test_create_retail_point_duplicate(client, mock_service):
     mock_service.create_retail_point.side_effect = ValueError("already exists")
 
-    resp = await client.post("/api/v1/retail_points", json={
-        "name": "Duplicate Point",
-        "address": "456 Second St",
-    })
+    resp = await client.post(
+        "/api/v1/retail_points",
+        json={
+            "name": "Duplicate Point",
+            "address": "456 Second St",
+        },
+    )
     assert resp.status_code == 409
 
 
 # --- GET /api/v1/retail_points/{id} ---
+
 
 @pytest.mark.asyncio
 async def test_get_retail_point_found(client, mock_service):
@@ -97,6 +105,7 @@ async def test_get_retail_point_found(client, mock_service):
 @pytest.mark.asyncio
 async def test_get_retail_point_not_found(client, mock_service):
     from app.core.exceptions import RetailPointNotFoundError
+
     mock_service.get_by_id.side_effect = RetailPointNotFoundError()
 
     resp = await client.get(f"/api/v1/retail_points/{uuid4()}")
@@ -104,6 +113,7 @@ async def test_get_retail_point_not_found(client, mock_service):
 
 
 # --- GET /api/v1/retail_points/{id}/code ---
+
 
 @pytest.mark.asyncio
 async def test_get_retail_point_invite_code(client, mock_service):
@@ -116,14 +126,18 @@ async def test_get_retail_point_invite_code(client, mock_service):
 
 # --- PATCH /api/v1/retail_points/{id} ---
 
+
 @pytest.mark.asyncio
 async def test_update_retail_point_success(client, mock_service):
     point = _retail_point_response(name="Updated Point")
     mock_service.update_retail_point.return_value = point
 
-    resp = await client.patch(f"/api/v1/retail_points/{point.id}", json={
-        "name": "Updated Point",
-    })
+    resp = await client.patch(
+        f"/api/v1/retail_points/{point.id}",
+        json={
+            "name": "Updated Point",
+        },
+    )
     assert resp.status_code == 200
     assert resp.json()["name"] == "Updated Point"
 
@@ -132,13 +146,17 @@ async def test_update_retail_point_success(client, mock_service):
 async def test_update_retail_point_not_found(client, mock_service):
     mock_service.update_retail_point.side_effect = ValueError("not found")
 
-    resp = await client.patch(f"/api/v1/retail_points/{uuid4()}", json={
-        "name": "X",
-    })
+    resp = await client.patch(
+        f"/api/v1/retail_points/{uuid4()}",
+        json={
+            "name": "X",
+        },
+    )
     assert resp.status_code == 404
 
 
 # --- DELETE /api/v1/retail_points/{id} ---
+
 
 @pytest.mark.asyncio
 async def test_delete_retail_point_success(client, mock_service):
@@ -149,9 +167,11 @@ async def test_delete_retail_point_success(client, mock_service):
 
 # --- GET /api/v1/retail_points/by-weekday/{weekday} ---
 
+
 @pytest.mark.asyncio
 async def test_list_retail_points_by_weekday(client, mock_service, mock_admin_employee):
     from app.domain.enums import Weekday
+
     point = _retail_point_response(name="Monday Store")
     mock_service.list_by_employee_and_weekday.return_value = [point]
 
@@ -164,5 +184,3 @@ async def test_list_retail_points_by_weekday(client, mock_service, mock_admin_em
         employee_id=mock_admin_employee.id,
         weekday=Weekday.MONDAY,
     )
-
-

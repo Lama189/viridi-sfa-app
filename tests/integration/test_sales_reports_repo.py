@@ -1,4 +1,4 @@
-from datetime import datetime, UTC, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
@@ -160,7 +160,9 @@ async def test_get_agent_daily_report_with_data(session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_date(session: AsyncSession):
+async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_date(
+    session: AsyncSession,
+):
     repo = SalesReportRepository(session)
     target_agent_id = uuid4()
     other_agent_id = uuid4()
@@ -198,13 +200,21 @@ async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_d
         status=OrderStatus.PENDING,
     )
     item_unconfirmed = OrderItem(
-        id=uuid4(), order_id=order_unconfirmed.id, product_id=prod.id, quantity=10, price_at_order=Decimal("100.00"), total_volume=Decimal("10.0")
+        id=uuid4(),
+        order_id=order_unconfirmed.id,
+        product_id=prod.id,
+        quantity=10,
+        price_at_order=Decimal("100.00"),
+        total_volume=Decimal("10.0"),
     )
     session.add_all([visit_unconfirmed, order_unconfirmed, item_unconfirmed])
 
     # 2. Visit outside date range (started 10 hours ago) -> Should be ignored
     visit_old = Visit(
-        id=uuid4(), employee_id=target_agent_id, retail_point_id=rp_id, started_at=now - timedelta(hours=10)
+        id=uuid4(),
+        employee_id=target_agent_id,
+        retail_point_id=rp_id,
+        started_at=now - timedelta(hours=10),
     )
     order_old = Order(
         id=uuid4(),
@@ -215,7 +225,12 @@ async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_d
         status=OrderStatus.CONFIRMED,
     )
     item_old = OrderItem(
-        id=uuid4(), order_id=order_old.id, product_id=prod.id, quantity=10, price_at_order=Decimal("100.00"), total_volume=Decimal("10.0")
+        id=uuid4(),
+        order_id=order_old.id,
+        product_id=prod.id,
+        quantity=10,
+        price_at_order=Decimal("100.00"),
+        total_volume=Decimal("10.0"),
     )
     session.add_all([visit_old, order_old, item_old])
 
@@ -232,7 +247,12 @@ async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_d
         status=OrderStatus.CONFIRMED,
     )
     item_other_agent = OrderItem(
-        id=uuid4(), order_id=order_other_agent.id, product_id=prod.id, quantity=10, price_at_order=Decimal("100.00"), total_volume=Decimal("10.0")
+        id=uuid4(),
+        order_id=order_other_agent.id,
+        product_id=prod.id,
+        quantity=10,
+        price_at_order=Decimal("100.00"),
+        total_volume=Decimal("10.0"),
     )
     session.add_all([visit_other_agent, order_other_agent, item_other_agent])
 

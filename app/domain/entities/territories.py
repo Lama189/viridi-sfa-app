@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from uuid import UUID
 from decimal import Decimal
+from uuid import UUID
 
 from app.domain.entities.retail_points import RetailPoint
 

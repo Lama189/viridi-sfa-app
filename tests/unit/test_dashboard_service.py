@@ -1,4 +1,4 @@
-from datetime import date, datetime, UTC
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -51,7 +51,10 @@ async def test_get_employee_dashboard_zero_total_points(service, mock_uow):
     mock_uow.visit_plans.get_by_employee_and_date.return_value = plan
     mock_uow.visit_plan_items.count_by_plan_id.return_value = 0
     mock_uow.visits.count_completed_by_plan.return_value = 0
-    mock_uow.orders.get_statistics_by_employee_and_date.return_value = (0, Decimal("0.00"))
+    mock_uow.orders.get_statistics_by_employee_and_date.return_value = (
+        0,
+        Decimal("0.00"),
+    )
     mock_uow.visit_debts.count_by_employee_and_date.return_value = 0
 
     dashboard = await service.get_employee_dashboard(emp_id)
@@ -59,7 +62,7 @@ async def test_get_employee_dashboard_zero_total_points(service, mock_uow):
     assert dashboard.total_points == 0
     assert dashboard.completed_points == 0
     assert dashboard.remaining_points == 0
-    assert dashboard.completion_percentage == Decimal("0")
+    assert dashboard.completion_percentage == Decimal(0)
     assert dashboard.orders_count == 0
     assert dashboard.orders_amount == Decimal("0.00")
     assert dashboard.debts_count == 0
@@ -74,7 +77,10 @@ async def test_get_employee_dashboard_success(service, mock_uow):
     mock_uow.visit_plans.get_by_employee_and_date.return_value = plan
     mock_uow.visit_plan_items.count_by_plan_id.return_value = 25
     mock_uow.visits.count_completed_by_plan.return_value = 12
-    mock_uow.orders.get_statistics_by_employee_and_date.return_value = (8, Decimal("1250000.00"))
+    mock_uow.orders.get_statistics_by_employee_and_date.return_value = (
+        8,
+        Decimal("1250000.00"),
+    )
     mock_uow.visit_debts.count_by_employee_and_date.return_value = 3
 
     dashboard = await service.get_employee_dashboard(emp_id)
@@ -82,7 +88,7 @@ async def test_get_employee_dashboard_success(service, mock_uow):
     assert dashboard.total_points == 25
     assert dashboard.completed_points == 12
     assert dashboard.remaining_points == 13
-    assert dashboard.completion_percentage == Decimal("48")
+    assert dashboard.completion_percentage == Decimal(48)
     assert dashboard.orders_count == 8
     assert dashboard.orders_amount == Decimal("1250000.00")
     assert dashboard.debts_count == 3
@@ -120,4 +126,3 @@ async def test_get_agent_daily_report_success(service, mock_uow):
         date_from,
         date_to,
     )
-

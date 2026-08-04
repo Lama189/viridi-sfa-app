@@ -45,6 +45,6 @@ class VisitScheduleRule(BaseModel):
         nullable=False,
     )
 
-    retail_point: Mapped["RetailPoint"] = relationship(
+    retail_point: Mapped[RetailPoint] = relationship(
         back_populates="visit_schedule_rules",
     )

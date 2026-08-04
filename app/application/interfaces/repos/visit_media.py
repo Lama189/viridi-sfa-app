@@ -5,7 +5,6 @@ from app.domain.entities.visit_media import VisitMedia
 
 
 class IVisitMediaRepository(ABC):
-
     @abstractmethod
     async def add(self, visit_media: VisitMedia) -> None:
         raise NotImplementedError

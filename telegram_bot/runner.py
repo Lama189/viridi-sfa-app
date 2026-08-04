@@ -1,5 +1,6 @@
 import asyncio
 import os
+
 import aio_pika
 from aio_pika import ExchangeType
 from aiogram import Bot, Dispatcher

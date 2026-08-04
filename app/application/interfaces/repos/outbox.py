@@ -5,7 +5,6 @@ from app.domain.entities.outbox_messages import OutboxMessage
 
 
 class IOutboxRepository(ABC):
-
     @abstractmethod
     async def add(self, message: OutboxMessage) -> None:
         raise NotImplementedError

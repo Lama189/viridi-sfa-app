@@ -16,8 +16,12 @@ class Stock(BaseModel):
 
     __table_args__ = (
         CheckConstraint("quantity >= 0", name="ck_stock_quantity_positive"),
-        CheckConstraint("reserved_quantity >= 0", name="ck_stock_reserved_quantity_positive"),
-        CheckConstraint("reserved_quantity <= quantity", name="ck_stock_reserved_le_quantity"),
+        CheckConstraint(
+            "reserved_quantity >= 0", name="ck_stock_reserved_quantity_positive"
+        ),
+        CheckConstraint(
+            "reserved_quantity <= quantity", name="ck_stock_reserved_le_quantity"
+        ),
     )
 
     warehouse_id: Mapped[PG_UUID] = mapped_column(
@@ -44,10 +48,10 @@ class Stock(BaseModel):
         default=0,
     )
 
-    warehouse: Mapped["Warehouse"] = relationship(
+    warehouse: Mapped[Warehouse] = relationship(
         back_populates="stocks",
     )
 
-    product: Mapped["Product"] = relationship(
+    product: Mapped[Product] = relationship(
         back_populates="stocks",
     )

@@ -1,18 +1,21 @@
-from uuid import UUID
 from typing import Annotated
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.application.services.employees import EmployeesService, EmployeesAuthService
-from app.api.dependencies import get_employees_service, get_employees_auth_service, allow_admin
+from app.api.dependencies import (
+    allow_admin,
+    get_employees_auth_service,
+    get_employees_service,
+)
 from app.api.v1.schemas.employees import (
-    EmployeeUpdate,
+    EmployeeLoginDTO,
     EmployeeResponse,
+    EmployeeUpdate,
     EmployeeWithTokensResponse,
-    EmployeeLoginDTO
 )
 from app.api.v1.schemas.tokens import RefreshTokenDTO, TokenResponseDTO
-
-
+from app.application.services.employees import EmployeesAuthService, EmployeesService
 
 router = APIRouter(prefix="/api/v1/employees", tags=["Employees"])
 
@@ -30,12 +33,12 @@ async def register(
         return await service.create_employee(dto)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    
+
 
 @router.post(
     path="/login",
     status_code=status.HTTP_200_OK,
-    response_model=EmployeeWithTokensResponse
+    response_model=EmployeeWithTokensResponse,
 )
 async def login(
     dto: EmployeeLoginDTO,
@@ -63,7 +66,7 @@ async def refresh(
     path="/{employee_id}",
     status_code=status.HTTP_200_OK,
     response_model=EmployeeResponse,
-    dependencies=[Depends(allow_admin)]
+    dependencies=[Depends(allow_admin)],
 )
 async def update_employee(
     employee_id: UUID,
@@ -73,16 +76,13 @@ async def update_employee(
     try:
         return await service.update_employee(employee_id, dto)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail=str(e)
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 
 @router.delete(
     path="/{employee_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(allow_admin)]
+    dependencies=[Depends(allow_admin)],
 )
 async def delete_employee(
     employee_id: UUID,
@@ -91,7 +91,4 @@ async def delete_employee(
     try:
         await service.delete_employee(employee_id)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

@@ -9,8 +9,8 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.orders import Order
-    from app.infrastructure.postgres.models.stocks import Stock
     from app.infrastructure.postgres.models.stock_transactions import StockTransaction
+    from app.infrastructure.postgres.models.stocks import Stock
 
 
 class Warehouse(BaseModel):
@@ -38,15 +38,15 @@ class Warehouse(BaseModel):
         nullable=False,
     )
 
-    stocks: Mapped[list["Stock"]] = relationship(
+    stocks: Mapped[list[Stock]] = relationship(
         back_populates="warehouse",
         cascade="all, delete-orphan",
     )
 
-    orders: Mapped[list["Order"]] = relationship(
+    orders: Mapped[list[Order]] = relationship(
         back_populates="warehouse",
     )
 
-    transactions: Mapped[list["StockTransaction"]] = relationship(
+    transactions: Mapped[list[StockTransaction]] = relationship(
         back_populates="warehouse"
     )

@@ -1,7 +1,8 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select, func, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visit_debts import IVisitDebtRepository
@@ -11,7 +12,6 @@ from app.infrastructure.postgres.models.visits import Visit as VisitModel
 
 
 class PostgresVisitDebtRepository(IVisitDebtRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -32,9 +32,7 @@ class PostgresVisitDebtRepository(IVisitDebtRepository):
         return self._to_domain(model)
 
     async def list_by_visit(self, visit_id: UUID) -> list[VisitDebt]:
-        stmt = select(VisitDebtModel).where(
-            VisitDebtModel.visit_id == visit_id
-        )
+        stmt = select(VisitDebtModel).where(VisitDebtModel.visit_id == visit_id)
 
         result = await self._session.execute(stmt)
         return [self._to_domain(m) for m in result.scalars().all()]
@@ -73,7 +71,6 @@ class PostgresVisitDebtRepository(IVisitDebtRepository):
 
         result = await self._session.execute(stmt)
         return result.scalar_one() or 0
-
 
     def _to_domain(self, model: VisitDebtModel) -> VisitDebt:
         return VisitDebt(

@@ -5,7 +5,6 @@ from app.domain.entities.stocks import Stock
 
 
 class IStockRepository(ABC):
-
     @abstractmethod
     async def add(self, stock: Stock) -> None:
         raise NotImplementedError
@@ -15,7 +14,9 @@ class IStockRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_for_update(self, warehouse_id: UUID, product_id: UUID) -> Stock | None:
+    async def get_for_update(
+        self, warehouse_id: UUID, product_id: UUID
+    ) -> Stock | None:
         raise NotImplementedError
 
     @abstractmethod

@@ -1,15 +1,17 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.media_objects import IMediaObjectRepository
 from app.domain.entities.media import MediaFile
-from app.infrastructure.postgres.models.media_objects import MediaObject as MediaObjectModel
+from app.infrastructure.postgres.models.media_objects import (
+    MediaObject as MediaObjectModel,
+)
 
 
 class PostgresMediaObjectRepository(IMediaObjectRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

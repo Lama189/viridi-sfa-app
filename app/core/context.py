@@ -1,6 +1,5 @@
 from contextvars import ContextVar
 
-
 req_id_ctx_var: ContextVar[str | None] = ContextVar("request_id", default=None)
 client_id_ctx_var: ContextVar[str | None] = ContextVar("client_id", default=None)
 employee_id_ctx_var: ContextVar[str | None] = ContextVar("employee_id", default=None)

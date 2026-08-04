@@ -37,13 +37,13 @@ class VisitPlanItemStatus(str, Enum):
 
 
 class StockTransactionType(str, Enum):
-    RECEIPT = "receipt"          # Приход от поставщика / Пополнение
+    RECEIPT = "receipt"  # Приход от поставщика / Пополнение
     RESERVATION = "reservation"  # Бронь под заказ
-    CANCEL_RESERVATION = "cancel_reservation" # Отмена брони
-    SALE = "sale"                # Фактическое списание при отгрузке
-    WRITEOFF = "writeoff"        # Списание (брак, порча)
-    RETURN = "return"            # Возврат от клиента
-    ADJUSTMENT = "adjustment"    # Инвентаризация / Корректировка
+    CANCEL_RESERVATION = "cancel_reservation"  # Отмена брони
+    SALE = "sale"  # Фактическое списание при отгрузке
+    WRITEOFF = "writeoff"  # Списание (брак, порча)
+    RETURN = "return"  # Возврат от клиента
+    ADJUSTMENT = "adjustment"  # Инвентаризация / Корректировка
 
 
 class TransactionActorType(str, Enum):

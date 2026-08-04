@@ -1,4 +1,5 @@
 from uuid import UUID
+
 from pydantic import BaseModel
 
 
@@ -9,6 +10,4 @@ class MediaUploadResponse(BaseModel):
     content_type: str
     size: int
 
-    model_config = {
-        "from_attributes": True  
-    }
+    model_config = {"from_attributes": True}

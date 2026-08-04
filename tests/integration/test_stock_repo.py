@@ -13,7 +13,9 @@ async def test_stock_repo_operations(session: AsyncSession):
     wh_id = uuid4()
     prod_id = uuid4()
 
-    stock = Stock(warehouse_id=wh_id, product_id=prod_id, quantity=100, reserved_quantity=10)
+    stock = Stock(
+        warehouse_id=wh_id, product_id=prod_id, quantity=100, reserved_quantity=10
+    )
     await repo.add(stock)
     await session.commit()
 

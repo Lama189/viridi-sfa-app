@@ -84,7 +84,7 @@ class EmployeeLoginDTO(BaseModel):
     )
     password: str = Field(
         ...,
-        min_length=6,  
+        min_length=6,
         max_length=100,
         description="Сырой пароль сотрудника для проверки",
     )
@@ -95,12 +95,12 @@ class EmployeeLoginDTO(BaseModel):
         if not re.fullmatch(r"\+998\d{9}", v):
             raise ValueError("Неверный формат номера. Ожидается +998XXXXXXXXX")
         return v
-    
+
 
 class EmployeeWithTokensResponse(BaseModel):
     access_token: str
     refresh_token: str
-    employee: EmployeeResponse  
+    employee: EmployeeResponse
 
     model_config = {
         "from_attributes": True,

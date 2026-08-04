@@ -1,12 +1,16 @@
 from datetime import datetime
 from typing import Annotated
+
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies import allow_all_staff, get_current_employee, get_dashboard_service
+from app.api.dependencies import (
+    allow_all_staff,
+    get_current_employee,
+    get_dashboard_service,
+)
 from app.api.v1.schemas.dashboard import DailyReportDTO, EmployeeDashboardResponse
 from app.application.services.dashboard import DashboardService
 from app.domain.entities.auth import AuthenticatedEmployee
-
 
 router = APIRouter(prefix="/api/v1/dashboard", tags=["Dashboard"])
 

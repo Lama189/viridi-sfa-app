@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.visit_schedule_rules import VisitScheduleRule
 from app.domain.enums import Weekday
-from app.infrastructure.postgres.repos.visits_schedule_rules import PostgresVisitScheduleRuleRepository
+from app.infrastructure.postgres.repos.visits_schedule_rules import (
+    PostgresVisitScheduleRuleRepository,
+)
 
 
 @pytest.mark.asyncio

@@ -5,21 +5,29 @@ from app.application.interfaces.repos.invite_codes import IInviteCodeRepository
 from app.application.interfaces.repos.media_objects import IMediaObjectRepository
 from app.application.interfaces.repos.order_items import IOrderItemRepository
 from app.application.interfaces.repos.orders import IOrderRepository
+from app.application.interfaces.repos.outbox import IOutboxRepository
 from app.application.interfaces.repos.products import IProductRepository
-from app.application.interfaces.repos.retail_point_assignments import IRetailPointAssignmentRepository
-from app.application.interfaces.repos.retail_point_members import IRetailPointMemberRepository
+from app.application.interfaces.repos.retail_point_assignments import (
+    IRetailPointAssignmentRepository,
+)
+from app.application.interfaces.repos.retail_point_members import (
+    IRetailPointMemberRepository,
+)
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.application.interfaces.repos.sales_reports import ISalesReportRepository
 from app.application.interfaces.repos.stocks import IStockRepository
-from app.application.interfaces.repos.stocks_transactions import IStockTransactionRepository
+from app.application.interfaces.repos.stocks_transactions import (
+    IStockTransactionRepository,
+)
 from app.application.interfaces.repos.visit_debts import IVisitDebtRepository
 from app.application.interfaces.repos.visit_media import IVisitMediaRepository
-from app.application.interfaces.repos.visits import IVisitRepository
-from app.application.interfaces.repos.visit_plans import IVisitPlanRepository
 from app.application.interfaces.repos.visit_plan_items import IVisitPlanItemRepository
+from app.application.interfaces.repos.visit_plans import IVisitPlanRepository
+from app.application.interfaces.repos.visit_schedule_rules import (
+    IVisitScheduleRuleRepository,
+)
+from app.application.interfaces.repos.visits import IVisitRepository
 from app.application.interfaces.repos.warehouses import IWarehouseRepository
-from app.application.interfaces.repos.visit_schedule_rules import IVisitScheduleRuleRepository
-from app.application.interfaces.repos.outbox import IOutboxRepository
 
 
 class IUnitOfWork:

@@ -5,7 +5,6 @@ from app.domain.entities.retail_point_members import RetailPointMember
 
 
 class IRetailPointMembersService(ABC):
-
     @abstractmethod
     async def join(
         self,

@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class IObjectStorage(ABC):
-
     @abstractmethod
     async def upload(
         self,

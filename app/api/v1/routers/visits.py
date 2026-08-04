@@ -4,22 +4,21 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
-    get_visits_service,
-    get_visit_media_service,
     allow_all_staff,
+    get_visit_media_service,
+    get_visits_service,
 )
 from app.api.v1.schemas.visits import (
-    AttachMediaRequest,
     AddDebtRequest,
+    AttachMediaRequest,
     UpdateDebtRequest,
     VisitDebtResponse,
     VisitMediaResponse,
     VisitResponse,
 )
-from app.application.services.visits import VisitService
 from app.application.services.visit_media import VisitMediaService
+from app.application.services.visits import VisitService
 from app.domain.enums import VisitStatus
-
 
 router = APIRouter(prefix="/api/v1/visits", tags=["Visits"])
 
@@ -27,6 +26,7 @@ router = APIRouter(prefix="/api/v1/visits", tags=["Visits"])
 # ======================================================================
 # 1. BASE VISIT OPERATIONS
 # ======================================================================
+
 
 @router.post(
     path="/start",
@@ -113,6 +113,7 @@ async def list_visits(
 # 2. VISIT MEDIA
 # ======================================================================
 
+
 @router.post(
     path="/{visit_id}/media",
     response_model=VisitMediaResponse,
@@ -157,6 +158,7 @@ async def list_visit_media(
 # ======================================================================
 # 3. VISIT DEBTS
 # ======================================================================
+
 
 @router.post(
     path="/{visit_id}/debts",

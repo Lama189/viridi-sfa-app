@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -6,16 +6,16 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.visits import VisitService
+from app.core.exceptions import (
+    EmployeeHasActiveVisitError,
+    MediaNotFoundError,
+    RetailPointInactiveError,
+    RetailPointNotFoundError,
+    VisitNotActiveError,
+    VisitNotFoundError,
+)
 from app.domain.entities.visits import Visit
 from app.domain.enums import VisitStatus
-from app.core.exceptions import (
-    VisitNotFoundError,
-    VisitNotActiveError,
-    MediaNotFoundError,
-    RetailPointNotFoundError,
-    RetailPointInactiveError,
-    EmployeeHasActiveVisitError,
-)
 
 
 @pytest.fixture
@@ -44,6 +44,7 @@ def service(mock_uow, mock_visit_media_service, mock_visit_debts_service):
 
 
 # --- start_visit ---
+
 
 @pytest.mark.asyncio
 async def test_start_visit_success(service, mock_uow):
@@ -85,16 +86,19 @@ async def test_start_visit_already_active(service, mock_uow):
     retail_point_id = uuid4()
 
     mock_uow.retail_points.get_by_id.return_value = MagicMock(is_active=True)
-    mock_uow.visits.list_by_employee.return_value = [Visit(
-        employee_id=employee_id,
-        retail_point_id=retail_point_id,
-    )]
+    mock_uow.visits.list_by_employee.return_value = [
+        Visit(
+            employee_id=employee_id,
+            retail_point_id=retail_point_id,
+        )
+    ]
 
     with pytest.raises(EmployeeHasActiveVisitError):
         await service.start_visit(employee_id, retail_point_id)
 
 
 # --- finish_visit ---
+
 
 @pytest.mark.asyncio
 async def test_finish_visit_success(service, mock_uow):
@@ -127,6 +131,7 @@ async def test_finish_visit_not_found(service, mock_uow):
 
 # --- cancel_visit ---
 
+
 @pytest.mark.asyncio
 async def test_cancel_visit_success(service, mock_uow):
     visit_id = uuid4()
@@ -158,6 +163,7 @@ async def test_cancel_visit_not_found(service, mock_uow):
 
 # --- get_visit ---
 
+
 @pytest.mark.asyncio
 async def test_get_visit_found(service, mock_uow):
     visit_id = uuid4()
@@ -184,6 +190,7 @@ async def test_get_visit_not_found(service, mock_uow):
 
 # --- list ---
 
+
 @pytest.mark.asyncio
 async def test_list_visits(service, mock_uow):
     mock_uow.visits.list.return_value = []
@@ -209,7 +216,9 @@ async def test_list_visits_with_filters(service, mock_uow):
 
     assert result == []
     mock_uow.visits.list.assert_awaited_once_with(
-        employee_id, retail_point_id, VisitStatus.IN_PROGRESS,
+        employee_id,
+        retail_point_id,
+        VisitStatus.IN_PROGRESS,
     )
 
 
@@ -222,6 +231,7 @@ async def test_list_visits_validates_retail_point(service, mock_uow):
 
 
 # --- attach_media ---
+
 
 @pytest.mark.asyncio
 async def test_attach_media_success(service, mock_uow, mock_visit_media_service):
@@ -261,8 +271,8 @@ async def test_attach_media_visit_not_found(service, mock_uow):
         await service.attach_media(uuid4(), uuid4())
 
 
-
 # --- detach_media ---
+
 
 @pytest.mark.asyncio
 async def test_detach_media_success(service, mock_uow, mock_visit_media_service):
@@ -291,6 +301,7 @@ async def test_detach_media_not_found(service, mock_uow):
 
 
 # --- add_debt ---
+
 
 @pytest.mark.asyncio
 async def test_add_debt_success(service, mock_uow, mock_visit_debts_service):
@@ -332,6 +343,7 @@ async def test_add_debt_visit_not_active(service, mock_uow):
 
 # --- update_debt ---
 
+
 @pytest.mark.asyncio
 async def test_update_debt_success(service, mock_uow, mock_visit_debts_service):
     debt_id = uuid4()
@@ -344,6 +356,7 @@ async def test_update_debt_success(service, mock_uow, mock_visit_debts_service):
 
 
 # --- delete_debt ---
+
 
 @pytest.mark.asyncio
 async def test_delete_debt_success(service, mock_uow, mock_visit_debts_service):

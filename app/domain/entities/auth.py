@@ -15,7 +15,7 @@ class AuthenticatedEmployee:
     is_active: bool
 
     @classmethod
-    def from_entity(cls, employee: Employee) -> "AuthenticatedEmployee":
+    def from_entity(cls, employee: Employee) -> AuthenticatedEmployee:
         return cls(
             id=employee.id,
             phone=employee.phone,
@@ -34,7 +34,7 @@ class AuthenticatedClient:
     telegram_chat_id: int | None = None
 
     @classmethod
-    def from_entity(cls, client: Client) -> "AuthenticatedClient":
+    def from_entity(cls, client: Client) -> AuthenticatedClient:
         return cls(
             id=client.id,
             phone=client.phone,

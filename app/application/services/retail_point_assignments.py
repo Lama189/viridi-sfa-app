@@ -1,22 +1,23 @@
 from uuid import UUID
 
-from app.core.observability.logging import logger
-from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
-from app.domain.entities.retail_point_assignments import RetailPointAssignment
-from app.core.exceptions import (
-    RetailPointNotFoundError,
-    RetailPointInactiveError,
-    RetailPointAssignmentNotFoundError,
-    RetailPointAssignmentAlreadyExistsError,
-    UserNotFoundError,
-    UserNotActiveError
+from app.application.interfaces.services.retail_point_assignments import (
+    IRetailPointAssignmentService,
 )
+from app.application.interfaces.uow import IUnitOfWork
+from app.core.exceptions import (
+    RetailPointAssignmentAlreadyExistsError,
+    RetailPointAssignmentNotFoundError,
+    RetailPointInactiveError,
+    RetailPointNotFoundError,
+    UserNotActiveError,
+    UserNotFoundError,
+)
+from app.core.observability.logging import logger
 from app.core.observability.metrics import retail_point_assignment_operations_total
+from app.domain.entities.retail_point_assignments import RetailPointAssignment
 
 
 class RetailPointAssignmentService(IRetailPointAssignmentService):
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -40,10 +41,7 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
             )
             raise RetailPointInactiveError()
 
-    async def _validate_employee(
-        self,
-        employee_id: UUID
-    ) -> None:
+    async def _validate_employee(self, employee_id: UUID) -> None:
         employee = await self._uow.employees.get_by_id(employee_id)
 
         if employee is None:
@@ -66,7 +64,9 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
     ) -> RetailPointAssignment:
         await self._validate_retail_point(retail_point_id)
 
-        if await self._uow.retail_point_assignments.exists_by_retail_point_id(retail_point_id):
+        if await self._uow.retail_point_assignments.exists_by_retail_point_id(
+            retail_point_id
+        ):
             logger.warning(
                 "Retail point assignment already exists",
                 retail_point_id=str(retail_point_id),
@@ -74,8 +74,7 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
             raise RetailPointAssignmentAlreadyExistsError()
 
         assignment = RetailPointAssignment(
-            retail_point_id=retail_point_id,
-            employee_id=None
+            retail_point_id=retail_point_id, employee_id=None
         )
         await self._uow.retail_point_assignments.add(assignment)
         retail_point_assignment_operations_total.labels(action="create").inc()
@@ -87,13 +86,12 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
 
         return assignment
 
-    async def delete(
-        self,
-        retail_point_id: UUID
-    ) -> None:
+    async def delete(self, retail_point_id: UUID) -> None:
         await self._validate_retail_point(retail_point_id)
 
-        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(retail_point_id)
+        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(
+            retail_point_id
+        )
         if assignment is None:
             logger.warning(
                 "Retail point assignment not found for deletion",
@@ -110,14 +108,14 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         )
 
     async def assign_employee(
-        self,
-        retail_point_id: UUID,
-        employee_id: UUID
+        self, retail_point_id: UUID, employee_id: UUID
     ) -> RetailPointAssignment:
         await self._validate_retail_point(retail_point_id)
         await self._validate_employee(employee_id)
 
-        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(retail_point_id)
+        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(
+            retail_point_id
+        )
         if assignment is None:
             logger.warning(
                 "Retail point assignment not found",
@@ -139,13 +137,12 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
 
         return assignment
 
-    async def unassign_employee(
-        self,
-        retail_point_id: UUID
-    ) -> RetailPointAssignment:
+    async def unassign_employee(self, retail_point_id: UUID) -> RetailPointAssignment:
         await self._validate_retail_point(retail_point_id)
 
-        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(retail_point_id)
+        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(
+            retail_point_id
+        )
         if assignment is None:
             logger.warning(
                 "Retail point assignment not found for unassigning",
@@ -157,7 +154,9 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         await self._uow.retail_point_assignments.update(assignment)
 
         await self._uow.commit()
-        retail_point_assignment_operations_total.labels(action="unassign_employee").inc()
+        retail_point_assignment_operations_total.labels(
+            action="unassign_employee"
+        ).inc()
 
         logger.info(
             "Employee successfully unassigned from retail point",
@@ -166,24 +165,20 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
 
         return assignment
 
-    async def create_many(
-        self,
-        retail_point_ids: list[UUID]
-    ) -> None:
+    async def create_many(self, retail_point_ids: list[UUID]) -> None:
         assignments_list: list[RetailPointAssignment] = []
 
         for point_id in retail_point_ids:
             assignment = RetailPointAssignment(
-                retail_point_id=point_id,
-                employee_id=None
+                retail_point_id=point_id, employee_id=None
             )
 
             assignments_list.append(assignment)
 
         await self._uow.retail_point_assignments.add_many(assignments_list)
-        retail_point_assignment_operations_total.labels(
-            action="create_many"
-        ).inc(len(assignments_list))
+        retail_point_assignment_operations_total.labels(action="create_many").inc(
+            len(assignments_list)
+        )
 
         logger.info(
             "Multiple retail point assignments successfully created",
@@ -194,7 +189,9 @@ class RetailPointAssignmentService(IRetailPointAssignmentService):
         self,
         retail_point_ids: list[UUID],
     ) -> None:
-        await self._uow.retail_point_assignments.clear_employee_assignments(retail_point_ids)
+        await self._uow.retail_point_assignments.clear_employee_assignments(
+            retail_point_ids
+        )
         retail_point_assignment_operations_total.labels(
             action="clear_employee_assignments"
         ).inc(len(retail_point_ids))

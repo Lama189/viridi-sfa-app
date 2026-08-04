@@ -3,12 +3,11 @@ import time
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-from app.core.observability.logging import logger
 from app.core.context import get_request_id
+from app.core.observability.logging import logger
 
 
 class LoggingMiddleware(BaseHTTPMiddleware):
-
     async def dispatch(self, request: Request, call_next):
         started = time.perf_counter()
 
@@ -16,7 +15,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             "Request started",
             method=request.method,
             path=request.url.path,
-            request_id=get_request_id()
+            request_id=get_request_id(),
         )
 
         response = await call_next(request)
@@ -29,7 +28,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             path=request.url.path,
             status=response.status_code,
             duration_ms=clapsed,
-            request_id=get_request_id()
+            request_id=get_request_id(),
         )
 
         return response

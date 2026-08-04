@@ -23,6 +23,7 @@ def service(mock_uow):
 
 # --- create_warehouse ---
 
+
 @pytest.mark.asyncio
 async def test_create_warehouse_success(service, mock_uow):
     mock_uow.warehouses.exists_by.return_value = False
@@ -61,6 +62,7 @@ async def test_create_warehouse_duplicate_name(service, mock_uow):
 
 # --- get_by_id ---
 
+
 @pytest.mark.asyncio
 async def test_get_by_id_found(service, mock_uow):
     uid = uuid4()
@@ -81,6 +83,7 @@ async def test_get_by_id_not_found(service, mock_uow):
 
 # --- get_all_warehouses ---
 
+
 @pytest.mark.asyncio
 async def test_get_all_warehouses(service, mock_uow):
     mock_uow.warehouses.list_all.return_value = [
@@ -94,6 +97,7 @@ async def test_get_all_warehouses(service, mock_uow):
 
 
 # --- update_warehouse ---
+
 
 @pytest.mark.asyncio
 async def test_update_warehouse_success(service, mock_uow):

@@ -31,6 +31,6 @@ class Category(BaseModel):
         nullable=False,
     )
 
-    products: Mapped[list["Product"]] = relationship(
+    products: Mapped[list[Product]] = relationship(
         back_populates="category",
     )

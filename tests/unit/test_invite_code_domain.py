@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
@@ -7,12 +7,12 @@ from app.domain.entities.invite_codes import ClientInviteCode
 
 
 def _make_code(**overrides):
-    defaults = dict(
-        retail_point_id=uuid4(),
-        encrypted_code="enc",
-        code_hash="hash",
-        created_by_employee_id=uuid4(),
-    )
+    defaults = {
+        "retail_point_id": uuid4(),
+        "encrypted_code": "enc",
+        "code_hash": "hash",
+        "created_by_employee_id": uuid4(),
+    }
     defaults.update(overrides)
     return ClientInviteCode(**defaults)
 
@@ -31,7 +31,7 @@ def test_invite_code_default_values():
 def test_invite_code_create_classmethod():
     rp_id = uuid4()
     emp_id = uuid4()
-    now = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    now = datetime(2025, 1, 1, tzinfo=UTC)
 
     code = ClientInviteCode.create(
         retail_point_id=rp_id,
@@ -59,7 +59,7 @@ def test_invite_code_create_no_expiry():
 
 
 def test_invite_code_activate():
-    now = datetime(2025, 6, 1, tzinfo=timezone.utc)
+    now = datetime(2025, 6, 1, tzinfo=UTC)
     code = _make_code()
     client_id = uuid4()
 
@@ -71,12 +71,12 @@ def test_invite_code_activate():
 
 
 def test_invite_code_activate_expired_raises():
-    past = datetime(2025, 1, 1, tzinfo=timezone.utc)
+    past = datetime(2025, 1, 1, tzinfo=UTC)
     code = _make_code()
     code.expires_at = past
 
     with pytest.raises(ValueError, match="not available"):
-        code.activate(uuid4(), now=datetime(2025, 6, 1, tzinfo=timezone.utc))
+        code.activate(uuid4(), now=datetime(2025, 6, 1, tzinfo=UTC))
 
 
 def test_invite_code_activate_inactive_raises():
@@ -88,7 +88,7 @@ def test_invite_code_activate_inactive_raises():
 
 
 def test_invite_code_regenerate():
-    now = datetime(2025, 6, 1, tzinfo=timezone.utc)
+    now = datetime(2025, 6, 1, tzinfo=UTC)
     code = _make_code()
     code.is_active = False
     code.last_activated_client_id = uuid4()
@@ -104,7 +104,7 @@ def test_invite_code_regenerate():
 
 
 def test_invite_code_deactivate():
-    now = datetime(2025, 6, 1, tzinfo=timezone.utc)
+    now = datetime(2025, 6, 1, tzinfo=UTC)
     code = _make_code()
 
     code.deactivate(now=now)
@@ -126,21 +126,21 @@ def test_invite_code_is_available_inactive():
 
 def test_invite_code_is_available_expired():
     code = _make_code()
-    code.expires_at = datetime(2020, 1, 1, tzinfo=timezone.utc)
-    assert code.is_available(now=datetime(2025, 6, 1, tzinfo=timezone.utc)) is False
+    code.expires_at = datetime(2020, 1, 1, tzinfo=UTC)
+    assert code.is_available(now=datetime(2025, 6, 1, tzinfo=UTC)) is False
 
 
 def test_invite_code_is_available_not_yet_expired():
     code = _make_code()
-    code.expires_at = datetime(2030, 1, 1, tzinfo=timezone.utc)
-    assert code.is_available(now=datetime(2025, 6, 1, tzinfo=timezone.utc)) is True
+    code.expires_at = datetime(2030, 1, 1, tzinfo=UTC)
+    assert code.is_available(now=datetime(2025, 6, 1, tzinfo=UTC)) is True
 
 
 def test_invite_code_change_expiration():
-    now = datetime(2025, 6, 1, tzinfo=timezone.utc)
+    now = datetime(2025, 6, 1, tzinfo=UTC)
     code = _make_code()
 
-    new_exp = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    new_exp = datetime(2026, 1, 1, tzinfo=UTC)
     code.change_expiration(new_exp, now=now)
 
     assert code.expires_at == new_exp
@@ -149,7 +149,7 @@ def test_invite_code_change_expiration():
 
 def test_invite_code_change_expiration_to_none():
     code = _make_code()
-    code.expires_at = datetime(2030, 1, 1, tzinfo=timezone.utc)
+    code.expires_at = datetime(2030, 1, 1, tzinfo=UTC)
 
     code.change_expiration(None)
 

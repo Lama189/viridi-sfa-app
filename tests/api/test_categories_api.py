@@ -5,11 +5,11 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
-from app.domain.entities.inventory import Category
-from app.domain.entities.auth import AuthenticatedEmployee
-from app.infrastructure.postgres.models.enums import EmployeeRole
 from app.api.dependencies import get_categories_service, get_current_user
+from app.domain.entities.auth import AuthenticatedEmployee
+from app.domain.entities.inventory import Category
+from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.main import app
 
 
 @pytest.fixture
@@ -45,10 +45,13 @@ async def client():
 
 # --- POST /api/v1/categories ---
 
+
 @pytest.mark.asyncio
 async def test_create_category_success(client, mock_service):
     uid = uuid4()
-    mock_service.create_category.return_value = Category(name="Fertilizers", id=uid, is_active=True)
+    mock_service.create_category.return_value = Category(
+        name="Fertilizers", id=uid, is_active=True
+    )
 
     resp = await client.post("/api/v1/categories", json={"name": "Fertilizers"})
     assert resp.status_code == 201
@@ -67,6 +70,7 @@ async def test_create_category_duplicate(client, mock_service):
 
 # --- GET /api/v1/categories ---
 
+
 @pytest.mark.asyncio
 async def test_get_categories(client, mock_service):
     mock_service.get_all_categories.return_value = [
@@ -80,6 +84,7 @@ async def test_get_categories(client, mock_service):
 
 
 # --- GET /api/v1/categories/{id} ---
+
 
 @pytest.mark.asyncio
 async def test_get_category_found(client, mock_service):
@@ -101,10 +106,13 @@ async def test_get_category_not_found(client, mock_service):
 
 # --- PATCH /api/v1/categories/{id} ---
 
+
 @pytest.mark.asyncio
 async def test_update_category_success(client, mock_service):
     uid = uuid4()
-    mock_service.update_category.return_value = Category(name="New", id=uid, is_active=True)
+    mock_service.update_category.return_value = Category(
+        name="New", id=uid, is_active=True
+    )
 
     resp = await client.patch(f"/api/v1/categories/{uid}", json={"name": "New"})
     assert resp.status_code == 200
@@ -120,6 +128,7 @@ async def test_update_category_not_found(client, mock_service):
 
 
 # --- DELETE /api/v1/categories/{id} ---
+
 
 @pytest.mark.asyncio
 async def test_delete_category_success(client, mock_service):

@@ -5,7 +5,6 @@ from app.domain.entities.invite_codes import ClientInviteCode
 
 
 class IInviteCodeRepository(ABC):
-
     @abstractmethod
     async def add(self, invite_code: ClientInviteCode) -> None:
         raise NotImplementedError
@@ -19,7 +18,9 @@ class IInviteCodeRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_retail_point(self, retail_point_id: UUID) -> ClientInviteCode | None:
+    async def get_by_retail_point(
+        self, retail_point_id: UUID
+    ) -> ClientInviteCode | None:
         raise NotImplementedError
 
     @abstractmethod

@@ -1,18 +1,17 @@
-import numpy as np
-from uuid import uuid4
 from decimal import Decimal
-from k_means_constrained import KMeansConstrained
+from uuid import uuid4
 
-from app.domain.entities.retail_points import RetailPoint
-from app.domain.entities.territories import TerritoryCluster
+import numpy as np
+from k_means_constrained import KMeansConstrained
 
 from app.application.interfaces.services.territories import ITerritoryClusteringService
 from app.core.exceptions import InvalidEmployeesCountError
+from app.domain.entities.retail_points import RetailPoint
+from app.domain.entities.territories import TerritoryCluster
+
 
 class TerritoryClusteringService(ITerritoryClusteringService):
-
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
 
     async def build_clusters(
         self,
@@ -26,7 +25,8 @@ class TerritoryClusteringService(ITerritoryClusteringService):
             return []
 
         valid_points = [
-            point for point in points
+            point
+            for point in points
             if point.latitude is not None and point.longitude is not None
         ]
 
@@ -41,7 +41,8 @@ class TerritoryClusteringService(ITerritoryClusteringService):
             return [self._create_cluster([point]) for point in valid_points]
 
         coordinates = np.array(
-            [[float(p.latitude), float(p.longitude)] for p in valid_points], dtype=np.float64
+            [[float(p.latitude), float(p.longitude)] for p in valid_points],
+            dtype=np.float64,
         )
 
         average_size = len(valid_points) / target_clusters_count
@@ -57,7 +58,7 @@ class TerritoryClusteringService(ITerritoryClusteringService):
             n_clusters=target_clusters_count,
             size_min=min_size,
             size_max=max_size,
-            random_state=42
+            random_state=42,
         )
         labels = clf.fit_predict(coordinates)
 
@@ -73,11 +74,7 @@ class TerritoryClusteringService(ITerritoryClusteringService):
             if cluster_points
         ]
 
-
-    def _create_cluster(
-        self, 
-        points: list[RetailPoint]
-    ) -> TerritoryCluster:
+    def _create_cluster(self, points: list[RetailPoint]) -> TerritoryCluster:
         avg_lat = sum(Decimal(str(p.latitude)) for p in points) / len(points)
         avg_lon = sum(Decimal(str(p.longitude)) for p in points) / len(points)
 

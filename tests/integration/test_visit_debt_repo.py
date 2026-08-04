@@ -13,7 +13,9 @@ async def test_visit_debt_repo_operations(session: AsyncSession):
     repo = PostgresVisitDebtRepository(session)
     visit_id = uuid4()
 
-    debt = VisitDebt(visit_id=visit_id, amount=Decimal("1500.00"), comment="Unpaid invoice")
+    debt = VisitDebt(
+        visit_id=visit_id, amount=Decimal("1500.00"), comment="Unpaid invoice"
+    )
     await repo.add(debt)
     await session.commit()
 

@@ -2,12 +2,11 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, func, Index
+from sqlalchemy import DateTime, ForeignKey, Index, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
-
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee
@@ -56,10 +55,10 @@ class RetailPointAssignment(BaseModel):
         nullable=False,
     )
 
-    retail_point: Mapped["RetailPoint"] = relationship(
+    retail_point: Mapped[RetailPoint] = relationship(
         back_populates="assignment",
     )
 
-    employee: Mapped["Employee"] = relationship(
+    employee: Mapped[Employee] = relationship(
         back_populates="retail_point_assignments",
     )

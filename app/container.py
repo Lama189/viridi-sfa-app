@@ -6,16 +6,13 @@ from app.infrastructure.rabbitmq.publisher import RabbitMQPublisher
 
 
 class Container:
-
     def __init__(self) -> None:
         settings = get_settings()
         self._session_factory = create_session_factory(
             database_url=settings.database_url,
             echo=settings.debug,
         )
-        self._rabbitmq = RabbitMQConnectionManager(
-            settings.rabbitmq_url
-        )
+        self._rabbitmq = RabbitMQConnectionManager(settings.rabbitmq_url)
 
     @property
     def session_factory(self):
@@ -26,9 +23,7 @@ class Container:
         return self._rabbitmq
 
     def uow(self) -> PostgresUnitOfWork:
-        return PostgresUnitOfWork(
-            session_factory=self._session_factory
-        )
+        return PostgresUnitOfWork(session_factory=self._session_factory)
 
     async def rabbitmq_publisher(self) -> RabbitMQPublisher:
         channel = await self._rabbitmq.get_channel()

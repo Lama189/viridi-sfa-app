@@ -18,7 +18,9 @@ class VisitPlan(BaseModel):
     __tablename__ = "visit_plans"
 
     __table_args__ = (
-        UniqueConstraint("employee_id", "plan_date", name="uq_visit_plan_employee_date"),
+        UniqueConstraint(
+            "employee_id", "plan_date", name="uq_visit_plan_employee_date"
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(
@@ -44,11 +46,11 @@ class VisitPlan(BaseModel):
         nullable=False,
     )
 
-    employee: Mapped["Employee"] = relationship(
+    employee: Mapped[Employee] = relationship(
         back_populates="visit_plans",
     )
 
-    items: Mapped[list["VisitPlanItem"]] = relationship(
+    items: Mapped[list[VisitPlanItem]] = relationship(
         back_populates="visit_plan",
         cascade="all, delete-orphan",
     )

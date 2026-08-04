@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from app.infrastructure.rabbitmq.serializer import serialize_event
@@ -16,7 +16,7 @@ def test_serialize_event_basic():
 
 def test_serialize_event_with_uuid_and_datetime():
     sample_id = uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "id": sample_id,
         "timestamp": now,

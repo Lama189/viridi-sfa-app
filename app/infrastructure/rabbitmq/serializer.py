@@ -1,11 +1,10 @@
 import json
 from datetime import datetime
-from uuid import UUID
 from typing import Any
+from uuid import UUID
 
 
 class JSONEncoder(json.JSONEncoder):
-
     def default(self, obj: Any) -> Any:
         if isinstance(obj, UUID):
             return str(obj)

@@ -7,7 +7,9 @@ from app.domain.entities.media import MediaFile
 from app.domain.entities.visit_media import VisitMedia
 from app.domain.entities.visits import Visit
 from app.domain.enums import MediaBucket
-from app.infrastructure.postgres.repos.media_objects import PostgresMediaObjectRepository
+from app.infrastructure.postgres.repos.media_objects import (
+    PostgresMediaObjectRepository,
+)
 from app.infrastructure.postgres.repos.visit_media import PostgresVisitMediaRepository
 from app.infrastructure.postgres.repos.visits import PostgresVisitRepository
 

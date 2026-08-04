@@ -5,7 +5,6 @@ from app.core.observability.logging import logger
 
 
 class RabbitMQConnection:
-
     def __init__(self, url: str) -> None:
         self._url = url
         self._connection: AbstractConnection | None = None

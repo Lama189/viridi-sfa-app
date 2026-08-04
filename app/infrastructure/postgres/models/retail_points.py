@@ -21,11 +21,17 @@ if TYPE_CHECKING:
     from app.infrastructure.postgres.models.invite_codes import RetailPointInviteCode
     from app.infrastructure.postgres.models.media_objects import MediaObject
     from app.infrastructure.postgres.models.orders import Order
-    from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
-    from app.infrastructure.postgres.models.visits import Visit
-    from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
+    from app.infrastructure.postgres.models.retail_point_assignments import (
+        RetailPointAssignment,
+    )
+    from app.infrastructure.postgres.models.retail_point_members import (
+        RetailPointMember,
+    )
     from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem
-    from app.infrastructure.postgres.models.visit_schedule_rules import VisitScheduleRule
+    from app.infrastructure.postgres.models.visit_schedule_rules import (
+        VisitScheduleRule,
+    )
+    from app.infrastructure.postgres.models.visits import Visit
 
 
 class RetailPoint(BaseModel):
@@ -65,13 +71,9 @@ class RetailPoint(BaseModel):
 
     oked: Mapped[str | None] = mapped_column(String(5))
 
-    latitude: Mapped[Decimal | None] = mapped_column(
-        Numeric(9, 6)
-    )
+    latitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
 
-    longitude: Mapped[Decimal | None] = mapped_column(
-        Numeric(9, 6)
-    )
+    longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6))
 
     photo_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -90,40 +92,39 @@ class RetailPoint(BaseModel):
         ForeignKey("employees.id", ondelete="SET NULL"),
     )
 
-    photo: Mapped["MediaObject | None"] = relationship(
+    photo: Mapped[MediaObject | None] = relationship(
         foreign_keys=[photo_id],
     )
 
-    created_by: Mapped["Employee | None"] = relationship(
-        back_populates="retail_points",
-        foreign_keys=[created_by_employee_id]
+    created_by: Mapped[Employee | None] = relationship(
+        back_populates="retail_points", foreign_keys=[created_by_employee_id]
     )
 
-    visits: Mapped[list["Visit"]] = relationship(
+    visits: Mapped[list[Visit]] = relationship(
         back_populates="retail_point",
     )
 
-    orders: Mapped[list["Order"]] = relationship(
+    orders: Mapped[list[Order]] = relationship(
         back_populates="retail_point",
     )
 
-    members: Mapped[list["RetailPointMember"]] = relationship(
+    members: Mapped[list[RetailPointMember]] = relationship(
         back_populates="retail_point",
     )
 
-    invite_codes: Mapped[list["RetailPointInviteCode"]] = relationship(
+    invite_codes: Mapped[list[RetailPointInviteCode]] = relationship(
         back_populates="retail_point",
     )
 
-    assignment: Mapped["RetailPointAssignment"] = relationship(
+    assignment: Mapped[RetailPointAssignment] = relationship(
         back_populates="retail_point",
         uselist=False,
     )
 
-    visit_plan_items: Mapped[list["VisitPlanItem"]] = relationship(
+    visit_plan_items: Mapped[list[VisitPlanItem]] = relationship(
         back_populates="retail_point",
     )
 
-    visit_schedule_rules: Mapped[list["VisitScheduleRule"]] = relationship(
+    visit_schedule_rules: Mapped[list[VisitScheduleRule]] = relationship(
         back_populates="retail_point",
     )

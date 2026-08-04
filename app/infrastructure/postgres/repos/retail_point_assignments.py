@@ -1,15 +1,19 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.repos.retail_point_assignments import IRetailPointAssignmentRepository
+from app.application.interfaces.repos.retail_point_assignments import (
+    IRetailPointAssignmentRepository,
+)
 from app.domain.entities.retail_point_assignments import RetailPointAssignment
-from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment as RetailPointAssignmentModel
+from app.infrastructure.postgres.models.retail_point_assignments import (
+    RetailPointAssignment as RetailPointAssignmentModel,
+)
 
 
 class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -36,7 +40,9 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
 
         return self._to_domain(model)
 
-    async def get_by_retail_point_id(self, retail_point_id: UUID) -> RetailPointAssignment | None:
+    async def get_by_retail_point_id(
+        self, retail_point_id: UUID
+    ) -> RetailPointAssignment | None:
         result = await self._session.execute(
             select(RetailPointAssignmentModel).where(
                 RetailPointAssignmentModel.retail_point_id == retail_point_id,
@@ -49,7 +55,9 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
 
         return self._to_domain(model)
 
-    async def list_by_employee_id(self, employee_id: UUID) -> list[RetailPointAssignment]:
+    async def list_by_employee_id(
+        self, employee_id: UUID
+    ) -> list[RetailPointAssignment]:
         result = await self._session.execute(
             select(RetailPointAssignmentModel).where(
                 RetailPointAssignmentModel.employee_id == employee_id,
@@ -60,9 +68,11 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
 
     async def exists_by_retail_point_id(self, retail_point_id: UUID) -> bool:
         stmt = select(
-            select(RetailPointAssignmentModel).where(
+            select(RetailPointAssignmentModel)
+            .where(
                 RetailPointAssignmentModel.retail_point_id == retail_point_id,
-            ).exists()
+            )
+            .exists()
         )
         result = await self._session.execute(stmt)
         return bool(result.scalar())
@@ -91,9 +101,7 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
     ) -> None:
         await self._session.execute(
             update(RetailPointAssignmentModel)
-            .where(
-                RetailPointAssignmentModel.retail_point_id.in_(retail_point_ids)
-            )
+            .where(RetailPointAssignmentModel.retail_point_id.in_(retail_point_ids))
             .values(employee_id=None)
         )
         await self._session.flush()
@@ -105,7 +113,9 @@ class PostgresRetailPointAssignmentRepository(IRetailPointAssignmentRepository):
             employee_id=model.employee_id,
         )
 
-    def _to_model(self, assignment: RetailPointAssignment) -> RetailPointAssignmentModel:
+    def _to_model(
+        self, assignment: RetailPointAssignment
+    ) -> RetailPointAssignmentModel:
         return RetailPointAssignmentModel(
             id=assignment.id,
             retail_point_id=assignment.retail_point_id,

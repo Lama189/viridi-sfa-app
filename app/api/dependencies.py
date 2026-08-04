@@ -1,56 +1,58 @@
-import structlog
 from collections.abc import AsyncGenerator
 from typing import Annotated
-from minio import Minio
 
-from fastapi import Depends, HTTPException, status, Request
+import structlog
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
+from minio import Minio
 from redis.asyncio import Redis
-
-from app.core.config import get_settings
-from app.core.security import SecurityUtils
-from app.domain.enums import EmployeeRole
-from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
+from app.application.interfaces.object_storage import IObjectStorage
+from app.application.interfaces.services.retail_point_assignments import (
+    IRetailPointAssignmentService,
+)
+from app.application.interfaces.services.stocks import IStockService
+from app.application.interfaces.services.territories import ITerritoryClusteringService
+from app.application.interfaces.services.visit_debts import IVisitDebtService
+from app.application.interfaces.services.visit_media import IVisitMediaService
+from app.application.interfaces.services.visit_schedule_rules import (
+    IVisitScheduleService,
+)
 from app.application.interfaces.uow import IUnitOfWork
-
 from app.application.services.categories import CategoriesService
-from app.application.services.clients import ClientsService, ClientsAuthService
-from app.application.services.employees import EmployeesService, EmployeesAuthService
+from app.application.services.clients import ClientsAuthService, ClientsService
+from app.application.services.dashboard import DashboardService
+from app.application.services.employees import EmployeesAuthService, EmployeesService
 from app.application.services.invite_codes import ClientInviteCodesService
+from app.application.services.media import MediaService
 from app.application.services.members import RetailPointMembersService
 from app.application.services.orders import OrdersService
 from app.application.services.products import ProductsService
+from app.application.services.retail_point_assignments import (
+    RetailPointAssignmentService,
+)
 from app.application.services.retail_points import RetailPointsService
-from app.application.services.retail_point_assignments import RetailPointAssignmentService
-from app.application.services.stocks import StockService
-from app.application.services.warehouses import WarehousesService
-from app.application.interfaces.services.stocks import IStockService
-from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
-from app.application.interfaces.object_storage import IObjectStorage
-from app.application.services.media import MediaService
-from app.application.services.visit_media import VisitMediaService
-from app.application.services.visit_debts import VisitDebtService
-from app.application.services.visits import VisitService
-from app.application.services.visit_plans import VisitPlanService
-from app.application.services.dashboard import DashboardService
-from app.application.services.visit_schedule_rules import VisitScheduleService
-from app.application.services.territories import TerritoryClusteringService
 from app.application.services.routes_generator import RouteGenerationService
-from app.application.interfaces.services.visit_media import IVisitMediaService
-from app.application.interfaces.services.visit_debts import IVisitDebtService
-from app.application.interfaces.services.visit_schedule_rules import IVisitScheduleService
-from app.application.interfaces.services.territories import ITerritoryClusteringService
-
-
+from app.application.services.stocks import StockService
+from app.application.services.territories import TerritoryClusteringService
+from app.application.services.visit_debts import VisitDebtService
+from app.application.services.visit_media import VisitMediaService
+from app.application.services.visit_plans import VisitPlanService
+from app.application.services.visit_schedule_rules import VisitScheduleService
+from app.application.services.visits import VisitService
+from app.application.services.warehouses import WarehousesService
+from app.core.config import get_settings
+from app.core.security import SecurityUtils
+from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
+from app.domain.enums import EmployeeRole
+from app.infrastructure.minio.client import get_minio_client
+from app.infrastructure.minio.storage import MinioStorage
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
 from app.infrastructure.redis.client import get_redis_client
 from app.infrastructure.redis.repos.clients import ClientsRedisRepository
 from app.infrastructure.redis.repos.employees import EmployeesRedisRepository
-from app.infrastructure.minio.client import get_minio_client
-from app.infrastructure.minio.storage import MinioStorage
 
 settings = get_settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/users/login")
@@ -60,7 +62,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/users/login")
 # 1. DATABASE & UOW DEPENDENCIES
 # ======================================================================
 
-async def get_uow() -> AsyncGenerator[IUnitOfWork, None]:
+
+async def get_uow() -> AsyncGenerator[IUnitOfWork]:
     async with PostgresUnitOfWork() as uow:
         yield uow
 
@@ -69,42 +72,53 @@ async def get_uow() -> AsyncGenerator[IUnitOfWork, None]:
 # 3. INFRASTRUCTURE DEPENDENCIES
 # ======================================================================
 
+
 async def get_clients_redis_repo(
-    client: Annotated[Redis, Depends(get_redis_client)]
+    client: Annotated[Redis, Depends(get_redis_client)],
 ) -> IClientsCacheRepository:
     return ClientsRedisRepository(client)
 
 
 async def get_employees_redis_repo(
-    client: Annotated[Redis, Depends(get_redis_client)]
+    client: Annotated[Redis, Depends(get_redis_client)],
 ) -> IEmployeesCacheRepository:
     return EmployeesRedisRepository(client)
 
 
-def get_minio_storage(client: Annotated[Minio, Depends(get_minio_client)]) -> IObjectStorage:
+def get_minio_storage(
+    client: Annotated[Minio, Depends(get_minio_client)],
+) -> IObjectStorage:
     return MinioStorage(client)
+
 
 # ======================================================================
 # 2. CORE BUSINESS SERVICES DEPENDENCIES
 # ======================================================================
 
-async def get_categories_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> CategoriesService:
+
+async def get_categories_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> CategoriesService:
     return CategoriesService(uow)
 
 
-async def get_warehouses_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> WarehousesService:
+async def get_warehouses_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> WarehousesService:
     return WarehousesService(uow)
 
 
 async def get_invite_codes_service(
-    uow: Annotated[IUnitOfWork, Depends(get_uow)]
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
 ) -> ClientInviteCodesService:
     return ClientInviteCodesService(uow)
 
 
 async def get_retail_point_members_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
-    invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
+    invite_codes: Annotated[
+        ClientInviteCodesService, Depends(get_invite_codes_service)
+    ],
 ) -> RetailPointMembersService:
     return RetailPointMembersService(uow, invite_codes)
 
@@ -123,18 +137,26 @@ async def get_visit_schedule_service(
 
 async def get_retail_points_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
-    invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
-    assignments: Annotated[IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)],
+    invite_codes: Annotated[
+        ClientInviteCodesService, Depends(get_invite_codes_service)
+    ],
+    assignments: Annotated[
+        IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)
+    ],
     visits_rules: Annotated[IVisitScheduleService, Depends(get_visit_schedule_service)],
 ) -> RetailPointsService:
     return RetailPointsService(uow, invite_codes, assignments, visits_rules)
 
 
-async def get_products_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ProductsService:
+async def get_products_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> ProductsService:
     return ProductsService(uow)
 
 
-async def get_stocks_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> IStockService:
+async def get_stocks_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> IStockService:
     return StockService(uow)
 
 
@@ -145,39 +167,54 @@ async def get_orders_service(
     return OrdersService(uow, stocks)
 
 
-async def get_clients_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> ClientsService:
+async def get_clients_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> ClientsService:
     return ClientsService(uow)
 
 
 async def get_clients_auth_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
     redis: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)],
-    invite_codes: Annotated[ClientInviteCodesService, Depends(get_invite_codes_service)],
-    memberships: Annotated[RetailPointMembersService, Depends(get_retail_point_members_service)],
+    invite_codes: Annotated[
+        ClientInviteCodesService, Depends(get_invite_codes_service)
+    ],
+    memberships: Annotated[
+        RetailPointMembersService, Depends(get_retail_point_members_service)
+    ],
 ) -> ClientsAuthService:
     return ClientsAuthService(uow, redis, invite_codes, memberships)
 
-async def get_employees_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> EmployeesService:
+
+async def get_employees_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> EmployeesService:
     return EmployeesService(uow)
+
 
 async def get_employees_auth_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
-    redis: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)]
+    redis: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)],
 ) -> EmployeesAuthService:
     return EmployeesAuthService(uow, redis)
 
+
 async def get_media_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
-    storage: Annotated[IObjectStorage, Depends(get_minio_storage)]
+    storage: Annotated[IObjectStorage, Depends(get_minio_storage)],
 ) -> MediaService:
     return MediaService(uow, storage)
 
 
-async def get_visit_media_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> IVisitMediaService:
+async def get_visit_media_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> IVisitMediaService:
     return VisitMediaService(uow)
 
 
-async def get_visit_debts_service(uow: Annotated[IUnitOfWork, Depends(get_uow)]) -> IVisitDebtService:
+async def get_visit_debts_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> IVisitDebtService:
     return VisitDebtService(uow)
 
 
@@ -207,8 +244,12 @@ def get_territory_clustering_service() -> ITerritoryClusteringService:
 
 async def get_routes_generator_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
-    clustering_service: Annotated[ITerritoryClusteringService, Depends(get_territory_clustering_service)],
-    assignments_service: Annotated[IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)],
+    clustering_service: Annotated[
+        ITerritoryClusteringService, Depends(get_territory_clustering_service)
+    ],
+    assignments_service: Annotated[
+        IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)
+    ],
     visit_plans_service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
 ) -> RouteGenerationService:
     return RouteGenerationService(
@@ -229,7 +270,9 @@ async def get_current_user(
     clients_service: Annotated[ClientsService, Depends(get_clients_service)],
     employees_service: Annotated[EmployeesService, Depends(get_employees_service)],
     clients_cache: Annotated[IClientsCacheRepository, Depends(get_clients_redis_repo)],
-    employees_cache: Annotated[IEmployeesCacheRepository, Depends(get_employees_redis_repo)],
+    employees_cache: Annotated[
+        IEmployeesCacheRepository, Depends(get_employees_redis_repo)
+    ],
 ) -> AuthenticatedEmployee | AuthenticatedClient:
     payload = SecurityUtils.verify_token(token)
 
@@ -252,7 +295,9 @@ async def get_current_user(
         return AuthenticatedClient.from_entity(client)
 
     if user_type == "employee":
-        structlog.contextvars.bind_contextvars(employee_id=str(user_id), user_type="employee")
+        structlog.contextvars.bind_contextvars(
+            employee_id=str(user_id), user_type="employee"
+        )
 
         if cached_employee := await employees_cache.get_employee(user_id):
             if not cached_employee.is_active:
@@ -284,7 +329,9 @@ async def get_current_user(
 
 
 async def get_current_employee(
-    user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+    user: Annotated[
+        AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+    ],
 ) -> AuthenticatedEmployee:
     if not isinstance(user, AuthenticatedEmployee):
         raise HTTPException(
@@ -293,8 +340,11 @@ async def get_current_employee(
         )
     return user
 
+
 async def get_current_client(
-    user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+    user: Annotated[
+        AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+    ],
 ) -> AuthenticatedClient:
     if not isinstance(user, AuthenticatedClient):
         raise HTTPException(
@@ -312,7 +362,9 @@ async def get_current_client(
 class RequireEmployee:
     async def __call__(
         self,
-        user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+        user: Annotated[
+            AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+        ],
     ) -> AuthenticatedEmployee:
         if not isinstance(user, AuthenticatedEmployee):
             raise HTTPException(
@@ -321,7 +373,7 @@ class RequireEmployee:
             )
 
         return user
-    
+
 
 class RequireEmployeeRoles:
     def __init__(self, *roles: EmployeeRole):
@@ -338,7 +390,7 @@ class RequireEmployeeRoles:
             )
 
         return employee
-    
+
 
 class RequireOwner:
     def __init__(self, param_name: str = "client_id"):
@@ -347,7 +399,9 @@ class RequireOwner:
     async def __call__(
         self,
         request: Request,
-        user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+        user: Annotated[
+            AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+        ],
     ) -> AuthenticatedClient:
         if not isinstance(user, AuthenticatedClient):
             raise HTTPException(
@@ -364,7 +418,7 @@ class RequireOwner:
             )
 
         return user
-    
+
 
 def allow_staff_or_owner(
     *roles: EmployeeRole,
@@ -374,7 +428,9 @@ def allow_staff_or_owner(
 
     async def dependency(
         request: Request,
-        user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+        user: Annotated[
+            AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+        ],
     ) -> AuthenticatedEmployee | AuthenticatedClient:
 
         if isinstance(user, AuthenticatedEmployee):
@@ -391,11 +447,10 @@ def allow_staff_or_owner(
 
     return dependency
 
+
 allow_all_staff = RequireEmployeeRoles(
     EmployeeRole.ADMIN,
     EmployeeRole.AGENT,
 )
 
-allow_admin = RequireEmployeeRoles(
-    EmployeeRole.ADMIN
-)
+allow_admin = RequireEmployeeRoles(EmployeeRole.ADMIN)

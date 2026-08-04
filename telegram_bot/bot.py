@@ -2,14 +2,21 @@ import asyncio
 import json
 import os
 
-from aiohttp import ClientError, ClientSession, ClientTimeout
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+    WebAppInfo,
+)
+from aiohttp import ClientError, ClientSession, ClientTimeout
 
 
 class Registration(StatesGroup):
@@ -52,7 +59,7 @@ def market_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
 def extract_error(response_text: str) -> str:
     try:
         detail = json.loads(response_text).get("detail")
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         detail = None
 
     if isinstance(detail, str):
@@ -70,17 +77,19 @@ def create_router(api_url: str, web_app_url: str) -> Router:
         if message.from_user is not None:
             telegram_chat_id = message.from_user.id
             try:
-                async with ClientSession(timeout=ClientTimeout(total=10)) as client:
-                    async with client.get(
+                async with (
+                    ClientSession(timeout=ClientTimeout(total=10)) as client,
+                    client.get(
                         f"{normalized_api_url}/api/v1/clients/by-telegram/{telegram_chat_id}"
-                    ) as response:
-                        if response.status == 200:
-                            await state.clear()
-                            await message.answer(
-                                "С возвращением в Viridi market!\nНажмите кнопку ниже, чтобы открыть магазин.",
-                                reply_markup=market_keyboard(web_app_url),
-                            )
-                            return
+                    ) as response,
+                ):
+                    if response.status == 200:
+                        await state.clear()
+                        await message.answer(
+                            "С возвращением в Viridi market!\nНажмите кнопку ниже, чтобы открыть магазин.",
+                            reply_markup=market_keyboard(web_app_url),
+                        )
+                        return
             except ClientError:
                 pass
 
@@ -97,7 +106,9 @@ def create_router(api_url: str, web_app_url: str) -> Router:
 
         invite_code = message.text.strip()
         if not invite_code:
-            await message.answer("Код не должен быть пустым. Отправьте код активации ещё раз.")
+            await message.answer(
+                "Код не должен быть пустым. Отправьте код активации ещё раз."
+            )
             return
 
         await state.update_data(invite_code=invite_code)
@@ -105,7 +116,9 @@ def create_router(api_url: str, web_app_url: str) -> Router:
         await message.answer(
             "Теперь поделитесь номером телефона. Он нужен для оформления заказов.",
             reply_markup=ReplyKeyboardMarkup(
-                keyboard=[[KeyboardButton(text="Поделиться номером", request_contact=True)]],
+                keyboard=[
+                    [KeyboardButton(text="Поделиться номером", request_contact=True)]
+                ],
                 resize_keyboard=True,
                 one_time_keyboard=True,
             ),
@@ -114,8 +127,14 @@ def create_router(api_url: str, web_app_url: str) -> Router:
     @router.message(Registration.phone, F.contact)
     async def save_phone(message: Message, state: FSMContext) -> None:
         contact = message.contact
-        if contact is None or message.from_user is None or contact.user_id != message.from_user.id:
-            await message.answer("Нажмите кнопку «Поделиться номером», чтобы отправить свой номер.")
+        if (
+            contact is None
+            or message.from_user is None
+            or contact.user_id != message.from_user.id
+        ):
+            await message.answer(
+                "Нажмите кнопку «Поделиться номером», чтобы отправить свой номер."
+            )
             return
 
         phone = normalize_phone(contact.phone_number)
@@ -134,7 +153,9 @@ def create_router(api_url: str, web_app_url: str) -> Router:
 
     @router.message(Registration.phone)
     async def request_phone_contact(message: Message) -> None:
-        await message.answer("Нажмите кнопку «Поделиться номером», чтобы отправить свой номер.")
+        await message.answer(
+            "Нажмите кнопку «Поделиться номером», чтобы отправить свой номер."
+        )
 
     @router.message(Registration.full_name, F.text)
     async def register_client(message: Message, state: FSMContext) -> None:
@@ -155,15 +176,19 @@ def create_router(api_url: str, web_app_url: str) -> Router:
         }
 
         try:
-            async with ClientSession(timeout=ClientTimeout(total=20)) as client:
-                async with client.post(
+            async with (
+                ClientSession(timeout=ClientTimeout(total=20)) as client,
+                client.post(
                     f"{normalized_api_url}/api/v1/clients/register",
                     json=payload,
-                ) as response:
-                    response_text = await response.text()
-                    is_success = response.ok
+                ) as response,
+            ):
+                response_text = await response.text()
+                is_success = response.ok
         except ClientError:
-            await message.answer("Сервис временно недоступен. Попробуйте ещё раз позже.")
+            await message.answer(
+                "Сервис временно недоступен. Попробуйте ещё раз позже."
+            )
             return
 
         if is_success:
@@ -206,4 +231,5 @@ async def main() -> None:
 
 if __name__ == "__main__":
     from telegram_bot.runner import main as runner_main
+
     asyncio.run(runner_main())

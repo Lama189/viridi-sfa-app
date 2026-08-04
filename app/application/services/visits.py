@@ -1,34 +1,30 @@
-from uuid import UUID
+from datetime import UTC, datetime
 from decimal import Decimal
-from datetime import datetime, UTC
+from uuid import UUID
 
-from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.services.visit_media import IVisitMediaService
 from app.application.interfaces.services.visit_debts import IVisitDebtService
-
-from app.domain.entities.visits import Visit
-from app.domain.entities.visit_media import VisitMedia
-from app.domain.entities.visit_debts import VisitDebt
-from app.domain.enums import VisitStatus
-
+from app.application.interfaces.services.visit_media import IVisitMediaService
+from app.application.interfaces.uow import IUnitOfWork
 from app.core.exceptions import (
     EmployeeHasActiveVisitError,
-    VisitNotFoundError,
-    VisitNotActiveError,
     MediaNotFoundError,
-    RetailPointNotFoundError,
     RetailPointInactiveError,
+    RetailPointNotFoundError,
+    VisitNotActiveError,
+    VisitNotFoundError,
 )
-
+from app.domain.entities.visit_debts import VisitDebt
+from app.domain.entities.visit_media import VisitMedia
+from app.domain.entities.visits import Visit
+from app.domain.enums import VisitStatus
 
 
 class VisitService:
-
     def __init__(
         self,
         uow: IUnitOfWork,
         visit_media_service: IVisitMediaService,
-        visit_debts_service: IVisitDebtService
+        visit_debts_service: IVisitDebtService,
     ) -> None:
         self._uow = uow
         self._visit_media_service = visit_media_service
@@ -39,7 +35,7 @@ class VisitService:
         retail_point_id: UUID,
     ) -> None:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
-    
+
         if retail_point is None:
             raise RetailPointNotFoundError()
 
@@ -54,11 +50,7 @@ class VisitService:
         if media_object is None:
             raise MediaNotFoundError()
 
-    async def start_visit(
-        self,
-        employee_id: UUID,
-        retail_point_id: UUID
-    ) -> Visit:
+    async def start_visit(self, employee_id: UUID, retail_point_id: UUID) -> Visit:
         await self._validate_retail_point(retail_point_id)
 
         active_visit = await self._uow.visits.list_by_employee(employee_id, True, 1)
@@ -66,9 +58,9 @@ class VisitService:
             raise EmployeeHasActiveVisitError()
 
         visit = Visit(
-            employee_id=employee_id, 
+            employee_id=employee_id,
             retail_point_id=retail_point_id,
-            started_at=datetime.now(UTC)
+            started_at=datetime.now(UTC),
         )
 
         await self._uow.visits.add(visit)
@@ -96,9 +88,9 @@ class VisitService:
 
         visit.cancel()
         await self._uow.visits.update(visit)
-        
+
         await self._uow.commit()
-        
+
         return visit
 
     async def get_visit(self, visit_id: UUID) -> Visit:
@@ -147,10 +139,7 @@ class VisitService:
         await self._uow.commit()
 
     async def add_debt(
-        self, 
-        visit_id: UUID,
-        amount: Decimal,
-        comment: str | None
+        self, visit_id: UUID, amount: Decimal, comment: str | None
     ) -> VisitDebt:
         visit = await self._uow.visits.get_by_id(visit_id)
         if not visit:
@@ -166,10 +155,7 @@ class VisitService:
         return debt
 
     async def update_debt(
-        self,
-        visit_debt_id: UUID,
-        amount: Decimal,
-        comment: str | None
+        self, visit_debt_id: UUID, amount: Decimal, comment: str | None
     ) -> VisitDebt:
         debt = await self._visit_debts_service.get_by_id(visit_debt_id)
         await self._visit_debts_service.update(visit_debt_id, amount, comment)

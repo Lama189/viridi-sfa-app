@@ -6,7 +6,6 @@ from app.domain.entities.visit_plans import VisitPlan
 
 
 class IVisitPlanService(ABC):
-
     @abstractmethod
     async def create_plan(
         self,

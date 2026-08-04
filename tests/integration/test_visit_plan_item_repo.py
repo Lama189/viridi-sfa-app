@@ -4,7 +4,9 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.visit_plan_items import VisitPlanItem
-from app.infrastructure.postgres.repos.visit_plan_items import PostgresVisitPlanItemRepository
+from app.infrastructure.postgres.repos.visit_plan_items import (
+    PostgresVisitPlanItemRepository,
+)
 
 
 @pytest.mark.asyncio

@@ -59,10 +59,10 @@ class OrderItem(BaseModel):
         nullable=False,
     )
 
-    order: Mapped["Order"] = relationship(
+    order: Mapped[Order] = relationship(
         back_populates="items",
     )
 
-    product: Mapped["Product"] = relationship(
+    product: Mapped[Product] = relationship(
         back_populates="order_items",
     )

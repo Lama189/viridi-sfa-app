@@ -1,18 +1,24 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete, tuple_, func
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
 from app.domain.enums import Weekday
-from app.infrastructure.postgres.models.retail_points import RetailPoint as RetailPointModel
-from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment as RetailPointAssignmentModel
-from app.infrastructure.postgres.models.visit_schedule_rules import VisitScheduleRule as VisitScheduleRuleModel
+from app.infrastructure.postgres.models.retail_point_assignments import (
+    RetailPointAssignment as RetailPointAssignmentModel,
+)
+from app.infrastructure.postgres.models.retail_points import (
+    RetailPoint as RetailPointModel,
+)
+from app.infrastructure.postgres.models.visit_schedule_rules import (
+    VisitScheduleRule as VisitScheduleRuleModel,
+)
 
 
 class PostgresRetailPointRepository(IRetailPointRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -42,9 +48,10 @@ class PostgresRetailPointRepository(IRetailPointRepository):
                 RetailPointModel.address,
             ).where(
                 tuple_(
-                    func.lower(RetailPointModel.name), 
-                    func.lower(RetailPointModel.address)
-                ).in_(criteria))
+                    func.lower(RetailPointModel.name),
+                    func.lower(RetailPointModel.address),
+                ).in_(criteria)
+            )
         )
 
         rows = result.all()
@@ -170,7 +177,6 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         result = await self._session.execute(stmt)
 
         return [self._to_domain(model) for model in result.scalars().all()]
-
 
     async def list_paginated(
         self,

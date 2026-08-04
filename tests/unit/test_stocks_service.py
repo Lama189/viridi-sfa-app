@@ -62,15 +62,15 @@ def _product(uid=None, is_active=True):
 
 
 def _op_dto(warehouse_id=None, product_id=None, quantity=10, **overrides):
-    defaults = dict(
-        warehouse_id=warehouse_id or uuid4(),
-        product_id=product_id or uuid4(),
-        quantity=quantity,
-        actor_type=TransactionActorType.EMPLOYEE,
-        created_by_id=uuid4(),
-        reference_type=StockReferenceType.ORDER,
-        reference_id=uuid4(),
-    )
+    defaults = {
+        "warehouse_id": warehouse_id or uuid4(),
+        "product_id": product_id or uuid4(),
+        "quantity": quantity,
+        "actor_type": TransactionActorType.EMPLOYEE,
+        "created_by_id": uuid4(),
+        "reference_type": StockReferenceType.ORDER,
+        "reference_id": uuid4(),
+    }
     defaults.update(overrides)
     return StockOperationDTO(**defaults)
 
@@ -221,9 +221,7 @@ class TestStockServiceReserve:
         assert len(results) == 2
         assert stock1.reserved_quantity == 10
         assert stock2.reserved_quantity == 5
-        mock_uow.stocks.get_many_for_update.assert_awaited_once_with(
-            wid, [pid1, pid2]
-        )
+        mock_uow.stocks.get_many_for_update.assert_awaited_once_with(wid, [pid1, pid2])
 
     @pytest.mark.asyncio
     async def test_reserve_insufficient_stock(self, service, mock_uow):
@@ -254,9 +252,7 @@ class TestStockServiceRelease:
 
         assert result.reserved_quantity == 10
         tx_call = mock_uow.stock_transactions.add.call_args[0][0]
-        assert (
-            tx_call.transaction_type == StockTransactionType.CANCEL_RESERVATION
-        )
+        assert tx_call.transaction_type == StockTransactionType.CANCEL_RESERVATION
 
     @pytest.mark.asyncio
     async def test_release_exceeds_reservation(self, service, mock_uow):
@@ -294,9 +290,7 @@ class TestStockServiceConfirmSale:
         assert tx_call.quantity_delta == -10
 
     @pytest.mark.asyncio
-    async def test_confirm_sale_insufficient_reservation(
-        self, service, mock_uow
-    ):
+    async def test_confirm_sale_insufficient_reservation(self, service, mock_uow):
         stock = Stock(
             warehouse_id=uuid4(), product_id=uuid4(), quantity=50, reserved_quantity=5
         )

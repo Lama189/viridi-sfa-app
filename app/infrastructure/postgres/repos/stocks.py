@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.stocks import IStockRepository
@@ -9,7 +10,6 @@ from app.infrastructure.postgres.models.stocks import Stock as StockModel
 
 
 class PostgresStocksRepository(IStockRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -32,7 +32,9 @@ class PostgresStocksRepository(IStockRepository):
 
         return self._to_domain(model)
 
-    async def get_for_update(self, warehouse_id: UUID, product_id: UUID) -> Stock | None:
+    async def get_for_update(
+        self, warehouse_id: UUID, product_id: UUID
+    ) -> Stock | None:
         result = await self._session.execute(
             select(StockModel)
             .where(
@@ -61,7 +63,7 @@ class PostgresStocksRepository(IStockRepository):
                 StockModel.warehouse_id == warehouse_id,
                 StockModel.product_id.in_(sorted_ids),
             )
-            .order_by(StockModel.product_id) 
+            .order_by(StockModel.product_id)
             .with_for_update()
         )
 

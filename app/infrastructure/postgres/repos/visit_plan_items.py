@@ -1,15 +1,17 @@
 from uuid import UUID
 
-from sqlalchemy import select, func, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visit_plan_items import IVisitPlanItemRepository
 from app.domain.entities.visit_plan_items import VisitPlanItem
-from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem as VisitPlanItemModel
+from app.infrastructure.postgres.models.visit_plan_items import (
+    VisitPlanItem as VisitPlanItemModel,
+)
 
 
 class PostgresVisitPlanItemRepository(IVisitPlanItemRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -42,7 +44,6 @@ class PostgresVisitPlanItemRepository(IVisitPlanItemRepository):
             )
         )
         return result.scalar_one() or 0
-
 
     def _to_domain(self, model: VisitPlanItemModel) -> VisitPlanItem:
         return VisitPlanItem(

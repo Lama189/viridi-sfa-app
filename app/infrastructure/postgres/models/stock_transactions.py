@@ -1,13 +1,17 @@
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
-import uuid
 
-from sqlalchemy import Enum as SQLEnum, ForeignKey, Index, Integer, String, func
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Index, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.infrastructure.postgres.models.enums import StockTransactionType, TransactionActorType
+from app.infrastructure.postgres.models.enums import (
+    StockTransactionType,
+    TransactionActorType,
+)
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.products import Product
@@ -80,10 +84,10 @@ class StockTransaction(BaseModel):
         server_default=func.now(),
     )
 
-    warehouse: Mapped["Warehouse"] = relationship(
+    warehouse: Mapped[Warehouse] = relationship(
         back_populates="transactions",
     )
 
-    product: Mapped["Product"] = relationship(
+    product: Mapped[Product] = relationship(
         back_populates="transactions",
     )

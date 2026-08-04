@@ -1,7 +1,7 @@
 import re
 from uuid import UUID
-from pydantic import BaseModel, Field, field_validator
 
+from pydantic import BaseModel, Field, field_validator
 
 
 class ClientLoginDTO(BaseModel):
@@ -23,7 +23,7 @@ class ClientLoginDTO(BaseModel):
         if not re.fullmatch(r"\+998\d{9}", v):
             raise ValueError("Неверный формат номера. Ожидается +998XXXXXXXXX")
         return v
-    
+
 
 class ClientTelegramLoginRequest(BaseModel):
     init_data: str = Field(
@@ -31,7 +31,6 @@ class ClientTelegramLoginRequest(BaseModel):
         description="Telegram WebApp initData строка",
     )
 
-    
 
 class ClientCreate(BaseModel):
     phone: str = Field(

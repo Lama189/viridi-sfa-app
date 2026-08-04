@@ -16,7 +16,6 @@ from app.infrastructure.postgres.models.visits import Visit
 
 
 class SalesReportRepository(ISalesReportRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -26,7 +25,9 @@ class SalesReportRepository(ISalesReportRepository):
         date_from: datetime,
         date_to: datetime,
     ) -> DailyReportDTO:
-        volume_boxes = cast(OrderItem.quantity, Numeric) / func.nullif(Product.items_in_box, 0)
+        volume_boxes = cast(OrderItem.quantity, Numeric) / func.nullif(
+            Product.items_in_box, 0
+        )
         total_amount = func.sum(OrderItem.quantity * OrderItem.price_at_order)
         order_statuses = (OrderStatus.CONFIRMED, OrderStatus.SHIPPED)
         filters = (
@@ -56,15 +57,16 @@ class SalesReportRepository(ISalesReportRepository):
 
         categories_result = await self._session.execute(categories_stmt)
         categories = [
-            CategoryReportDTO(**row._asdict())
-            for row in categories_result.all()
+            CategoryReportDTO(**row._asdict()) for row in categories_result.all()
         ]
 
         summary_stmt = (
             select(
                 func.coalesce(total_amount, Decimal("0.00")).label("total_amount"),
                 func.count(func.distinct(Order.retail_point_id)).label("acb_count"),
-                func.coalesce(func.sum(OrderItem.quantity), 0).label("total_quantity_pcs"),
+                func.coalesce(func.sum(OrderItem.quantity), 0).label(
+                    "total_quantity_pcs"
+                ),
                 func.round(
                     func.coalesce(func.sum(volume_boxes), Decimal("0.0")),
                     1,

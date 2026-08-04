@@ -5,7 +5,6 @@ from telegram_bot.services.notifications import NotificationService
 
 
 class OrderEventsConsumer:
-
     def __init__(
         self,
         notification_service: NotificationService,

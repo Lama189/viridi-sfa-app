@@ -4,11 +4,11 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.exceptions import UserNotFoundError, UserNotActiveError
 from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest
 from app.application.services.orders import OrdersService
-from app.domain.entities.inventory import Warehouse, Product
+from app.core.exceptions import UserNotActiveError, UserNotFoundError
 from app.domain.entities.clients import Client
+from app.domain.entities.inventory import Product, Warehouse
 from app.domain.entities.retail_points import RetailPoint
 from app.domain.enums import OrderStatus
 
@@ -41,17 +41,34 @@ def _warehouse(uid=None, is_active=True):
 
 
 def _client(uid=None, is_active=True):
-    return Client(phone="+998900000000", full_name="Test Client", id=uid or uuid4(), is_active=is_active)
+    return Client(
+        phone="+998900000000",
+        full_name="Test Client",
+        id=uid or uuid4(),
+        is_active=is_active,
+    )
 
 
 def _retail_point(uid=None, is_active=True):
-    return RetailPoint(name="RP1", address="Addr", id=uid or uuid4(), is_active=is_active)
+    return RetailPoint(
+        name="RP1", address="Addr", id=uid or uuid4(), is_active=is_active
+    )
 
 
-def _product(name="NPK-10", price=Decimal("150.00"), uid=None, is_active=True, volume=Decimal("1.000")):
+def _product(
+    name="NPK-10",
+    price=Decimal("150.00"),
+    uid=None,
+    is_active=True,
+    volume=Decimal("1.000"),
+):
     return Product(
-        category_id=uuid4(), name=name, price=price, id=uid or uuid4(),
-        is_active=is_active, volume=volume,
+        category_id=uuid4(),
+        name=name,
+        price=price,
+        id=uid or uuid4(),
+        is_active=is_active,
+        volume=volume,
     )
 
 
@@ -66,6 +83,7 @@ def _create_dto(warehouse_id, retail_point_id, items):
 # ---------------------------------------------------------------------------
 # create
 # ---------------------------------------------------------------------------
+
 
 class TestOrdersServiceCreate:
     @pytest.mark.asyncio
@@ -174,8 +192,12 @@ class TestOrdersServiceCreate:
     @pytest.mark.asyncio
     async def test_create_multiple_items(self, service, mock_uow, mock_stocks):
         pid1, pid2 = uuid4(), uuid4()
-        p1 = _product(name="A", price=Decimal("100.00"), uid=pid1, volume=Decimal("0.500"))
-        p2 = _product(name="B", price=Decimal("200.00"), uid=pid2, volume=Decimal("1.500"))
+        p1 = _product(
+            name="A", price=Decimal("100.00"), uid=pid1, volume=Decimal("0.500")
+        )
+        p2 = _product(
+            name="B", price=Decimal("200.00"), uid=pid2, volume=Decimal("1.500")
+        )
 
         mock_uow.warehouses.get_by_id.return_value = _warehouse()
         mock_uow.clients.get_by_id.return_value = _client()
@@ -192,6 +214,7 @@ class TestOrdersServiceCreate:
 # ---------------------------------------------------------------------------
 # confirm
 # ---------------------------------------------------------------------------
+
 
 class TestOrdersServiceConfirm:
     @pytest.mark.asyncio
@@ -227,6 +250,7 @@ class TestOrdersServiceConfirm:
 # cancel
 # ---------------------------------------------------------------------------
 
+
 class TestOrdersServiceCancel:
     @pytest.mark.asyncio
     async def test_cancel_success(self, service, mock_uow, mock_stocks):
@@ -261,6 +285,7 @@ class TestOrdersServiceCancel:
 # ship
 # ---------------------------------------------------------------------------
 
+
 class TestOrdersServiceShip:
     @pytest.mark.asyncio
     async def test_ship_success(self, service, mock_uow, mock_stocks):
@@ -293,17 +318,24 @@ class TestOrdersServiceShip:
 # helpers
 # ---------------------------------------------------------------------------
 
+
 def _pending_order_with_item(order_id=None, product_id=None):
     from app.domain.entities.orders import Order, OrderItem
+
     oid = order_id or uuid4()
     pid = product_id or uuid4()
     order = Order(
-        warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4(),
+        warehouse_id=uuid4(),
+        created_by_id=uuid4(),
+        retail_point_id=uuid4(),
         id=oid,
     )
     item = OrderItem(
-        order_id=oid, product_id=pid, quantity=10,
-        price_at_order=Decimal("5000.00"), total_volume=Decimal("0.100"),
+        order_id=oid,
+        product_id=pid,
+        quantity=10,
+        price_at_order=Decimal("5000.00"),
+        total_volume=Decimal("0.100"),
     )
     order.add_item(item)
     return order

@@ -1,13 +1,12 @@
 from uuid import UUID
 
-from app.domain.entities.inventory import Product
-from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.inventory import ProductCreate, ProductUpdate
+from app.application.interfaces.uow import IUnitOfWork
 from app.core.observability.metrics import product_operations_total
+from app.domain.entities.inventory import Product
 
 
 class ProductsService:
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 

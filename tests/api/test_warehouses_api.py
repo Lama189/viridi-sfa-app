@@ -5,9 +5,9 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
-from app.domain.entities.inventory import Warehouse
 from app.api.dependencies import get_warehouses_service
+from app.domain.entities.inventory import Warehouse
+from app.main import app
 
 
 @pytest.fixture
@@ -31,18 +31,24 @@ async def client():
 
 # --- POST /api/v1/warehouses ---
 
+
 @pytest.mark.asyncio
 async def test_create_warehouse_success(client, mock_service):
     uid = uuid4()
-    mock_service.create_warehouse.return_value = Warehouse(name="WH-1", address="addr", id=uid, is_active=True)
+    mock_service.create_warehouse.return_value = Warehouse(
+        name="WH-1", address="addr", id=uid, is_active=True
+    )
 
-    resp = await client.post("/api/v1/warehouses", json={"name": "WH-1", "address": "addr"})
+    resp = await client.post(
+        "/api/v1/warehouses", json={"name": "WH-1", "address": "addr"}
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert data["name"] == "WH-1"
 
 
 # --- GET /api/v1/warehouses ---
+
 
 @pytest.mark.asyncio
 async def test_get_warehouses(client, mock_service):
@@ -57,6 +63,7 @@ async def test_get_warehouses(client, mock_service):
 
 
 # --- GET /api/v1/warehouses/{id} ---
+
 
 @pytest.mark.asyncio
 async def test_get_warehouse_found(client, mock_service):
@@ -78,10 +85,13 @@ async def test_get_warehouse_not_found(client, mock_service):
 
 # --- PATCH /api/v1/warehouses/{id} ---
 
+
 @pytest.mark.asyncio
 async def test_update_warehouse_success(client, mock_service):
     uid = uuid4()
-    mock_service.update_warehouse.return_value = Warehouse(name="New", id=uid, is_active=True)
+    mock_service.update_warehouse.return_value = Warehouse(
+        name="New", id=uid, is_active=True
+    )
 
     resp = await client.patch(f"/api/v1/warehouses/{uid}", json={"name": "New"})
     assert resp.status_code == 200

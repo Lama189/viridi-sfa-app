@@ -6,7 +6,6 @@ from app.domain.entities.visit_plans import VisitPlan
 
 
 class IVisitPlanRepository(ABC):
-
     @abstractmethod
     async def add(self, visit_plan: VisitPlan) -> None:
         raise NotImplementedError

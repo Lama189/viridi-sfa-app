@@ -1,39 +1,42 @@
 from uuid import UUID
 
+from app.api.v1.schemas.retail_points import (
+    CreateRetailPointRequest,
+    UpdateRetailPointRequest,
+)
+from app.application.interfaces.services.invite_codes import IClientInviteCodesService
+from app.application.interfaces.services.retail_point_assignments import (
+    IRetailPointAssignmentService,
+)
+from app.application.interfaces.services.visit_schedule_rules import (
+    IVisitScheduleService,
+)
+from app.application.interfaces.uow import IUnitOfWork
+from app.core.exceptions import (
+    BulkCreateRetailPointsRequestIsEmptyError,
+    DuplicateRetailPointError,
+    RetailPointAlreadyExistsError,
+    RetailPointImageAlreadyExistsError,
+    RetailPointImageNotFoundError,
+    RetailPointNotFoundError,
+)
 from app.core.observability.logging import logger
 from app.core.observability.metrics import (
-    retail_point_operations_total,
     media_operations_total,
+    retail_point_operations_total,
 )
-
 from app.domain.entities.retail_points import (
-    RetailPoint, 
-    RetailPointIdentity, 
-    BulkCreateRetailPointsResult
+    BulkCreateRetailPointsResult,
+    RetailPoint,
+    RetailPointIdentity,
 )
-
-from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.services.invite_codes import IClientInviteCodesService
-from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
-from app.application.interfaces.services.visit_schedule_rules import IVisitScheduleService
-
-from app.api.v1.schemas.retail_points import CreateRetailPointRequest, UpdateRetailPointRequest
 from app.domain.enums import Weekday
-from app.core.exceptions import (
-    RetailPointNotFoundError, 
-    RetailPointAlreadyExistsError,
-    RetailPointImageNotFoundError, 
-    RetailPointImageAlreadyExistsError,
-    DuplicateRetailPointError,
-    BulkCreateRetailPointsRequestIsEmptyError
-)
 
 
 class RetailPointsService:
-
     def __init__(
-        self, 
-        uow: IUnitOfWork, 
+        self,
+        uow: IUnitOfWork,
         invite_codes_service: IClientInviteCodesService,
         assignments_service: IRetailPointAssignmentService,
         visits_rules_service: IVisitScheduleService,
@@ -80,7 +83,7 @@ class RetailPointsService:
         retail_point_operations_total.labels(action="create").inc()
 
         return point, code
-    
+
     async def update_retail_point(
         self,
         retail_point_id: UUID,
@@ -90,7 +93,7 @@ class RetailPointsService:
         if not retail_point:
             logger.warning(
                 "Retail point not found for update",
-                retail_point_id=str(retail_point_id)
+                retail_point_id=str(retail_point_id),
             )
             raise ValueError(f"Retail point {retail_point_id} not found")
 
@@ -130,11 +133,15 @@ class RetailPointsService:
         await self._uow.retail_points.update(retail_point)
 
         if dto.visits is not None:
-            await self._visits_rules_service.replace_schedule(retail_point.id, dto.visits)
+            await self._visits_rules_service.replace_schedule(
+                retail_point.id, dto.visits
+            )
 
         await self._uow.commit()
 
-        logger.info("Retail point succesfully updated", retail_point_id=str(retail_point.id))
+        logger.info(
+            "Retail point succesfully updated", retail_point_id=str(retail_point.id)
+        )
         retail_point_operations_total.labels(action="update").inc()
 
         return retail_point
@@ -150,7 +157,7 @@ class RetailPointsService:
 
         await self._uow.retail_points.delete(retail_point)
         await self._assignments_service.delete(retail_point_id)
-        
+
         await self._uow.commit()
 
         logger.info("Retail point deleted", retail_point_id=str(retail_point_id))
@@ -164,7 +171,7 @@ class RetailPointsService:
                 retail_point_id=str(retail_point_id),
             )
             raise RetailPointNotFoundError()
-        
+
         return retail_point
 
     async def get_retail_point_invite_code(self, retail_point_id: UUID) -> str | None:
@@ -181,11 +188,16 @@ class RetailPointsService:
     async def detach_media(self, retail_point_id: UUID) -> UUID:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
-            logger.warning("Retail point not found", retail_point_id=str(retail_point_id))
+            logger.warning(
+                "Retail point not found", retail_point_id=str(retail_point_id)
+            )
             raise RetailPointNotFoundError()
 
         if retail_point.photo_id is None:
-            logger.warning("Retail point image not found to detach", retail_point_id=str(retail_point_id))
+            logger.warning(
+                "Retail point image not found to detach",
+                retail_point_id=str(retail_point_id),
+            )
             raise RetailPointImageNotFoundError()
 
         media_id, retail_point.photo_id = retail_point.photo_id, None
@@ -207,7 +219,9 @@ class RetailPointsService:
         exists = await self._uow.media_objects.exists_by(id=new_media_id)
 
         if retail_point is None:
-            logger.warning("Retail point not found", retail_point_id=str(retail_point_id))
+            logger.warning(
+                "Retail point not found", retail_point_id=str(retail_point_id)
+            )
             raise RetailPointNotFoundError()
 
         if retail_point.photo_id is None or not exists:
@@ -219,7 +233,6 @@ class RetailPointsService:
                 new_media_exists=exists,
             )
             raise RetailPointImageNotFoundError()
-
 
         old_media_id, retail_point.photo_id = retail_point.photo_id, new_media_id
 
@@ -239,7 +252,9 @@ class RetailPointsService:
     async def setup_media(self, retail_point_id: UUID, media_id: UUID) -> UUID:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if retail_point is None:
-            logger.warning("Retail point not found", retail_point_id=str(retail_point_id))
+            logger.warning(
+                "Retail point not found", retail_point_id=str(retail_point_id)
+            )
             raise RetailPointNotFoundError()
 
         if retail_point.photo_id is not None:
@@ -249,7 +264,7 @@ class RetailPointsService:
                 existing_photo_id=str(retail_point.photo_id),
             )
             raise RetailPointImageAlreadyExistsError()
-        
+
         exists = await self._uow.media_objects.exists_by(id=media_id)
         if not exists:
             logger.warning(
@@ -270,7 +285,7 @@ class RetailPointsService:
             media_id=str(media_id),
         )
         media_operations_total.labels(action="attach").inc()
-        
+
         return media_id
 
     async def list_by_employee(self, employee_id: UUID) -> list[RetailPoint]:
@@ -317,7 +332,9 @@ class RetailPointsService:
             employee_id=str(employee_id),
             created_count=len(retail_points),
         )
-        retail_point_operations_total.labels(action="bulk_create").inc(len(retail_points))
+        retail_point_operations_total.labels(action="bulk_create").inc(
+            len(retail_points)
+        )
 
         return BulkCreateRetailPointsResult(created=retail_points)
 
@@ -357,7 +374,9 @@ class RetailPointsService:
 
             identities.add(identity)
 
-        existing = await self._uow.retail_points.find_existing_by_identity(list(identities))
+        existing = await self._uow.retail_points.find_existing_by_identity(
+            list(identities)
+        )
         if existing:
             logger.warning(
                 "Retail point already exists in DB during bulk create",

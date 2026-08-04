@@ -1,17 +1,21 @@
-from uuid import UUID
 from datetime import date
+from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.application.interfaces.repos.visit_schedule_rules import IVisitScheduleRuleRepository
+from app.application.interfaces.repos.visit_schedule_rules import (
+    IVisitScheduleRuleRepository,
+)
 from app.domain.entities.visit_schedule_rules import VisitScheduleRule
 from app.domain.enums import Weekday
-from app.infrastructure.postgres.models.visit_schedule_rules import VisitScheduleRule as VisitScheduleRuleModel
+from app.infrastructure.postgres.models.visit_schedule_rules import (
+    VisitScheduleRule as VisitScheduleRuleModel,
+)
 
 
 class PostgresVisitScheduleRuleRepository(IVisitScheduleRuleRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -24,11 +28,11 @@ class PostgresVisitScheduleRuleRepository(IVisitScheduleRuleRepository):
         result = await self._session.execute(
             select(VisitScheduleRuleModel).where(VisitScheduleRuleModel.id == rule_id)
         )
-        
+
         model = result.scalar_one_or_none()
         if model is None:
             return None
-        
+
         return self._to_domain(model)
 
     async def exists_by(self, **kwargs) -> bool:
@@ -50,7 +54,9 @@ class PostgresVisitScheduleRuleRepository(IVisitScheduleRuleRepository):
 
     async def delete(self, rule: VisitScheduleRule) -> None:
         await self._session.execute(
-            sa_delete(VisitScheduleRuleModel).where(VisitScheduleRuleModel.id == rule.id)
+            sa_delete(VisitScheduleRuleModel).where(
+                VisitScheduleRuleModel.id == rule.id
+            )
         )
         await self._session.flush()
 
@@ -87,15 +93,15 @@ class PostgresVisitScheduleRuleRepository(IVisitScheduleRuleRepository):
         rules: list[VisitScheduleRule],
     ) -> None:
         await self._session.execute(
-            sa_delete(VisitScheduleRuleModel)
-            .where(VisitScheduleRuleModel.retail_point_id == retail_point_id)
+            sa_delete(VisitScheduleRuleModel).where(
+                VisitScheduleRuleModel.retail_point_id == retail_point_id
+            )
         )
         await self._session.flush()
 
         models = [self._to_model(rule) for rule in rules]
         self._session.add_all(models)
         await self._session.flush()
-
 
     async def get_active_rules_for_day(
         self,

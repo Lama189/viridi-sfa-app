@@ -5,7 +5,6 @@ from app.domain.entities.employees import Employee
 
 
 class IEmployeeRepository(ABC):
-
     @abstractmethod
     async def add(self, employee: Employee) -> None:
         raise NotImplementedError

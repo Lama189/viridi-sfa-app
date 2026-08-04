@@ -1,16 +1,17 @@
 from uuid import UUID
 
-from app.core.observability.logging import logger
 from app.api.v1.schemas.retail_points import VisitsDatesDTO
-from app.application.interfaces.services.visit_schedule_rules import IVisitScheduleService
+from app.application.interfaces.services.visit_schedule_rules import (
+    IVisitScheduleService,
+)
 from app.application.interfaces.uow import IUnitOfWork
+from app.core.observability.logging import logger
+from app.core.observability.metrics import visit_schedule_operations_total
 from app.domain.entities.visit_schedule_rules import VisitScheduleRule
 from app.domain.enums import Weekday
-from app.core.observability.metrics import visit_schedule_operations_total
 
 
 class VisitScheduleService(IVisitScheduleService):
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -57,7 +58,9 @@ class VisitScheduleService(IVisitScheduleService):
                 logger.info(
                     "Reactivating existing inactive visit schedule rule",
                     retail_point_id=str(retail_point_id),
-                    weekday=str(weekday.value if hasattr(weekday, "value") else weekday),
+                    weekday=str(
+                        weekday.value if hasattr(weekday, "value") else weekday
+                    ),
                 )
                 existing.activate()
                 await self._uow.visit_schedule_rules.replace_for_retail_point(
@@ -90,7 +93,9 @@ class VisitScheduleService(IVisitScheduleService):
         retail_point_id: UUID,
         weekday: Weekday,
     ) -> None:
-        rules = await self._uow.visit_schedule_rules.list_by_retail_point(retail_point_id)
+        rules = await self._uow.visit_schedule_rules.list_by_retail_point(
+            retail_point_id
+        )
 
         rule = self._find_rule_by_weekday(rules, weekday)
 
@@ -130,15 +135,15 @@ class VisitScheduleService(IVisitScheduleService):
         self,
         retail_point_id: UUID,
     ) -> list[VisitScheduleRule]:
-        return await self._uow.visit_schedule_rules.list_by_retail_point(retail_point_id)
+        return await self._uow.visit_schedule_rules.list_by_retail_point(
+            retail_point_id
+        )
 
     async def get_active_rules_by_weekday(
         self,
         weekday: Weekday,
     ) -> list[VisitScheduleRule]:
-        return await self._uow.visit_schedule_rules.get_active_rules_by_weekday(
-            weekday
-        )
+        return await self._uow.visit_schedule_rules.get_active_rules_by_weekday(weekday)
 
     async def _change_activity(
         self,

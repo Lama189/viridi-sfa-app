@@ -5,12 +5,12 @@ import pytest
 
 from app.application.services.members import RetailPointMembersService
 from app.core.exceptions import (
-    UserNotFoundError,
-    UserNotActiveError,
     MembershipAlreadyExistsError,
     MembershipNotFoundError,
-    RetailPointNotFoundError,
     RetailPointInactiveError,
+    RetailPointNotFoundError,
+    UserNotActiveError,
+    UserNotFoundError,
 )
 from app.domain.entities.clients import Client
 from app.domain.entities.retail_point_members import RetailPointMember
@@ -39,12 +39,17 @@ def service(mock_uow, mock_invite_codes):
 
 # --- join ---
 
+
 @pytest.mark.asyncio
 async def test_join_success(service, mock_uow):
     rp_id = uuid4()
     client_id = uuid4()
-    mock_uow.clients.get_by_id.return_value = Client(phone="+998901111111", full_name="C", id=client_id, is_active=True)
-    mock_uow.retail_points.get_by_id.return_value = RetailPoint(name="R", address="A", id=rp_id, is_active=True)
+    mock_uow.clients.get_by_id.return_value = Client(
+        phone="+998901111111", full_name="C", id=client_id, is_active=True
+    )
+    mock_uow.retail_points.get_by_id.return_value = RetailPoint(
+        name="R", address="A", id=rp_id, is_active=True
+    )
     mock_uow.retail_point_members.exists.return_value = False
 
     result = await service.join(rp_id, client_id)
@@ -66,7 +71,10 @@ async def test_join_client_not_found(service, mock_uow):
 async def test_join_client_not_active(service, mock_uow):
     client_id = uuid4()
     mock_uow.clients.get_by_id.return_value = Client(
-        phone="+998901111111", full_name="C", id=client_id, is_active=False,
+        phone="+998901111111",
+        full_name="C",
+        id=client_id,
+        is_active=False,
     )
 
     with pytest.raises(UserNotActiveError):
@@ -77,7 +85,10 @@ async def test_join_client_not_active(service, mock_uow):
 async def test_join_retail_point_not_found(service, mock_uow):
     client_id = uuid4()
     mock_uow.clients.get_by_id.return_value = Client(
-        phone="+998901111111", full_name="C", id=client_id, is_active=True,
+        phone="+998901111111",
+        full_name="C",
+        id=client_id,
+        is_active=True,
     )
     mock_uow.retail_points.get_by_id.return_value = None
 
@@ -90,10 +101,16 @@ async def test_join_retail_point_inactive(service, mock_uow):
     rp_id = uuid4()
     client_id = uuid4()
     mock_uow.clients.get_by_id.return_value = Client(
-        phone="+998901111111", full_name="C", id=client_id, is_active=True,
+        phone="+998901111111",
+        full_name="C",
+        id=client_id,
+        is_active=True,
     )
     mock_uow.retail_points.get_by_id.return_value = RetailPoint(
-        name="R", address="A", id=rp_id, is_active=False,
+        name="R",
+        address="A",
+        id=rp_id,
+        is_active=False,
     )
 
     with pytest.raises(RetailPointInactiveError):
@@ -105,10 +122,16 @@ async def test_join_already_member(service, mock_uow):
     rp_id = uuid4()
     client_id = uuid4()
     mock_uow.clients.get_by_id.return_value = Client(
-        phone="+998901111111", full_name="C", id=client_id, is_active=True,
+        phone="+998901111111",
+        full_name="C",
+        id=client_id,
+        is_active=True,
     )
     mock_uow.retail_points.get_by_id.return_value = RetailPoint(
-        name="R", address="A", id=rp_id, is_active=True,
+        name="R",
+        address="A",
+        id=rp_id,
+        is_active=True,
     )
     mock_uow.retail_point_members.exists.return_value = True
 
@@ -118,12 +141,15 @@ async def test_join_already_member(service, mock_uow):
 
 # --- leave ---
 
+
 @pytest.mark.asyncio
 async def test_leave_success(service, mock_uow):
     rp_id = uuid4()
     client_id = uuid4()
     membership = RetailPointMember(rp_id, client_id)
-    mock_uow.retail_point_members.get_by_retail_point_and_client.return_value = membership
+    mock_uow.retail_point_members.get_by_retail_point_and_client.return_value = (
+        membership
+    )
 
     result = await service.leave(rp_id, client_id)
 
@@ -142,12 +168,15 @@ async def test_leave_not_found(service, mock_uow):
 
 # --- remove ---
 
+
 @pytest.mark.asyncio
 async def test_remove_success(service, mock_uow):
     rp_id = uuid4()
     client_id = uuid4()
     membership = RetailPointMember(rp_id, client_id)
-    mock_uow.retail_point_members.get_by_retail_point_and_client.return_value = membership
+    mock_uow.retail_point_members.get_by_retail_point_and_client.return_value = (
+        membership
+    )
 
     result = await service.remove(rp_id, client_id)
 
@@ -165,12 +194,15 @@ async def test_remove_not_found(service, mock_uow):
 
 # --- get_member ---
 
+
 @pytest.mark.asyncio
 async def test_get_member_success(service, mock_uow):
     rp_id = uuid4()
     client_id = uuid4()
     membership = RetailPointMember(rp_id, client_id)
-    mock_uow.retail_point_members.get_by_retail_point_and_client.return_value = membership
+    mock_uow.retail_point_members.get_by_retail_point_and_client.return_value = (
+        membership
+    )
 
     result = await service.get_member(rp_id, client_id)
     assert result.retail_point_id == rp_id
@@ -187,11 +219,15 @@ async def test_get_member_not_found(service, mock_uow):
 
 # --- list_members ---
 
+
 @pytest.mark.asyncio
 async def test_list_members_success(service, mock_uow):
     rp_id = uuid4()
     mock_uow.retail_points.get_by_id.return_value = RetailPoint(
-        name="R", address="A", id=rp_id, is_active=True,
+        name="R",
+        address="A",
+        id=rp_id,
+        is_active=True,
     )
     members = [
         RetailPointMember(rp_id, uuid4()),
@@ -215,7 +251,10 @@ async def test_list_members_retail_point_not_found(service, mock_uow):
 async def test_list_members_retail_point_inactive(service, mock_uow):
     rp_id = uuid4()
     mock_uow.retail_points.get_by_id.return_value = RetailPoint(
-        name="R", address="A", id=rp_id, is_active=False,
+        name="R",
+        address="A",
+        id=rp_id,
+        is_active=False,
     )
 
     with pytest.raises(RetailPointInactiveError):
@@ -223,6 +262,7 @@ async def test_list_members_retail_point_inactive(service, mock_uow):
 
 
 # --- is_member ---
+
 
 @pytest.mark.asyncio
 async def test_is_member_true(service, mock_uow):
@@ -241,6 +281,7 @@ async def test_is_member_false(service, mock_uow):
 
 
 # --- get_by_telegram ---
+
 
 @pytest.mark.asyncio
 async def test_get_by_telegram_success(service, mock_uow):

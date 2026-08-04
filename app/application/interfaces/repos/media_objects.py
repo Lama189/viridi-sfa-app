@@ -5,7 +5,6 @@ from app.domain.entities.media import MediaFile
 
 
 class IMediaObjectRepository(ABC):
-
     @abstractmethod
     async def add(self, media: MediaFile) -> None:
         raise NotImplementedError

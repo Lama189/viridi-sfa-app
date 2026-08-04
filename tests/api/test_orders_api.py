@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
@@ -7,17 +7,17 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
+from app.api.dependencies import get_current_user, get_orders_service
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 from app.domain.entities.orders import Order, OrderItem
 from app.domain.enums import OrderStatus
 from app.infrastructure.postgres.models.enums import EmployeeRole as PGEmployeeRole
-from app.api.dependencies import get_current_user, get_orders_service
-
+from app.main import app
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_service():
@@ -48,7 +48,7 @@ def mock_admin_employee():
 def _order_response(order_id=None, client_id=None, status=OrderStatus.PENDING):
     oid = order_id or uuid4()
     cid = client_id or uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return Order(
         id=oid,
         warehouse_id=uuid4(),
@@ -65,7 +65,7 @@ def _order_response(order_id=None, client_id=None, status=OrderStatus.PENDING):
 def _order_with_item(order_id=None, client_id=None, status=OrderStatus.PENDING):
     oid = order_id or uuid4()
     cid = client_id or uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     order = Order(
         id=oid,
         warehouse_id=uuid4(),
@@ -92,6 +92,7 @@ def _order_with_item(order_id=None, client_id=None, status=OrderStatus.PENDING):
 # Client endpoints: POST /api/v1/orders, GET /{id}, DELETE /{id}
 # ---------------------------------------------------------------------------
 
+
 class TestOrdersClientEndpoints:
     @pytest.fixture(autouse=True)
     def override_deps(self, mock_service, mock_client_entity):
@@ -113,11 +114,14 @@ class TestOrdersClientEndpoints:
         order = _order_response(client_id=mock_client_entity.id)
         mock_service.create.return_value = order
 
-        resp = await client.post("/api/v1/orders", json={
-            "warehouse_id": str(uuid4()),
-            "retail_point_id": str(uuid4()),
-            "items": [{"product_id": str(uuid4()), "quantity": 10}],
-        })
+        resp = await client.post(
+            "/api/v1/orders",
+            json={
+                "warehouse_id": str(uuid4()),
+                "retail_point_id": str(uuid4()),
+                "items": [{"product_id": str(uuid4()), "quantity": 10}],
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         assert data["status"] == OrderStatus.PENDING.value
@@ -126,24 +130,31 @@ class TestOrdersClientEndpoints:
     @pytest.mark.asyncio
     async def test_create_order_client_not_found(self, client, mock_service):
         from app.core.exceptions import UserNotFoundError
+
         mock_service.create.side_effect = UserNotFoundError()
 
-        resp = await client.post("/api/v1/orders", json={
-            "warehouse_id": str(uuid4()),
-            "retail_point_id": str(uuid4()),
-            "items": [{"product_id": str(uuid4()), "quantity": 1}],
-        })
+        resp = await client.post(
+            "/api/v1/orders",
+            json={
+                "warehouse_id": str(uuid4()),
+                "retail_point_id": str(uuid4()),
+                "items": [{"product_id": str(uuid4()), "quantity": 1}],
+            },
+        )
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
     async def test_create_order_validation_error(self, client, mock_service):
         mock_service.create.side_effect = ValueError("Warehouse is inactive")
 
-        resp = await client.post("/api/v1/orders", json={
-            "warehouse_id": str(uuid4()),
-            "retail_point_id": str(uuid4()),
-            "items": [{"product_id": str(uuid4()), "quantity": 1}],
-        })
+        resp = await client.post(
+            "/api/v1/orders",
+            json={
+                "warehouse_id": str(uuid4()),
+                "retail_point_id": str(uuid4()),
+                "items": [{"product_id": str(uuid4()), "quantity": 1}],
+            },
+        )
         assert resp.status_code == 400
 
     # --- GET /api/v1/orders/{order_id} ---
@@ -178,7 +189,9 @@ class TestOrdersClientEndpoints:
     # --- DELETE /api/v1/orders/{order_id} ---
 
     @pytest.mark.asyncio
-    async def test_cancel_order_by_client_success(self, client, mock_service, mock_client_entity):
+    async def test_cancel_order_by_client_success(
+        self, client, mock_service, mock_client_entity
+    ):
         order = _order_response(client_id=mock_client_entity.id)
         mock_service._uow = MagicMock()
         mock_service._uow.orders.get_by_id = AsyncMock(return_value=order)
@@ -205,7 +218,9 @@ class TestOrdersClientEndpoints:
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
-    async def test_cancel_order_by_client_value_error(self, client, mock_service, mock_client_entity):
+    async def test_cancel_order_by_client_value_error(
+        self, client, mock_service, mock_client_entity
+    ):
         order = _order_response(client_id=mock_client_entity.id)
         mock_service._uow = MagicMock()
         mock_service._uow.orders.get_by_id = AsyncMock(return_value=order)
@@ -218,6 +233,7 @@ class TestOrdersClientEndpoints:
 # ---------------------------------------------------------------------------
 # Staff endpoints: POST /{id}/confirm, POST /{id}/cancel, POST /{id}/ship
 # ---------------------------------------------------------------------------
+
 
 class TestOrdersStaffEndpoints:
     @pytest.fixture(autouse=True)

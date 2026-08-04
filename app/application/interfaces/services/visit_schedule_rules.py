@@ -7,7 +7,6 @@ from app.domain.enums import Weekday
 
 
 class IVisitScheduleService(ABC):
-
     @abstractmethod
     async def replace_schedule(
         self,

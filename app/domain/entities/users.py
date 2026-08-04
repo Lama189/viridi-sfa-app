@@ -7,7 +7,7 @@ from app.domain.enums import EmployeeRole
 
 @dataclass(slots=True)
 class User:
-    phone: str  
+    phone: str
     full_name: str
     password_hash: str | None = None
     id: UUID = field(default_factory=uuid4)

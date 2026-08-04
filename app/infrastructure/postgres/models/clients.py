@@ -2,10 +2,10 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    String,
-    Boolean,
     BigInteger,
+    Boolean,
     DateTime,
+    String,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -15,7 +15,9 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.orders import Order
-    from app.infrastructure.postgres.models.retail_point_members import RetailPointMember
+    from app.infrastructure.postgres.models.retail_point_members import (
+        RetailPointMember,
+    )
 
 
 class Client(BaseModel):
@@ -70,10 +72,10 @@ class Client(BaseModel):
         nullable=False,
     )
 
-    orders: Mapped[list["Order"]] = relationship(
-        back_populates="created_by", 
+    orders: Mapped[list[Order]] = relationship(
+        back_populates="created_by",
     )
 
-    retail_points: Mapped[list["RetailPointMember"]] = relationship(
+    retail_points: Mapped[list[RetailPointMember]] = relationship(
         back_populates="client",
     )

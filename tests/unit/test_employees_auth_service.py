@@ -5,7 +5,11 @@ import pytest
 
 from app.api.v1.schemas.employees import EmployeeLoginDTO
 from app.application.services.employees import EmployeesAuthService
-from app.core.exceptions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
+from app.core.exceptions import (
+    InvalidPasswordError,
+    UserNotActiveError,
+    UserNotFoundError,
+)
 from app.domain.entities.employees import Employee
 
 
@@ -29,13 +33,31 @@ def service(mock_uow, mock_cache):
 
 # --- login ---
 
+
 @pytest.mark.asyncio
-@patch("app.application.services.employees.SecurityUtils.verify_password", return_value=True)
-@patch("app.application.services.employees.SecurityUtils.generate_access_token", return_value="access_tok")
-@patch("app.application.services.employees.SecurityUtils.generate_refresh_token", return_value="refresh_tok")
-async def test_login_success(mock_refresh, mock_access, mock_verify, service, mock_uow, mock_cache):
+@patch(
+    "app.application.services.employees.SecurityUtils.verify_password",
+    return_value=True,
+)
+@patch(
+    "app.application.services.employees.SecurityUtils.generate_access_token",
+    return_value="access_tok",
+)
+@patch(
+    "app.application.services.employees.SecurityUtils.generate_refresh_token",
+    return_value="refresh_tok",
+)
+async def test_login_success(
+    mock_refresh, mock_access, mock_verify, service, mock_uow, mock_cache
+):
     uid = uuid4()
-    emp = Employee(phone="+998901234567", password_hash="hash", full_name="Test", id=uid, is_active=True)
+    emp = Employee(
+        phone="+998901234567",
+        password_hash="hash",
+        full_name="Test",
+        id=uid,
+        is_active=True,
+    )
     mock_uow.employees.get_by.return_value = emp
 
     dto = EmployeeLoginDTO(phone="+998901234567", password="secret123")
@@ -58,7 +80,10 @@ async def test_login_user_not_found(service, mock_uow):
 
 
 @pytest.mark.asyncio
-@patch("app.application.services.employees.SecurityUtils.verify_password", return_value=False)
+@patch(
+    "app.application.services.employees.SecurityUtils.verify_password",
+    return_value=False,
+)
 async def test_login_invalid_password(mock_verify, service, mock_uow):
     emp = Employee(phone="+998901234567", password_hash="hash", full_name="Test")
     mock_uow.employees.get_by.return_value = emp
@@ -69,9 +94,14 @@ async def test_login_invalid_password(mock_verify, service, mock_uow):
 
 
 @pytest.mark.asyncio
-@patch("app.application.services.employees.SecurityUtils.verify_password", return_value=True)
+@patch(
+    "app.application.services.employees.SecurityUtils.verify_password",
+    return_value=True,
+)
 async def test_login_inactive_user(mock_verify, service, mock_uow):
-    emp = Employee(phone="+998901234567", password_hash="hash", full_name="Test", is_active=False)
+    emp = Employee(
+        phone="+998901234567", password_hash="hash", full_name="Test", is_active=False
+    )
     mock_uow.employees.get_by.return_value = emp
 
     dto = EmployeeLoginDTO(phone="+998901234567", password="secret123")
@@ -81,9 +111,13 @@ async def test_login_inactive_user(mock_verify, service, mock_uow):
 
 # --- refresh ---
 
+
 @pytest.mark.asyncio
 @patch("app.application.services.employees.SecurityUtils.verify_token")
-@patch("app.application.services.employees.SecurityUtils.generate_access_token", return_value="new_access")
+@patch(
+    "app.application.services.employees.SecurityUtils.generate_access_token",
+    return_value="new_access",
+)
 async def test_refresh_success(mock_access, mock_verify, service, mock_uow, mock_cache):
     uid = uuid4()
     mock_verify.return_value = {
@@ -103,7 +137,9 @@ async def test_refresh_success(mock_access, mock_verify, service, mock_uow, mock
 
 @pytest.mark.asyncio
 @patch("app.application.services.employees.SecurityUtils.verify_token")
-async def test_refresh_invalid_token_in_cache(mock_verify, service, mock_uow, mock_cache):
+async def test_refresh_invalid_token_in_cache(
+    mock_verify, service, mock_uow, mock_cache
+):
     uid = uuid4()
     mock_verify.return_value = {"sub": str(uid)}
     mock_cache.get_refresh_token.return_value = None
@@ -124,6 +160,7 @@ async def test_refresh_token_mismatch(mock_verify, service, mock_uow, mock_cache
 
 
 # --- logout ---
+
 
 @pytest.mark.asyncio
 async def test_logout(service, mock_cache):

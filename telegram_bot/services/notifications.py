@@ -1,13 +1,13 @@
 from uuid import UUID
+
 from aiogram import Bot
 
 from telegram_bot.events.order_events import OrderCreatedEvent
-from telegram_bot.services.retail_point_members import RetailPointMembersService
 from telegram_bot.services.clients import ClientsService
+from telegram_bot.services.retail_point_members import RetailPointMembersService
 
 
 class NotificationService:
-
     def __init__(
         self,
         bot: Bot,
@@ -47,5 +47,5 @@ class NotificationService:
                     chat_id=client.telegram_id,
                     text=f"🛒 Новый заказ №{order_id}",
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass

@@ -25,6 +25,7 @@ def service(mock_uow):
 
 # --- create_product ---
 
+
 @pytest.mark.asyncio
 async def test_create_product_success(service, mock_uow):
     cat = Category(name="Fertilizers", id=uuid4())
@@ -93,11 +94,15 @@ async def test_create_product_duplicate_name(service, mock_uow):
 
 # --- get_by_id ---
 
+
 @pytest.mark.asyncio
 async def test_get_by_id_found(service, mock_uow):
     uid = uuid4()
     mock_uow.products.get_by_id.return_value = Product(
-        category_id=uuid4(), name="X", price=Decimal("10.00"), id=uid,
+        category_id=uuid4(),
+        name="X",
+        price=Decimal("10.00"),
+        id=uid,
     )
 
     result = await service.get_by_id(uid)
@@ -115,6 +120,7 @@ async def test_get_by_id_not_found(service, mock_uow):
 
 # --- get_all_products ---
 
+
 @pytest.mark.asyncio
 async def test_get_all_products(service, mock_uow):
     mock_uow.products.list_all.return_value = [
@@ -128,6 +134,7 @@ async def test_get_all_products(service, mock_uow):
 
 
 # --- update_product ---
+
 
 @pytest.mark.asyncio
 async def test_update_product_success(service, mock_uow):
@@ -195,7 +202,9 @@ async def test_update_product_category_inactive(service, mock_uow):
 
 @pytest.mark.asyncio
 async def test_update_product_is_active(service, mock_uow):
-    prod = Product(category_id=uuid4(), name="P", price=Decimal("10.00"), is_active=True)
+    prod = Product(
+        category_id=uuid4(), name="P", price=Decimal("10.00"), is_active=True
+    )
     mock_uow.products.get_by_id.return_value = prod
 
     dto = ProductUpdate(is_active=False)
@@ -205,6 +214,7 @@ async def test_update_product_is_active(service, mock_uow):
 
 
 # --- delete_product ---
+
 
 @pytest.mark.asyncio
 async def test_delete_product_success(service, mock_uow):

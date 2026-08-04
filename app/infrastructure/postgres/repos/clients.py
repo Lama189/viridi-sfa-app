@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import select, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.clients import IClientRepository
@@ -9,7 +10,6 @@ from app.infrastructure.postgres.models.clients import Client as ClientModel
 
 
 class PostgresClientRepository(IClientRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -50,7 +50,6 @@ class PostgresClientRepository(IClientRepository):
             return None
 
         return self._to_domain(model)
-
 
     async def exists_by(self, **kwargs) -> bool:
         stmt = select(select(ClientModel).filter_by(**kwargs).exists())

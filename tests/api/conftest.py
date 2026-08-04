@@ -1,4 +1,5 @@
 import os
+
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-api-tests-32bytes!")
@@ -6,7 +7,6 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-api-tests-32bytes!")
 from unittest.mock import AsyncMock
 
 import pytest
-
 
 
 @pytest.fixture

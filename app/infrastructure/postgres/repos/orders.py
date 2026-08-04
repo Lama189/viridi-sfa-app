@@ -2,7 +2,8 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import select, func, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.orders import IOrderRepository
@@ -12,7 +13,6 @@ from app.infrastructure.postgres.models.visits import Visit as VisitModel
 
 
 class PostgresOrderRepository(IOrderRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -86,7 +86,6 @@ class PostgresOrderRepository(IOrderRepository):
         result = await self._session.execute(stmt)
         count, amount = result.one()
         return count or 0, Decimal(str(amount or "0.00"))
-
 
     def _to_domain(self, model: OrderModel) -> Order:
         return Order(

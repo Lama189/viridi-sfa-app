@@ -33,7 +33,9 @@ async def test_build_clusters_points_without_coordinates(service):
 
 @pytest.mark.asyncio
 async def test_build_clusters_single_cluster(service):
-    p1 = RetailPoint(name="P1", address="A1", latitude=Decimal("41.31"), longitude=Decimal("69.24"))
+    p1 = RetailPoint(
+        name="P1", address="A1", latitude=Decimal("41.31"), longitude=Decimal("69.24")
+    )
     clusters = await service.build_clusters([p1], agents_count=1)
 
     assert len(clusters) == 1

@@ -1,18 +1,13 @@
 import asyncio
 
+from app.application.interfaces.publisher import IPublisher
+from app.application.interfaces.uow import IUnitOfWork
 from app.core.observability.logging import logger
 from app.domain.entities.outbox_messages import OutboxMessage
-from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.publisher import IPublisher
 
 
 class OutboxWorker:
-
-    def __init__(
-        self,
-        uow: IUnitOfWork,
-        publisher: IPublisher
-    ) -> None:
+    def __init__(self, uow: IUnitOfWork, publisher: IPublisher) -> None:
         self._uow = uow
         self._publisher = publisher
 
@@ -32,7 +27,7 @@ class OutboxWorker:
                     for message in messages:
                         await self._process(message, uow)
 
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 logger.exception("Outbox worker failed", error=str(exc))
                 await asyncio.sleep(5)
 

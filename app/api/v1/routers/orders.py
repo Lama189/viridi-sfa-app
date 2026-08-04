@@ -1,19 +1,19 @@
-from uuid import UUID
 from typing import Annotated
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.api.dependencies import (
+    allow_all_staff,
+    get_current_client,
+    get_orders_service,
+)
 from app.api.v1.schemas.orders import (
     CreateOrderRequest,
     OrderResponse,
 )
 from app.application.services.orders import OrdersService
 from app.domain.entities.auth import AuthenticatedClient
-from app.api.dependencies import (
-    get_current_client,
-    get_orders_service,
-    allow_all_staff,
-)
-
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 

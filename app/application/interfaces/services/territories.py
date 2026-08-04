@@ -5,7 +5,6 @@ from app.domain.entities.territories import TerritoryCluster
 
 
 class ITerritoryClusteringService(ABC):
-
     @abstractmethod
     async def build_clusters(
         self,

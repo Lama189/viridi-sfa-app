@@ -7,7 +7,6 @@ from app.core.context import req_id_ctx_var
 
 
 class RequestMiddleware(BaseHTTPMiddleware):
-
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("X-Request-ID") or str(uuid4())
 

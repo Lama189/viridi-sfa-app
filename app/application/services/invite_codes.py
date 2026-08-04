@@ -1,22 +1,21 @@
 from uuid import UUID
 
-from app.core.observability.logging import logger
-from app.core.observability.metrics import invite_code_operations_total
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.exceptions import (
     InvalidInviteCodeError,
+    RetailPointInactiveError,
+    RetailPointNotFoundError,
     UserNotActiveError,
     UserNotFoundError,
-    RetailPointNotFoundError,
-    RetailPointInactiveError,
 )
+from app.core.observability.logging import logger
+from app.core.observability.metrics import invite_code_operations_total
 from app.core.security import SecurityUtils
 from app.domain.entities.invite_codes import ClientInviteCode
 
 
 class ClientInviteCodesService(IClientInviteCodesService):
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -220,9 +219,7 @@ class ClientInviteCodesService(IClientInviteCodesService):
     ) -> str:
         invite_code = await self.get_by_retail_point(retail_point_id)
 
-        return SecurityUtils.decrypt_invite_code(
-            invite_code.encrypted_code
-        )
+        return SecurityUtils.decrypt_invite_code(invite_code.encrypted_code)
 
     async def create_many(
         self,

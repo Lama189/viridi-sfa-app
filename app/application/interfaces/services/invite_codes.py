@@ -5,7 +5,6 @@ from app.domain.entities.invite_codes import ClientInviteCode
 
 
 class IClientInviteCodesService(ABC):
-
     @abstractmethod
     async def create(
         self,
@@ -16,12 +15,10 @@ class IClientInviteCodesService(ABC):
 
     @abstractmethod
     async def create_many(
-        self, 
-        employee_id: UUID,
-        retail_point_ids: list[UUID]
+        self, employee_id: UUID, retail_point_ids: list[UUID]
     ) -> dict[UUID, str]:
         raise NotImplementedError
-    
+
     @abstractmethod
     async def regenerate(
         self,

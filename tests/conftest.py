@@ -1,9 +1,10 @@
-import pytest_asyncio
 from decimal import Decimal
+from uuid import UUID, uuid4
+
+import pytest_asyncio
 from sqlalchemy import BigInteger, Boolean, ForeignKey, Integer, Numeric, String
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from uuid import UUID, uuid4
 
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -37,20 +38,25 @@ class _TestProduct(_TestBase):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     category_id: Mapped[UUID] = mapped_column(
-        ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False,
+        ForeignKey("categories.id", ondelete="RESTRICT"),
+        nullable=False,
     )
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
-    volume: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False, default=Decimal("0.000"))
-    weight: Mapped[Decimal] = mapped_column(Numeric(10, 3), nullable=False, default=Decimal("0.000"))
+    volume: Mapped[Decimal] = mapped_column(
+        Numeric(10, 3), nullable=False, default=Decimal("0.000")
+    )
+    weight: Mapped[Decimal] = mapped_column(
+        Numeric(10, 3), nullable=False, default=Decimal("0.000")
+    )
     items_in_box: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def _create_tables():
-    from app.infrastructure.postgres.models.base_model import BaseModel
     import app.infrastructure.postgres  # noqa: F401
+    from app.infrastructure.postgres.models.base_model import BaseModel
 
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
@@ -69,8 +75,10 @@ async def session():
 
 @pytest_asyncio.fixture
 def warehouse_repo(session: AsyncSession):
-    from app.infrastructure.postgres.repos.warehouses import PostgresWarehousesRepository
     import app.infrastructure.postgres.repos.warehouses as repo_mod
+    from app.infrastructure.postgres.repos.warehouses import (
+        PostgresWarehousesRepository,
+    )
 
     original = repo_mod.WarehouseModel
     repo_mod.WarehouseModel = _TestWarehouse
@@ -82,8 +90,10 @@ def warehouse_repo(session: AsyncSession):
 
 @pytest_asyncio.fixture
 def category_repo(session: AsyncSession):
-    from app.infrastructure.postgres.repos.categories import PostgresCategoriesRepository
     import app.infrastructure.postgres.repos.categories as repo_mod
+    from app.infrastructure.postgres.repos.categories import (
+        PostgresCategoriesRepository,
+    )
 
     original = repo_mod.CategoryModel
     repo_mod.CategoryModel = _TestCategory
@@ -95,8 +105,8 @@ def category_repo(session: AsyncSession):
 
 @pytest_asyncio.fixture
 def product_repo(session: AsyncSession):
-    from app.infrastructure.postgres.repos.products import PostgresProductsRepository
     import app.infrastructure.postgres.repos.products as repo_mod
+    from app.infrastructure.postgres.repos.products import PostgresProductsRepository
 
     original = repo_mod.ProductModel
     repo_mod.ProductModel = _TestProduct
@@ -113,7 +123,9 @@ class _TestUser(_TestBase):
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="client")
-    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
+    telegram_chat_id: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True, unique=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
@@ -123,7 +135,9 @@ class _TestClient(_TestBase):
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    telegram_chat_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, unique=True)
+    telegram_chat_id: Mapped[int | None] = mapped_column(
+        BigInteger, nullable=True, unique=True
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
@@ -158,15 +172,16 @@ class _TestRetailPoint(_TestBase):
     longitude: Mapped[Decimal | None] = mapped_column(Numeric(9, 6), nullable=True)
     photo_id: Mapped[UUID | None] = mapped_column(nullable=True)
     created_by_employee_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("employees.id", ondelete="SET NULL"), nullable=True,
+        ForeignKey("employees.id", ondelete="SET NULL"),
+        nullable=True,
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
 @pytest_asyncio.fixture
 def user_repo(session: AsyncSession):
-    from app.infrastructure.postgres.repos.users import PostgresUserRepository
     import app.infrastructure.postgres.repos.users as repo_mod
+    from app.infrastructure.postgres.repos.users import PostgresUserRepository
 
     original = repo_mod.UserModel
     repo_mod.UserModel = _TestUser
@@ -178,8 +193,8 @@ def user_repo(session: AsyncSession):
 
 @pytest_asyncio.fixture
 def client_repo(session: AsyncSession):
-    from app.infrastructure.postgres.repos.clients import PostgresClientRepository
     import app.infrastructure.postgres.repos.clients as repo_mod
+    from app.infrastructure.postgres.repos.clients import PostgresClientRepository
 
     original = repo_mod.ClientModel
     repo_mod.ClientModel = _TestClient
@@ -191,8 +206,8 @@ def client_repo(session: AsyncSession):
 
 @pytest_asyncio.fixture
 def employee_repo(session: AsyncSession):
-    from app.infrastructure.postgres.repos.employees import PostgresEmployeeRepository
     import app.infrastructure.postgres.repos.employees as repo_mod
+    from app.infrastructure.postgres.repos.employees import PostgresEmployeeRepository
 
     original = repo_mod.EmployeeModel
     repo_mod.EmployeeModel = _TestEmployee
@@ -204,8 +219,10 @@ def employee_repo(session: AsyncSession):
 
 @pytest_asyncio.fixture
 def retail_point_repo(session: AsyncSession):
-    from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
     import app.infrastructure.postgres.repos.retail_points as repo_mod
+    from app.infrastructure.postgres.repos.retail_points import (
+        PostgresRetailPointRepository,
+    )
 
     original = repo_mod.RetailPointModel
     repo_mod.RetailPointModel = _TestRetailPoint
@@ -218,4 +235,5 @@ def retail_point_repo(session: AsyncSession):
 @pytest_asyncio.fixture
 def outbox_repo(session: AsyncSession):
     from app.infrastructure.postgres.repos.outbox import PostgresOutboxRepository
+
     return PostgresOutboxRepository(session)

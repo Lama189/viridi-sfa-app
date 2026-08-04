@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -55,13 +55,15 @@ class RetailPoint:
             raise ValueError("Retail point address cannot be empty.")
 
     def _validate_coordinates(self) -> None:
-        if self.latitude is not None:
-            if self.latitude < Decimal("-90") or self.latitude > Decimal("90"):
-                raise ValueError("Latitude must be between -90 and 90.")
+        if self.latitude is not None and (
+            self.latitude < Decimal(-90) or self.latitude > Decimal(90)
+        ):
+            raise ValueError("Latitude must be between -90 and 90.")
 
-        if self.longitude is not None:
-            if self.longitude < Decimal("-180") or self.longitude > Decimal("180"):
-                raise ValueError("Longitude must be between -180 and 180.")
+        if self.longitude is not None and (
+            self.longitude < Decimal(-180) or self.longitude > Decimal(180)
+        ):
+            raise ValueError("Longitude must be between -180 and 180.")
 
     def _validate_phone_number(self) -> None:
         if self.phone_number is None:
@@ -77,21 +79,14 @@ class RetailPointIdentity:
     address: str
 
     def __post_init__(self):
-        object.__setattr__(
-            self,
-            "name",
-            self.name.lower().strip()
-        )
-        object.__setattr__(
-            self,
-            "address",
-            self.address.lower().strip()
-        )
+        object.__setattr__(self, "name", self.name.lower().strip())
+        object.__setattr__(self, "address", self.address.lower().strip())
+
 
 @dataclass(slots=True)
 class BulkCreateRetailPointsResult:
     created: list[RetailPoint]
-    
+
     @property
     def created_count(self) -> int:
         return len(self.created)

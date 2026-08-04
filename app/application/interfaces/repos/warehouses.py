@@ -1,11 +1,10 @@
-from uuid import UUID
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.domain.entities.inventory import Warehouse
 
 
 class IWarehouseRepository(ABC):
-
     @abstractmethod
     async def add(self, warehouse: Warehouse) -> None:
         raise NotImplementedError

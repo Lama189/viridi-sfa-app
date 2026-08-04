@@ -36,3 +36,11 @@ test = [
     "aiosqlite>=0.20",
     "httpx>=0.28.0",
 ]
+
+[tool.ruff]
+exclude = ["alembic"]
+
+[tool.ruff.lint]
+ignore = ["B008", "DTZ011"]
+
+

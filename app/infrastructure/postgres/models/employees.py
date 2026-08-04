@@ -2,23 +2,25 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
-    String,
     Boolean,
     DateTime,
     Enum,
+    String,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.infrastructure.postgres.models.enums import EmployeeRole 
+from app.infrastructure.postgres.models.enums import EmployeeRole
 
 if TYPE_CHECKING:
+    from app.infrastructure.postgres.models.retail_point_assignments import (
+        RetailPointAssignment,
+    )
     from app.infrastructure.postgres.models.retail_points import RetailPoint
-    from app.infrastructure.postgres.models.visits import Visit
-    from app.infrastructure.postgres.models.retail_point_assignments import RetailPointAssignment
     from app.infrastructure.postgres.models.visit_plans import VisitPlan
+    from app.infrastructure.postgres.models.visits import Visit
 
 
 class Employee(BaseModel):
@@ -39,7 +41,7 @@ class Employee(BaseModel):
 
     password_hash: Mapped[str] = mapped_column(
         String(255),
-        nullable=False, 
+        nullable=False,
     )
 
     role: Mapped[EmployeeRole] = mapped_column(
@@ -72,19 +74,19 @@ class Employee(BaseModel):
         nullable=False,
     )
 
-    retail_points: Mapped[list["RetailPoint"]] = relationship(
-        back_populates="created_by", 
+    retail_points: Mapped[list[RetailPoint]] = relationship(
+        back_populates="created_by",
     )
 
-    visits: Mapped[list["Visit"]] = relationship(
+    visits: Mapped[list[Visit]] = relationship(
         back_populates="employee",
     )
 
-    retail_point_assignments: Mapped[list["RetailPointAssignment"]] = relationship(
+    retail_point_assignments: Mapped[list[RetailPointAssignment]] = relationship(
         back_populates="employee",
         foreign_keys="RetailPointAssignment.employee_id",
     )
 
-    visit_plans: Mapped[list["VisitPlan"]] = relationship(
+    visit_plans: Mapped[list[VisitPlan]] = relationship(
         back_populates="employee",
     )

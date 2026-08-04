@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
+import pytest
 from aio_pika import ExchangeType
+
 from app.domain.entities.outbox_messages import OutboxMessage
 from app.domain.enums import AggregateType, OrderEventType
 from app.infrastructure.rabbitmq.publisher import RabbitMQPublisher
@@ -32,7 +33,10 @@ async def test_rabbitmq_publisher_publish_success():
     )
 
     mock_exchange.publish.assert_called_once()
-    published_msg, routing_key = mock_exchange.publish.call_args[0], mock_exchange.publish.call_args[1]["routing_key"]
+    published_msg, routing_key = (
+        mock_exchange.publish.call_args[0],
+        mock_exchange.publish.call_args[1]["routing_key"],
+    )
 
     assert routing_key == OrderEventType.CREATED
     sent_rabbit_msg = published_msg[0]

@@ -6,16 +6,19 @@ import pytest
 from app.domain.entities.orders import Order, OrderItem
 from app.domain.enums import OrderStatus
 
-
 # ---------------------------------------------------------------------------
 # OrderItem
 # ---------------------------------------------------------------------------
 
+
 class TestOrderItem:
     def test_create_basic(self):
         item = OrderItem(
-            order_id=uuid4(), product_id=uuid4(), quantity=10,
-            price_at_order=Decimal("5000.00"), total_volume=Decimal("0.100"),
+            order_id=uuid4(),
+            product_id=uuid4(),
+            quantity=10,
+            price_at_order=Decimal("5000.00"),
+            total_volume=Decimal("0.100"),
         )
         assert isinstance(item.id, type(uuid4()))
         assert item.quantity == 10
@@ -25,52 +28,73 @@ class TestOrderItem:
     def test_custom_id(self):
         item_id = uuid4()
         item = OrderItem(
-            order_id=uuid4(), product_id=uuid4(), quantity=5,
-            price_at_order=Decimal("10000.00"), total_volume=Decimal("0.250"),
+            order_id=uuid4(),
+            product_id=uuid4(),
+            quantity=5,
+            price_at_order=Decimal("10000.00"),
+            total_volume=Decimal("0.250"),
             id=item_id,
         )
         assert item.id == item_id
 
     def test_total_price_property(self):
         item = OrderItem(
-            order_id=uuid4(), product_id=uuid4(), quantity=7,
-            price_at_order=Decimal("3000.00"), total_volume=Decimal("0.070"),
+            order_id=uuid4(),
+            product_id=uuid4(),
+            quantity=7,
+            price_at_order=Decimal("3000.00"),
+            total_volume=Decimal("0.070"),
         )
         assert item.total_price == Decimal("21000.00")
 
     def test_zero_quantity_raises(self):
         with pytest.raises(ValueError, match="positive"):
             OrderItem(
-                order_id=uuid4(), product_id=uuid4(), quantity=0,
-                price_at_order=Decimal("100.00"), total_volume=Decimal("0.010"),
+                order_id=uuid4(),
+                product_id=uuid4(),
+                quantity=0,
+                price_at_order=Decimal("100.00"),
+                total_volume=Decimal("0.010"),
             )
 
     def test_negative_quantity_raises(self):
         with pytest.raises(ValueError, match="positive"):
             OrderItem(
-                order_id=uuid4(), product_id=uuid4(), quantity=-1,
-                price_at_order=Decimal("100.00"), total_volume=Decimal("0.010"),
+                order_id=uuid4(),
+                product_id=uuid4(),
+                quantity=-1,
+                price_at_order=Decimal("100.00"),
+                total_volume=Decimal("0.010"),
             )
 
     def test_negative_price_raises(self):
         with pytest.raises(ValueError, match="negative"):
             OrderItem(
-                order_id=uuid4(), product_id=uuid4(), quantity=1,
-                price_at_order=Decimal("-1.00"), total_volume=Decimal("0.001"),
+                order_id=uuid4(),
+                product_id=uuid4(),
+                quantity=1,
+                price_at_order=Decimal("-1.00"),
+                total_volume=Decimal("0.001"),
             )
 
     def test_zero_price_allowed(self):
         item = OrderItem(
-            order_id=uuid4(), product_id=uuid4(), quantity=1,
-            price_at_order=Decimal("0.00"), total_volume=Decimal("0.001"),
+            order_id=uuid4(),
+            product_id=uuid4(),
+            quantity=1,
+            price_at_order=Decimal("0.00"),
+            total_volume=Decimal("0.001"),
         )
         assert item.price_at_order == Decimal("0.00")
 
     def test_negative_volume_raises(self):
         with pytest.raises(ValueError, match="negative"):
             OrderItem(
-                order_id=uuid4(), product_id=uuid4(), quantity=1,
-                price_at_order=Decimal("100.00"), total_volume=Decimal("-0.010"),
+                order_id=uuid4(),
+                product_id=uuid4(),
+                quantity=1,
+                price_at_order=Decimal("100.00"),
+                total_volume=Decimal("-0.010"),
             )
 
 
@@ -78,9 +102,12 @@ class TestOrderItem:
 # Order — defaults & basic properties
 # ---------------------------------------------------------------------------
 
+
 class TestOrderDefaults:
     def test_default_values(self):
-        order = Order(warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4())
+        order = Order(
+            warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4()
+        )
         assert isinstance(order.id, type(uuid4()))
         assert order.visit_id is None
         assert order.status == OrderStatus.PENDING
@@ -92,9 +119,14 @@ class TestOrderDefaults:
         order_id = uuid4()
         visit_id = uuid4()
         order = Order(
-            warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4(),
-            id=order_id, visit_id=visit_id, status=OrderStatus.CONFIRMED,
-            total_amount=Decimal("150000.00"), total_volume=Decimal("0.500"),
+            warehouse_id=uuid4(),
+            created_by_id=uuid4(),
+            retail_point_id=uuid4(),
+            id=order_id,
+            visit_id=visit_id,
+            status=OrderStatus.CONFIRMED,
+            total_amount=Decimal("150000.00"),
+            total_volume=Decimal("0.500"),
         )
         assert order.id == order_id
         assert order.visit_id == visit_id
@@ -105,14 +137,18 @@ class TestOrderDefaults:
     def test_negative_total_amount_raises(self):
         with pytest.raises(ValueError, match="negative"):
             Order(
-                warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4(),
+                warehouse_id=uuid4(),
+                created_by_id=uuid4(),
+                retail_point_id=uuid4(),
                 total_amount=Decimal("-100.00"),
             )
 
     def test_negative_total_volume_raises(self):
         with pytest.raises(ValueError, match="negative"):
             Order(
-                warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4(),
+                warehouse_id=uuid4(),
+                created_by_id=uuid4(),
+                retail_point_id=uuid4(),
                 total_volume=Decimal("-1.000"),
             )
 
@@ -121,21 +157,38 @@ class TestOrderDefaults:
 # Order — add_item / remove_item / clear_items
 # ---------------------------------------------------------------------------
 
+
 class TestOrderItemManipulation:
     def _make_order(self, **kwargs):
-        defaults = dict(warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4())
+        defaults = {
+            "warehouse_id": uuid4(),
+            "created_by_id": uuid4(),
+            "retail_point_id": uuid4(),
+        }
         defaults.update(kwargs)
         return Order(**defaults)
 
-    def _make_item(self, order_id, product_id=None, quantity=10, price=Decimal("5000.00"), volume=Decimal("0.100")):
+    def _make_item(
+        self,
+        order_id,
+        product_id=None,
+        quantity=10,
+        price=Decimal("5000.00"),
+        volume=Decimal("0.100"),
+    ):
         return OrderItem(
-            order_id=order_id, product_id=product_id or uuid4(),
-            quantity=quantity, price_at_order=price, total_volume=volume,
+            order_id=order_id,
+            product_id=product_id or uuid4(),
+            quantity=quantity,
+            price_at_order=price,
+            total_volume=volume,
         )
 
     def test_add_item_updates_totals(self):
         order = self._make_order()
-        item = self._make_item(order.id, quantity=5, price=Decimal("2000.00"), volume=Decimal("0.050"))
+        item = self._make_item(
+            order.id, quantity=5, price=Decimal("2000.00"), volume=Decimal("0.050")
+        )
         order.add_item(item)
 
         assert len(order.items) == 1
@@ -144,8 +197,12 @@ class TestOrderItemManipulation:
 
     def test_add_multiple_items(self):
         order = self._make_order()
-        i1 = self._make_item(order.id, quantity=2, price=Decimal("1000.00"), volume=Decimal("0.020"))
-        i2 = self._make_item(order.id, quantity=3, price=Decimal("500.00"), volume=Decimal("0.030"))
+        i1 = self._make_item(
+            order.id, quantity=2, price=Decimal("1000.00"), volume=Decimal("0.020")
+        )
+        i2 = self._make_item(
+            order.id, quantity=3, price=Decimal("500.00"), volume=Decimal("0.030")
+        )
         order.add_item(i1)
         order.add_item(i2)
 
@@ -156,8 +213,11 @@ class TestOrderItemManipulation:
     def test_add_item_wrong_order_id_raises(self):
         order = self._make_order()
         item = OrderItem(
-            order_id=uuid4(), product_id=uuid4(), quantity=1,
-            price_at_order=Decimal("100.00"), total_volume=Decimal("0.010"),
+            order_id=uuid4(),
+            product_id=uuid4(),
+            quantity=1,
+            price_at_order=Decimal("100.00"),
+            total_volume=Decimal("0.010"),
         )
         with pytest.raises(ValueError, match="another order"):
             order.add_item(item)
@@ -165,7 +225,13 @@ class TestOrderItemManipulation:
     def test_remove_item_updates_totals(self):
         order = self._make_order()
         pid = uuid4()
-        item = self._make_item(order.id, product_id=pid, quantity=5, price=Decimal("2000.00"), volume=Decimal("0.050"))
+        item = self._make_item(
+            order.id,
+            product_id=pid,
+            quantity=5,
+            price=Decimal("2000.00"),
+            volume=Decimal("0.050"),
+        )
         order.add_item(item)
         order.remove_item(pid)
 
@@ -180,8 +246,16 @@ class TestOrderItemManipulation:
 
     def test_clear_items(self):
         order = self._make_order()
-        order.add_item(self._make_item(order.id, quantity=2, price=Decimal("1000.00"), volume=Decimal("0.020")))
-        order.add_item(self._make_item(order.id, quantity=3, price=Decimal("500.00"), volume=Decimal("0.030")))
+        order.add_item(
+            self._make_item(
+                order.id, quantity=2, price=Decimal("1000.00"), volume=Decimal("0.020")
+            )
+        )
+        order.add_item(
+            self._make_item(
+                order.id, quantity=3, price=Decimal("500.00"), volume=Decimal("0.030")
+            )
+        )
         order.clear_items()
 
         assert order.items == []
@@ -193,12 +267,18 @@ class TestOrderItemManipulation:
 # Order — lifecycle (confirm / ship / cancel / recalculate)
 # ---------------------------------------------------------------------------
 
+
 class TestOrderLifecycle:
     def _make_order_with_item(self):
-        order = Order(warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4())
+        order = Order(
+            warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4()
+        )
         item = OrderItem(
-            order_id=order.id, product_id=uuid4(), quantity=10,
-            price_at_order=Decimal("5000.00"), total_volume=Decimal("0.100"),
+            order_id=order.id,
+            product_id=uuid4(),
+            quantity=10,
+            price_at_order=Decimal("5000.00"),
+            total_volume=Decimal("0.100"),
         )
         order.add_item(item)
         return order
@@ -209,7 +289,9 @@ class TestOrderLifecycle:
         assert order.status == OrderStatus.CONFIRMED
 
     def test_confirm_without_items_raises(self):
-        order = Order(warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4())
+        order = Order(
+            warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4()
+        )
         with pytest.raises(ValueError, match="at least one item"):
             order.confirm()
 
@@ -256,16 +338,25 @@ class TestOrderLifecycle:
 
     def test_recalculate(self):
         order = Order(
-            warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4(),
-            total_amount=Decimal("999.99"), total_volume=Decimal("9.999"),
+            warehouse_id=uuid4(),
+            created_by_id=uuid4(),
+            retail_point_id=uuid4(),
+            total_amount=Decimal("999.99"),
+            total_volume=Decimal("9.999"),
         )
         i1 = OrderItem(
-            order_id=order.id, product_id=uuid4(), quantity=3,
-            price_at_order=Decimal("1000.00"), total_volume=Decimal("0.030"),
+            order_id=order.id,
+            product_id=uuid4(),
+            quantity=3,
+            price_at_order=Decimal("1000.00"),
+            total_volume=Decimal("0.030"),
         )
         i2 = OrderItem(
-            order_id=order.id, product_id=uuid4(), quantity=2,
-            price_at_order=Decimal("500.00"), total_volume=Decimal("0.020"),
+            order_id=order.id,
+            product_id=uuid4(),
+            quantity=2,
+            price_at_order=Decimal("500.00"),
+            total_volume=Decimal("0.020"),
         )
         order.items = [i1, i2]
         order.recalculate()

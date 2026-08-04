@@ -6,7 +6,6 @@ from app.domain.enums import Weekday
 
 
 class IRetailPointRepository(ABC):
-
     @abstractmethod
     async def add(self, retail_point: RetailPoint) -> None:
         raise NotImplementedError

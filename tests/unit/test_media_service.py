@@ -27,8 +27,9 @@ def service(mock_uow, mock_storage):
 
 def _make_jpeg_bytes():
     """Create minimal valid JPEG bytes for testing."""
-    from PIL import Image
     from io import BytesIO
+
+    from PIL import Image
 
     img = Image.new("RGB", (100, 100), color="red")
     buf = BytesIO()
@@ -37,6 +38,7 @@ def _make_jpeg_bytes():
 
 
 # --- upload ---
+
 
 @pytest.mark.asyncio
 async def test_upload_success(service, mock_uow, mock_storage):
@@ -115,6 +117,7 @@ async def test_upload_with_prefix(service, mock_uow, mock_storage):
 
 # --- get_content ---
 
+
 @pytest.mark.asyncio
 async def test_get_content_success(service, mock_uow, mock_storage):
     media_id = uuid4()
@@ -143,6 +146,7 @@ async def test_get_content_not_found(service, mock_uow):
 
 
 # --- get_thumbnail ---
+
 
 @pytest.mark.asyncio
 async def test_get_thumbnail_success(service, mock_uow, mock_storage):

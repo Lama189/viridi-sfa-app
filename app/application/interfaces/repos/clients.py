@@ -5,7 +5,6 @@ from app.domain.entities.clients import Client
 
 
 class IClientRepository(ABC):
-
     @abstractmethod
     async def add(self, client: Client) -> None:
         raise NotImplementedError

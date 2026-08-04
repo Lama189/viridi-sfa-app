@@ -5,11 +5,11 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
-from app.domain.entities.media import MediaFile
+from app.api.dependencies import get_current_user, get_media_service
 from app.domain.entities.auth import AuthenticatedEmployee
+from app.domain.entities.media import MediaFile
 from app.infrastructure.postgres.models.enums import EmployeeRole
-from app.api.dependencies import get_media_service, get_current_user
+from app.main import app
 
 
 @pytest.fixture
@@ -56,6 +56,7 @@ def _media_response():
 
 
 # --- POST /api/v1/media/upload ---
+
 
 @pytest.mark.asyncio
 async def test_upload_media_success(client, mock_service, mock_admin_employee):
@@ -111,6 +112,7 @@ async def test_upload_media_too_large(client, mock_service):
 
 # --- GET /api/v1/media/{media_id}/content ---
 
+
 @pytest.mark.asyncio
 async def test_get_media_content_success(client, mock_service):
     mock_service.get_content.return_value = (b"image-data", "image/webp")
@@ -123,6 +125,7 @@ async def test_get_media_content_success(client, mock_service):
 @pytest.mark.asyncio
 async def test_get_media_content_not_found(client, mock_service):
     from app.core.exceptions import MediaNotFoundError
+
     mock_service.get_content.side_effect = MediaNotFoundError()
 
     resp = await client.get(f"/api/v1/media/{uuid4()}/content")
@@ -130,6 +133,7 @@ async def test_get_media_content_not_found(client, mock_service):
 
 
 # --- GET /api/v1/media/{media_id}/thumbnail ---
+
 
 @pytest.mark.asyncio
 async def test_get_media_thumbnail_success(client, mock_service):
@@ -143,6 +147,7 @@ async def test_get_media_thumbnail_success(client, mock_service):
 @pytest.mark.asyncio
 async def test_get_media_thumbnail_not_found(client, mock_service):
     from app.core.exceptions import MediaNotFoundError
+
     mock_service.get_thumbnail.side_effect = MediaNotFoundError()
 
     resp = await client.get(f"/api/v1/media/{uuid4()}/thumbnail")

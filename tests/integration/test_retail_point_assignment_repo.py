@@ -4,7 +4,9 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.retail_point_assignments import RetailPointAssignment
-from app.infrastructure.postgres.repos.retail_point_assignments import PostgresRetailPointAssignmentRepository
+from app.infrastructure.postgres.repos.retail_point_assignments import (
+    PostgresRetailPointAssignmentRepository,
+)
 
 
 @pytest.mark.asyncio

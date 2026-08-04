@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 
 from app.api.dependencies import (
+    allow_admin,
     get_current_employee,
     get_visit_plans_service,
-    allow_admin,
 )
 from app.api.v1.schemas.visit_plans import (
     GenerateVisitPlanRequest,
@@ -17,7 +17,6 @@ from app.api.v1.schemas.visit_plans import (
 from app.application.services.visit_plans import VisitPlanService
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.visit_plans import VisitPlan
-
 
 router = APIRouter(prefix="/api/v1/visit-plans", tags=["Visit Plans"])
 
@@ -33,7 +32,9 @@ async def _to_response(service: VisitPlanService, plan: VisitPlan) -> VisitPlanR
                 order=item.order,
                 status=item.status,
                 retail_point_id=item.retail_point_id,
-                retail_point=VisitPlanItemRetailPointResponse.model_validate(retail_point),
+                retail_point=VisitPlanItemRetailPointResponse.model_validate(
+                    retail_point
+                ),
             )
         )
 

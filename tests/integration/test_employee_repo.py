@@ -8,8 +8,12 @@ from app.infrastructure.postgres.repos.employees import PostgresEmployeeReposito
 
 
 @pytest.mark.asyncio
-async def test_add_and_get_by_id(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
-    e = Employee(phone="+998901234567", password_hash="hash123", full_name="Test Employee")
+async def test_add_and_get_by_id(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
+    e = Employee(
+        phone="+998901234567", password_hash="hash123", full_name="Test Employee"
+    )
     await employee_repo.add(e)
     await session.commit()
 
@@ -22,14 +26,20 @@ async def test_add_and_get_by_id(session: AsyncSession, employee_repo: PostgresE
 
 
 @pytest.mark.asyncio
-async def test_get_by_id_not_found(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
+async def test_get_by_id_not_found(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
     found = await employee_repo.get_by_id(uuid4())
     assert found is None
 
 
 @pytest.mark.asyncio
-async def test_get_by_found(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
-    e = Employee(phone="+998909999999", password_hash="hash", full_name="Lookup Employee")
+async def test_get_by_found(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
+    e = Employee(
+        phone="+998909999999", password_hash="hash", full_name="Lookup Employee"
+    )
     await employee_repo.add(e)
     await session.commit()
 
@@ -39,13 +49,17 @@ async def test_get_by_found(session: AsyncSession, employee_repo: PostgresEmploy
 
 
 @pytest.mark.asyncio
-async def test_get_by_not_found(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
+async def test_get_by_not_found(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
     found = await employee_repo.get_by(phone="+998900000000")
     assert found is None
 
 
 @pytest.mark.asyncio
-async def test_exists_by_true(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
+async def test_exists_by_true(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
     e = Employee(phone="+998901111111", password_hash="hash", full_name="Exists")
     await employee_repo.add(e)
     await session.commit()
@@ -54,15 +68,27 @@ async def test_exists_by_true(session: AsyncSession, employee_repo: PostgresEmpl
 
 
 @pytest.mark.asyncio
-async def test_exists_by_false(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
+async def test_exists_by_false(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
     assert await employee_repo.exists_by(phone="+998900000000") is False
 
 
 @pytest.mark.asyncio
-async def test_list_by(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
-    await employee_repo.add(Employee(phone="+998903000001", password_hash="h", full_name="Agent1"))
-    await employee_repo.add(Employee(phone="+998903000002", password_hash="h", full_name="Agent2"))
-    await employee_repo.add(Employee(phone="+998903000003", password_hash="h", full_name="Admin1", role="admin"))
+async def test_list_by(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
+    await employee_repo.add(
+        Employee(phone="+998903000001", password_hash="h", full_name="Agent1")
+    )
+    await employee_repo.add(
+        Employee(phone="+998903000002", password_hash="h", full_name="Agent2")
+    )
+    await employee_repo.add(
+        Employee(
+            phone="+998903000003", password_hash="h", full_name="Admin1", role="admin"
+        )
+    )
     await session.commit()
 
     agents = await employee_repo.list_by(role="agent")
@@ -73,7 +99,9 @@ async def test_list_by(session: AsyncSession, employee_repo: PostgresEmployeeRep
 
 
 @pytest.mark.asyncio
-async def test_list_by_empty(session: AsyncSession, employee_repo: PostgresEmployeeRepository):
+async def test_list_by_empty(
+    session: AsyncSession, employee_repo: PostgresEmployeeRepository
+):
     result = await employee_repo.list_by(role="admin")
     assert result == []
 

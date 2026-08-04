@@ -11,10 +11,10 @@ from app.infrastructure.postgres.models.enums import VisitStatus
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee
-    from app.infrastructure.postgres.models.retail_points import RetailPoint
-    from app.infrastructure.postgres.models.visit_media import VisitMedia
-    from app.infrastructure.postgres.models.visit_debts import VisitDebt
     from app.infrastructure.postgres.models.orders import Order
+    from app.infrastructure.postgres.models.retail_points import RetailPoint
+    from app.infrastructure.postgres.models.visit_debts import VisitDebt
+    from app.infrastructure.postgres.models.visit_media import VisitMedia
 
 
 class Visit(BaseModel):
@@ -52,24 +52,24 @@ class Visit(BaseModel):
         DateTime(timezone=True),
     )
 
-    employee: Mapped["Employee"] = relationship(
+    employee: Mapped[Employee] = relationship(
         back_populates="visits",
     )
 
-    retail_point: Mapped["RetailPoint"] = relationship(
+    retail_point: Mapped[RetailPoint] = relationship(
         back_populates="visits",
     )
 
-    media: Mapped[list["VisitMedia"]] = relationship(
+    media: Mapped[list[VisitMedia]] = relationship(
         back_populates="visit",
         cascade="all, delete-orphan",
     )
 
-    debts: Mapped[list["VisitDebt"]] = relationship(
+    debts: Mapped[list[VisitDebt]] = relationship(
         back_populates="visit",
         cascade="all, delete-orphan",
     )
 
-    orders: Mapped[list["Order"]] = relationship(
+    orders: Mapped[list[Order]] = relationship(
         back_populates="visit",
     )

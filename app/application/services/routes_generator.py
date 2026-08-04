@@ -1,23 +1,22 @@
 from datetime import date, timedelta
 
+from app.application.interfaces.services.retail_point_assignments import (
+    IRetailPointAssignmentService,
+)
+from app.application.interfaces.services.territories import ITerritoryClusteringService
+from app.application.interfaces.services.visit_plans import IVisitPlanService
+from app.application.interfaces.uow import IUnitOfWork
 from app.core.exceptions import (
     NoActiveAgentsFoundError,
     NoActiveRetailPointsError,
     TerritoryClustersNotBuiltError,
 )
-
-from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.services.territories import ITerritoryClusteringService
-from app.application.interfaces.services.retail_point_assignments import IRetailPointAssignmentService
-from app.application.interfaces.services.visit_plans import IVisitPlanService
-
 from app.domain.entities.employees import Employee
 from app.domain.entities.territories import TerritoryCluster
 from app.domain.enums import EmployeeRole
 
 
 class RouteGenerationService:
-
     def __init__(
         self,
         uow: IUnitOfWork,
@@ -101,11 +100,6 @@ class RouteGenerationService:
 
         days_until_next_monday = 7 - today.weekday()
 
-        next_monday = today + timedelta(
-            days=days_until_next_monday
-        )
+        next_monday = today + timedelta(days=days_until_next_monday)
 
-        return [
-            next_monday + timedelta(days=i)
-            for i in range(7)
-        ]
+        return [next_monday + timedelta(days=i) for i in range(7)]

@@ -1,33 +1,32 @@
 from uuid import UUID
 
-from app.domain.entities.auth import AuthenticatedClient
-from app.domain.entities.clients import Client
-from app.core.exceptions import UserNotFoundError, UserNotActiveError
-from app.core.security import SecurityUtils
-from app.core.context import client_id_ctx_var
-from app.core.observability.metrics import client_operations_total
-
-from app.application.interfaces.uow import IUnitOfWork
+from app.api.v1.schemas.clients import (
+    ClientLoginDTO,
+    ClientRegisterRequest,
+    ClientResponse,
+    ClientTelegramLoginRequest,
+    ClientUpdate,
+    ClientWithTokensResponse,
+)
+from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
-from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
-from app.core.config import get_settings
-from app.api.v1.schemas.tokens import TokenResponseDTO
-from app.api.v1.schemas.clients import (
-    ClientUpdate,
-    ClientLoginDTO,
-    ClientTelegramLoginRequest,
-    ClientResponse,
-    ClientWithTokensResponse,
-    ClientRegisterRequest
+from app.application.interfaces.services.retail_point_members import (
+    IRetailPointMembersService,
 )
+from app.application.interfaces.uow import IUnitOfWork
+from app.core.config import get_settings
+from app.core.context import client_id_ctx_var
+from app.core.exceptions import UserNotActiveError, UserNotFoundError
+from app.core.observability.metrics import client_operations_total
+from app.core.security import SecurityUtils
+from app.domain.entities.auth import AuthenticatedClient
+from app.domain.entities.clients import Client
 
 settings = get_settings()
 
 
-
 class ClientsService:
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -79,7 +78,6 @@ class ClientsService:
 
 
 class ClientsAuthService:
-
     def __init__(
         self,
         uow: IUnitOfWork,
@@ -148,7 +146,7 @@ class ClientsAuthService:
                         invite.retail_point_id,
                         existing_client.id,
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
             await self._uow.commit()

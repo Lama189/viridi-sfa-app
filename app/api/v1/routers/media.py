@@ -1,16 +1,15 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from starlette import status
 from starlette.responses import StreamingResponse
 
-from app.api.dependencies import get_media_service, allow_all_staff
-from app.application.services.media import MediaService
+from app.api.dependencies import allow_all_staff, get_media_service
 from app.api.v1.schemas.media import MediaUploadResponse
+from app.application.services.media import MediaService
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.enums import MediaBucket
-
 
 router = APIRouter(prefix="/api/v1/media", tags=["Media"])
 
@@ -19,13 +18,13 @@ router = APIRouter(prefix="/api/v1/media", tags=["Media"])
     path="/upload",
     status_code=status.HTTP_201_CREATED,
     response_model=MediaUploadResponse,
-    dependencies=[Depends(allow_all_staff)]
+    dependencies=[Depends(allow_all_staff)],
 )
 async def upload_media(
     service: Annotated[MediaService, Depends(get_media_service)],
     employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
     file: UploadFile = File(...),
-    bucket: MediaBucket = Query(...)
+    bucket: MediaBucket = Query(...),
 ):
     try:
         data = await file.read()
@@ -41,7 +40,7 @@ async def upload_media(
             data=data,
             filename=file.filename,
             content_type=file.content_type,
-            uploaded_by=employee.id
+            uploaded_by=employee.id,
         )
 
         return MediaUploadResponse(

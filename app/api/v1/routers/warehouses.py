@@ -1,15 +1,15 @@
-from uuid import UUID
 from typing import Annotated
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.api.dependencies import get_warehouses_service
 from app.api.v1.schemas.inventory import (
     WarehouseCreate,
     WarehouseResponse,
     WarehouseUpdate,
 )
 from app.application.services.warehouses import WarehousesService
-from app.api.dependencies import get_warehouses_service
-
 
 router = APIRouter(prefix="/api/v1/warehouses", tags=["Warehouses"])
 
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api/v1/warehouses", tags=["Warehouses"])
 )
 async def create_warehouse(
     dto: WarehouseCreate,
-    service: Annotated[WarehousesService, Depends(get_warehouses_service)]
+    service: Annotated[WarehousesService, Depends(get_warehouses_service)],
 ):
     return await service.create_warehouse(dto)
 

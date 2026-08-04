@@ -1,13 +1,12 @@
 from uuid import UUID
 
-from app.domain.entities.inventory import Category
-from app.application.interfaces.uow import IUnitOfWork
 from app.api.v1.schemas.inventory import CategoryCreate, CategoryUpdate
+from app.application.interfaces.uow import IUnitOfWork
 from app.core.observability.metrics import category_operations_total
+from app.domain.entities.inventory import Category
 
 
 class CategoriesService:
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 

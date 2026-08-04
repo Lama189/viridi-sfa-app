@@ -42,6 +42,6 @@ class VisitDebt(BaseModel):
         nullable=False,
     )
 
-    visit: Mapped["Visit"] = relationship(
+    visit: Mapped[Visit] = relationship(
         back_populates="debts",
     )

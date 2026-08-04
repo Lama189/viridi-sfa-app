@@ -5,7 +5,9 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.retail_points import RetailPoint
-from app.infrastructure.postgres.repos.retail_points import PostgresRetailPointRepository
+from app.infrastructure.postgres.repos.retail_points import (
+    PostgresRetailPointRepository,
+)
 
 
 @pytest.mark.asyncio
@@ -59,7 +61,9 @@ async def test_list_all_only_active(
     retail_point_repo: PostgresRetailPointRepository,
 ):
     await retail_point_repo.add(RetailPoint(name="Active", address="a"))
-    await retail_point_repo.add(RetailPoint(name="Inactive", address="b", is_active=False))
+    await retail_point_repo.add(
+        RetailPoint(name="Inactive", address="b", is_active=False)
+    )
     await session.commit()
 
     active = await retail_point_repo.list_all(only_active=True)

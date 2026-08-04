@@ -24,12 +24,18 @@ def service(mock_uow):
 
 # --- create_employee ---
 
+
 @pytest.mark.asyncio
-@patch("app.application.services.employees.SecurityUtils.hash_password", return_value="hashed_value")
+@patch(
+    "app.application.services.employees.SecurityUtils.hash_password",
+    return_value="hashed_value",
+)
 async def test_create_employee_success(mock_hash, service, mock_uow):
     mock_uow.employees.exists_by.return_value = False
 
-    dto = EmployeeCreate(phone="+998901234567", password="secret123", full_name="Test Employee")
+    dto = EmployeeCreate(
+        phone="+998901234567", password="secret123", full_name="Test Employee"
+    )
     result = await service.create_employee(dto)
 
     assert result.phone == "+998901234567"
@@ -42,12 +48,18 @@ async def test_create_employee_success(mock_hash, service, mock_uow):
 
 
 @pytest.mark.asyncio
-@patch("app.application.services.employees.SecurityUtils.hash_password", return_value="hashed_value")
+@patch(
+    "app.application.services.employees.SecurityUtils.hash_password",
+    return_value="hashed_value",
+)
 async def test_create_employee_with_role(mock_hash, service, mock_uow):
     mock_uow.employees.exists_by.return_value = False
 
     dto = EmployeeCreate(
-        phone="+998901234568", password="secret123", full_name="Admin", role=EmployeeRole.ADMIN,
+        phone="+998901234568",
+        password="secret123",
+        full_name="Admin",
+        role=EmployeeRole.ADMIN,
     )
     result = await service.create_employee(dto)
 
@@ -67,11 +79,15 @@ async def test_create_employee_duplicate_phone(service, mock_uow):
 
 # --- get_employee ---
 
+
 @pytest.mark.asyncio
 async def test_get_employee_found(service, mock_uow):
     uid = uuid4()
     mock_uow.employees.get_by_id.return_value = Employee(
-        phone="+998901234567", password_hash="h", full_name="X", id=uid,
+        phone="+998901234567",
+        password_hash="h",
+        full_name="X",
+        id=uid,
     )
 
     result = await service.get_employee(uid)
@@ -89,10 +105,13 @@ async def test_get_employee_not_found(service, mock_uow):
 
 # --- get_employee_by ---
 
+
 @pytest.mark.asyncio
 async def test_get_employee_by(service, mock_uow):
     mock_uow.employees.get_by.return_value = Employee(
-        phone="+998901234567", password_hash="h", full_name="Y",
+        phone="+998901234567",
+        password_hash="h",
+        full_name="Y",
     )
 
     result = await service.get_employee_by(phone="+998901234567")
@@ -101,6 +120,7 @@ async def test_get_employee_by(service, mock_uow):
 
 
 # --- list_employees ---
+
 
 @pytest.mark.asyncio
 async def test_list_employees(service, mock_uow):
@@ -115,6 +135,7 @@ async def test_list_employees(service, mock_uow):
 
 
 # --- update_employee ---
+
 
 @pytest.mark.asyncio
 async def test_update_employee_success(service, mock_uow):
@@ -138,7 +159,10 @@ async def test_update_employee_phone_conflict(service, mock_uow):
     emp = Employee(phone="+998905000000", password_hash="h", full_name="X", id=uid)
     mock_uow.employees.get_by_id.return_value = emp
     mock_uow.employees.get_by.return_value = Employee(
-        phone="+998909999999", password_hash="h", full_name="Y", id=other_id,
+        phone="+998909999999",
+        password_hash="h",
+        full_name="Y",
+        id=other_id,
     )
 
     dto = EmployeeUpdate(phone="+998909999999")
@@ -170,11 +194,15 @@ async def test_update_employee_not_found(service, mock_uow):
 
 # --- delete_employee ---
 
+
 @pytest.mark.asyncio
 async def test_delete_employee_success(service, mock_uow):
     uid = uuid4()
     mock_uow.employees.get_by_id.return_value = Employee(
-        phone="+998906000000", password_hash="h", full_name="Del", id=uid,
+        phone="+998906000000",
+        password_hash="h",
+        full_name="Del",
+        id=uid,
     )
 
     await service.delete_employee(uid)

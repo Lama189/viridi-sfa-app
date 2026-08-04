@@ -46,10 +46,10 @@ class RetailPointMember(BaseModel):
         nullable=False,
     )
 
-    retail_point: Mapped["RetailPoint"] = relationship(
+    retail_point: Mapped[RetailPoint] = relationship(
         back_populates="members",
     )
 
-    client: Mapped["Client"] = relationship(
+    client: Mapped[Client] = relationship(
         back_populates="retail_points",
     )

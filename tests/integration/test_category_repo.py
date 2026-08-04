@@ -1,5 +1,6 @@
-import pytest
 from uuid import uuid4
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.inventory import Category
@@ -7,7 +8,9 @@ from app.infrastructure.postgres.repos.categories import PostgresCategoriesRepos
 
 
 @pytest.mark.asyncio
-async def test_add_and_get_by_id(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_add_and_get_by_id(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     c = Category(name="Fertilizers")
     await category_repo.add(c)
     await session.commit()
@@ -19,13 +22,17 @@ async def test_add_and_get_by_id(session: AsyncSession, category_repo: PostgresC
 
 
 @pytest.mark.asyncio
-async def test_get_by_id_not_found(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_get_by_id_not_found(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     found = await category_repo.get_by_id(uuid4())
     assert found is None
 
 
 @pytest.mark.asyncio
-async def test_exists_by_true(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_exists_by_true(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     c = Category(name="Seeds")
     await category_repo.add(c)
     await session.commit()
@@ -34,12 +41,16 @@ async def test_exists_by_true(session: AsyncSession, category_repo: PostgresCate
 
 
 @pytest.mark.asyncio
-async def test_exists_by_false(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_exists_by_false(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     assert await category_repo.exists_by(name="Nonexistent") is False
 
 
 @pytest.mark.asyncio
-async def test_exists_by_is_active(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_exists_by_is_active(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     c = Category(name="Tools", is_active=True)
     await category_repo.add(c)
     await session.commit()
@@ -49,7 +60,9 @@ async def test_exists_by_is_active(session: AsyncSession, category_repo: Postgre
 
 
 @pytest.mark.asyncio
-async def test_list_all_only_active(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_list_all_only_active(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     await category_repo.add(Category(name="Active"))
     await category_repo.add(Category(name="Inactive", is_active=False))
     await session.commit()
@@ -60,7 +73,9 @@ async def test_list_all_only_active(session: AsyncSession, category_repo: Postgr
 
 
 @pytest.mark.asyncio
-async def test_list_all_include_inactive(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_list_all_include_inactive(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     await category_repo.add(Category(name="A"))
     await category_repo.add(Category(name="B", is_active=False))
     await session.commit()
@@ -70,13 +85,17 @@ async def test_list_all_include_inactive(session: AsyncSession, category_repo: P
 
 
 @pytest.mark.asyncio
-async def test_list_all_empty(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_list_all_empty(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     result = await category_repo.list_all()
     assert result == []
 
 
 @pytest.mark.asyncio
-async def test_update(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_update(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     c = Category(name="Old")
     await category_repo.add(c)
     await session.commit()
@@ -90,7 +109,9 @@ async def test_update(session: AsyncSession, category_repo: PostgresCategoriesRe
 
 
 @pytest.mark.asyncio
-async def test_delete(session: AsyncSession, category_repo: PostgresCategoriesRepository):
+async def test_delete(
+    session: AsyncSession, category_repo: PostgresCategoriesRepository
+):
     c = Category(name="ToDelete")
     await category_repo.add(c)
     await session.commit()

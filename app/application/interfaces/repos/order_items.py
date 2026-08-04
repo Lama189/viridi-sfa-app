@@ -5,7 +5,6 @@ from app.domain.entities.orders import OrderItem
 
 
 class IOrderItemRepository(ABC):
-
     @abstractmethod
     async def add(self, item: OrderItem) -> None:
         raise NotImplementedError

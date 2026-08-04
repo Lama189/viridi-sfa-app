@@ -1,25 +1,18 @@
 from abc import ABC, abstractmethod
-from uuid import UUID
 from datetime import date
+from uuid import UUID
 
 from app.domain.entities.visit_schedule_rules import VisitScheduleRule
 from app.domain.enums import Weekday
 
 
 class IVisitScheduleRuleRepository(ABC):
-
     @abstractmethod
-    async def add(
-        self, 
-        rule: VisitScheduleRule
-    ) -> None:
+    async def add(self, rule: VisitScheduleRule) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    async def get_by_id(
-        self, 
-        rule_id: UUID
-    ) -> VisitScheduleRule | None:
+    async def get_by_id(self, rule_id: UUID) -> VisitScheduleRule | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -34,7 +27,7 @@ class IVisitScheduleRuleRepository(ABC):
     async def delete(self, rule: VisitScheduleRule) -> None:
         raise NotImplementedError
 
-    @abstractmethod    
+    @abstractmethod
     async def list_by_retail_point(
         self,
         retail_point_id: UUID,

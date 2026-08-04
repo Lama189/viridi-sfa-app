@@ -51,7 +51,9 @@ async def test_add_weekday_new(service, mock_uow):
 @pytest.mark.asyncio
 async def test_add_weekday_existing_inactive(service, mock_uow):
     point_id = uuid4()
-    inactive_rule = VisitScheduleRule(retail_point_id=point_id, weekday=Weekday.TUESDAY, is_active=False)
+    inactive_rule = VisitScheduleRule(
+        retail_point_id=point_id, weekday=Weekday.TUESDAY, is_active=False
+    )
     mock_uow.visit_schedule_rules.list_by_retail_point.return_value = [inactive_rule]
 
     await service.add_weekday(point_id, Weekday.TUESDAY)
@@ -86,7 +88,9 @@ async def test_remove_weekday_not_found(service, mock_uow):
 @pytest.mark.asyncio
 async def test_activate_and_deactivate_rule(service, mock_uow):
     rule_id = uuid4()
-    rule = VisitScheduleRule(retail_point_id=uuid4(), weekday=Weekday.MONDAY, is_active=False, id=rule_id)
+    rule = VisitScheduleRule(
+        retail_point_id=uuid4(), weekday=Weekday.MONDAY, is_active=False, id=rule_id
+    )
     mock_uow.visit_schedule_rules.get_by_id.return_value = rule
 
     await service.activate_rule(rule_id)

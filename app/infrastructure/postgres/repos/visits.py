@@ -1,17 +1,19 @@
 from uuid import UUID
 
-from sqlalchemy import select, func, update, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visits import IVisitRepository
 from app.domain.entities.visits import Visit
 from app.domain.enums import VisitStatus
+from app.infrastructure.postgres.models.visit_plan_items import (
+    VisitPlanItem as VisitPlanItemModel,
+)
 from app.infrastructure.postgres.models.visits import Visit as VisitModel
-from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem as VisitPlanItemModel
 
 
 class PostgresVisitRepository(IVisitRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -31,7 +33,9 @@ class PostgresVisitRepository(IVisitRepository):
 
         return self._to_domain(model)
 
-    async def list_by_employee(self, employee_id: UUID, active: bool = True, limit: int = 1) -> list[Visit]:
+    async def list_by_employee(
+        self, employee_id: UUID, active: bool = True, limit: int = 1
+    ) -> list[Visit]:
         stmt = select(VisitModel).where(VisitModel.employee_id == employee_id)
 
         if active:
@@ -46,9 +50,7 @@ class PostgresVisitRepository(IVisitRepository):
         return [self._to_domain(m) for m in result.scalars().all()]
 
     async def list_by_retail_point(self, retail_point_id: UUID) -> list[Visit]:
-        stmt = select(VisitModel).where(
-            VisitModel.retail_point_id == retail_point_id
-        )
+        stmt = select(VisitModel).where(VisitModel.retail_point_id == retail_point_id)
 
         result = await self._session.execute(stmt)
         return [self._to_domain(m) for m in result.scalars().all()]
@@ -111,7 +113,6 @@ class PostgresVisitRepository(IVisitRepository):
         )
         result = await self._session.execute(stmt)
         return result.scalar_one() or 0
-
 
     def _to_domain(self, model: VisitModel) -> Visit:
         return Visit(

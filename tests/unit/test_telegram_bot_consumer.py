@@ -5,9 +5,9 @@ import pytest
 
 from telegram_bot.consumers.order_events import OrderEventsConsumer
 from telegram_bot.events.order_events import OrderCreatedEvent, deserialize_event
+from telegram_bot.services.clients import ClientDTO
 from telegram_bot.services.notifications import NotificationService
 from telegram_bot.services.retail_point_members import RetailPointMemberDTO
-from telegram_bot.services.clients import ClientDTO
 
 
 def test_deserialize_order_created_event():
@@ -19,7 +19,7 @@ def test_deserialize_order_created_event():
     body = (
         f'{{"order_id": "{order_id}", "retail_point_id": "{retail_point_id}", '
         f'"created_by_id": "{created_by_id}", "warehouse_id": "{warehouse_id}"}}'
-    ).encode("utf-8")
+    ).encode()
 
     event = deserialize_event(body, OrderCreatedEvent)
 
@@ -43,7 +43,7 @@ async def test_order_events_consumer_handle_order_created():
     body = (
         f'{{"order_id": "{order_id}", "retail_point_id": "{retail_point_id}", '
         f'"created_by_id": "{created_by_id}"}}'
-    ).encode("utf-8")
+    ).encode()
 
     mock_message = MagicMock()
     mock_message.body = body
@@ -74,12 +74,23 @@ async def test_notification_service_order_created():
     client_id_2 = uuid4()
 
     # Member 1 with telegram_id
-    member_1 = RetailPointMemberDTO(id=uuid4(), retail_point_id=retail_point_id, client_id=client_id_1)
-    client_1 = ClientDTO(id=client_id_1, phone="+998901111111", full_name="Client One", telegram_id=12345678)
+    member_1 = RetailPointMemberDTO(
+        id=uuid4(), retail_point_id=retail_point_id, client_id=client_id_1
+    )
+    client_1 = ClientDTO(
+        id=client_id_1,
+        phone="+998901111111",
+        full_name="Client One",
+        telegram_id=12345678,
+    )
 
     # Member 2 without telegram_id
-    member_2 = RetailPointMemberDTO(id=uuid4(), retail_point_id=retail_point_id, client_id=client_id_2)
-    client_2 = ClientDTO(id=client_id_2, phone="+998902222222", full_name="Client Two", telegram_id=None)
+    member_2 = RetailPointMemberDTO(
+        id=uuid4(), retail_point_id=retail_point_id, client_id=client_id_2
+    )
+    client_2 = ClientDTO(
+        id=client_id_2, phone="+998902222222", full_name="Client Two", telegram_id=None
+    )
 
     # Setup mocks
     mock_retail_point_members.list_members.return_value = [member_1, member_2]

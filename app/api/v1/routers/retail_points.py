@@ -1,29 +1,28 @@
-from uuid import UUID
-from typing import Annotated
 from dataclasses import asdict
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import Annotated
+from uuid import UUID
 
-from app.api.v1.schemas.retail_points import (
-    CreateRetailPointRequest,
-    UpdateRetailPointRequest,
-    RetailPointResponse,
-    InviteCodeResponse,
-    RetailPointWithCodeResponse,
-    BulkCreateRetailPointsResponse,
-    RetailPointMemberResponse,
-)
-from app.application.services.retail_points import RetailPointsService
-from app.application.services.members import RetailPointMembersService
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
 from app.api.dependencies import (
-    allow_admin, 
+    allow_admin,
     allow_all_staff,
-    get_retail_points_service, 
-    get_retail_point_members_service, 
+    get_retail_point_members_service,
+    get_retail_points_service,
 )
-
-from app.domain.enums import Weekday
+from app.api.v1.schemas.retail_points import (
+    BulkCreateRetailPointsResponse,
+    CreateRetailPointRequest,
+    InviteCodeResponse,
+    RetailPointMemberResponse,
+    RetailPointResponse,
+    RetailPointWithCodeResponse,
+    UpdateRetailPointRequest,
+)
+from app.application.services.members import RetailPointMembersService
+from app.application.services.retail_points import RetailPointsService
 from app.domain.entities.auth import AuthenticatedEmployee
-
+from app.domain.enums import Weekday
 
 router = APIRouter(prefix="/api/v1/retail_points", tags=["RetailPoints"])
 
@@ -46,19 +45,18 @@ async def list_retail_points_by_weekday(
 @router.post(
     path="",
     response_model=RetailPointWithCodeResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_retail_point(
     dto: CreateRetailPointRequest,
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
-    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
 ):
     try:
         point, invite_code = await service.create_retail_point(dto, employee.id)
 
         return RetailPointWithCodeResponse(
-            retail_point=asdict(point), 
-            invite_code=invite_code
+            retail_point=asdict(point), invite_code=invite_code
         )
 
     except ValueError as e:
@@ -67,38 +65,32 @@ async def create_retail_point(
             detail=str(e),
         )
 
+
 @router.post(
     path="/bulk",
     response_model=BulkCreateRetailPointsResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def bulk_create_retail_points(
     dto: list[CreateRetailPointRequest],
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
-    employee: Annotated[AuthenticatedEmployee, Depends(allow_admin)]
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_admin)],
 ):
     try:
         result = await service.bulk_create(employee.id, dto)
 
         return BulkCreateRetailPointsResponse(
-            created_count=result.created_count,
-            created=result.created
+            created_count=result.created_count, created=result.created
         )
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e)
-        )
-    
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
-@router.get(
-    "/{retail_point_id}",
-    response_model=RetailPointResponse
-)
+
+@router.get("/{retail_point_id}", response_model=RetailPointResponse)
 async def get_retail_point(
     retail_point_id: UUID,
-    service: Annotated[RetailPointsService, Depends(get_retail_points_service)]
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
 ):
     return await service.get_by_id(retail_point_id)
 
@@ -106,23 +98,21 @@ async def get_retail_point(
 @router.get(
     "/{retail_point_id}/code",
     response_model=InviteCodeResponse,
-    dependencies=[Depends(allow_all_staff)]
+    dependencies=[Depends(allow_all_staff)],
 )
 async def get_retail_point_invite_code(
     retail_point_id: UUID,
-    service: Annotated[RetailPointsService, Depends(get_retail_points_service)]
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
 ):
     invite_code = await service.get_retail_point_invite_code(retail_point_id)
 
-    return InviteCodeResponse(
-        invite_code=invite_code
-    )
+    return InviteCodeResponse(invite_code=invite_code)
 
 
 @router.patch(
     "/{retail_point_id}",
     response_model=RetailPointResponse,
-    dependencies=[Depends(allow_all_staff)]
+    dependencies=[Depends(allow_all_staff)],
 )
 async def update_retail_point(
     retail_point_id: UUID,
@@ -173,6 +163,8 @@ async def list_retail_points(
 )
 async def list_retail_point_members(
     retail_point_id: UUID,
-    service: Annotated[RetailPointMembersService, Depends(get_retail_point_members_service)],
+    service: Annotated[
+        RetailPointMembersService, Depends(get_retail_point_members_service)
+    ],
 ):
     return await service.list_members(retail_point_id)

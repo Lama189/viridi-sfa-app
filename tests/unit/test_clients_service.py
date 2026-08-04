@@ -23,11 +23,14 @@ def service(mock_uow):
 
 # --- get_client ---
 
+
 @pytest.mark.asyncio
 async def test_get_client_found(service, mock_uow):
     uid = uuid4()
     mock_uow.clients.get_by_id.return_value = Client(
-        phone="+998901234567", full_name="X", id=uid,
+        phone="+998901234567",
+        full_name="X",
+        id=uid,
     )
 
     result = await service.get_client(uid)
@@ -45,10 +48,12 @@ async def test_get_client_not_found(service, mock_uow):
 
 # --- get_client_by_phone ---
 
+
 @pytest.mark.asyncio
 async def test_get_client_by_phone_found(service, mock_uow):
     mock_uow.clients.get_by_phone.return_value = Client(
-        phone="+998901234567", full_name="Phone Client",
+        phone="+998901234567",
+        full_name="Phone Client",
     )
 
     result = await service.get_client_by_phone("+998901234567")
@@ -65,6 +70,7 @@ async def test_get_client_by_phone_not_found(service, mock_uow):
 
 
 # --- list_clients ---
+
 
 @pytest.mark.asyncio
 async def test_list_clients(service, mock_uow):
@@ -92,6 +98,7 @@ async def test_list_clients_includes_inactive(service, mock_uow):
 
 # --- update_client ---
 
+
 @pytest.mark.asyncio
 async def test_update_client_success(service, mock_uow):
     uid = uuid4()
@@ -114,7 +121,9 @@ async def test_update_client_phone_conflict(service, mock_uow):
     client = Client(phone="+998905000000", full_name="X", id=uid)
     mock_uow.clients.get_by_id.return_value = client
     mock_uow.clients.get_by_phone.return_value = Client(
-        phone="+998909999999", full_name="Y", id=other_id,
+        phone="+998909999999",
+        full_name="Y",
+        id=other_id,
     )
 
     dto = ClientUpdate(phone="+998909999999")
@@ -169,11 +178,14 @@ async def test_update_client_not_found(service, mock_uow):
 
 # --- delete_client ---
 
+
 @pytest.mark.asyncio
 async def test_delete_client_success(service, mock_uow):
     uid = uuid4()
     mock_uow.clients.get_by_id.return_value = Client(
-        phone="+998906000000", full_name="Del", id=uid,
+        phone="+998906000000",
+        full_name="Del",
+        id=uid,
     )
 
     await service.delete_client(uid)

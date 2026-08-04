@@ -10,7 +10,6 @@ from app.infrastructure.postgres.models.visit_plans import VisitPlan as VisitPla
 
 
 class PostgresVisitPlanRepository(IVisitPlanRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

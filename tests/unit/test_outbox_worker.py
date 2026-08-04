@@ -1,6 +1,7 @@
-import pytest
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
+
+import pytest
 
 from app.domain.entities.outbox_messages import OutboxMessage
 from app.domain.enums import AggregateType, OrderEventType

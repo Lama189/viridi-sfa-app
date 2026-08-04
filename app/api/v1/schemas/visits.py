@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, UUID4
+from pydantic import UUID4, BaseModel
 
 from app.domain.enums import VisitStatus
 
@@ -33,9 +33,7 @@ class VisitResponse(BaseModel):
     started_at: datetime | None = None
     finished_at: datetime | None = None
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class VisitMediaResponse(BaseModel):
@@ -44,9 +42,7 @@ class VisitMediaResponse(BaseModel):
     media_id: UUID4
     created_at: datetime
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
 class VisitDebtResponse(BaseModel):
@@ -56,6 +52,4 @@ class VisitDebtResponse(BaseModel):
     comment: str | None = None
     created_at: datetime
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}

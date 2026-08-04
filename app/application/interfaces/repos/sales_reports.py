@@ -6,7 +6,6 @@ from app.api.v1.schemas.dashboard import DailyReportDTO
 
 
 class ISalesReportRepository(ABC):
-
     @abstractmethod
     async def get_agent_daily_report(
         self,

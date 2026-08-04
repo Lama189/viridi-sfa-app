@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -40,8 +40,8 @@ class Order:
     status: OrderStatus = OrderStatus.PENDING
     total_amount: Decimal = field(default=Decimal("0.00"))
     total_volume: Decimal = field(default=Decimal("0.000"))
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     items: list[OrderItem] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -121,4 +121,4 @@ class Order:
         self._touch()
 
     def _touch(self) -> None:
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)

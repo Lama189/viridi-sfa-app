@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 
@@ -19,13 +19,9 @@ class ClientInviteCode:
 
     expires_at: datetime | None = None
 
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
-    updated_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @classmethod
     def create(
@@ -37,19 +33,15 @@ class ClientInviteCode:
         created_by_employee_id: UUID,
         expires_in: timedelta | None = None,
         now: datetime | None = None,
-    ) -> "ClientInviteCode":
-        current_time = now or datetime.now(timezone.utc)
+    ) -> ClientInviteCode:
+        current_time = now or datetime.now(UTC)
 
         return cls(
             retail_point_id=retail_point_id,
             encrypted_code=encrypted_code,
             code_hash=code_hash,
             created_by_employee_id=created_by_employee_id,
-            expires_at=(
-                current_time + expires_in
-                if expires_in
-                else None
-            ),
+            expires_at=(current_time + expires_in if expires_in else None),
             created_at=current_time,
             updated_at=current_time,
         )
@@ -60,7 +52,7 @@ class ClientInviteCode:
         *,
         now: datetime | None = None,
     ) -> None:
-        current_time = now or datetime.now(timezone.utc)
+        current_time = now or datetime.now(UTC)
 
         if not self.is_available(now=current_time):
             raise ValueError("Invite code is not available")
@@ -77,7 +69,7 @@ class ClientInviteCode:
         code_hash: str,
         now: datetime | None = None,
     ) -> None:
-        current_time = now or datetime.now(timezone.utc)
+        current_time = now or datetime.now(UTC)
 
         self.encrypted_code = encrypted_code
         self.code_hash = code_hash
@@ -112,7 +104,7 @@ class ClientInviteCode:
         if not self.is_active:
             return False
 
-        current_time = now or datetime.now(timezone.utc)
+        current_time = now or datetime.now(UTC)
 
         if self.expires_at is not None:
             return current_time < self.expires_at
@@ -124,4 +116,4 @@ class ClientInviteCode:
         *,
         now: datetime | None = None,
     ) -> None:
-        self.updated_at = now or datetime.now(timezone.utc)
+        self.updated_at = now or datetime.now(UTC)

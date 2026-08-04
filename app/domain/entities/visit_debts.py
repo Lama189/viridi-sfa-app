@@ -1,7 +1,7 @@
-from uuid import UUID, uuid4
-from decimal import Decimal
-from datetime import datetime
 from dataclasses import dataclass, field
+from datetime import datetime
+from decimal import Decimal
+from uuid import UUID, uuid4
 
 
 @dataclass(slots=True)
@@ -10,7 +10,7 @@ class VisitDebt:
     amount: Decimal
     comment: str | None
 
-    id: UUID = field(default_factory=uuid4) 
+    id: UUID = field(default_factory=uuid4)
     created_at: datetime = field(default_factory=datetime.now)
 
     def __post_init__(self) -> None:

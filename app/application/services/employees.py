@@ -1,40 +1,43 @@
 from uuid import UUID
 
-from app.domain.entities.auth import AuthenticatedEmployee
-from app.domain.entities.employees import Employee
-from app.core.exceptions import UserNotFoundError, InvalidPasswordError, UserNotActiveError
-from app.core.security import SecurityUtils
-
-from app.application.interfaces.uow import IUnitOfWork
-from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
-from app.api.v1.schemas.tokens import TokenResponseDTO
 from app.api.v1.schemas.employees import (
     EmployeeCreate,
-    EmployeeUpdate,
     EmployeeLoginDTO,
     EmployeeResponse,
+    EmployeeUpdate,
     EmployeeWithTokensResponse,
 )
-
+from app.api.v1.schemas.tokens import TokenResponseDTO
+from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
+from app.application.interfaces.uow import IUnitOfWork
 from app.core.context import employee_id_ctx_var
+from app.core.exceptions import (
+    InvalidPasswordError,
+    UserNotActiveError,
+    UserNotFoundError,
+)
 from app.core.observability.metrics import employee_operations_total
+from app.core.security import SecurityUtils
+from app.domain.entities.auth import AuthenticatedEmployee
+from app.domain.entities.employees import Employee
 
 
 class EmployeesService:
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
     async def create_employee(self, dto: EmployeeCreate) -> Employee:
         if await self._uow.employees.exists_by(phone=dto.phone):
-            raise ValueError(f"An employee with phone number '{dto.phone}' already exists.")
+            raise ValueError(
+                f"An employee with phone number '{dto.phone}' already exists."
+            )
 
         employee = Employee(
             phone=dto.phone,
             password_hash=SecurityUtils.hash_password(dto.password),
             full_name=dto.full_name,
             role=dto.role,
-            is_active=False
+            is_active=False,
         )
 
         await self._uow.employees.add(employee)
@@ -90,7 +93,6 @@ class EmployeesService:
 
 
 class EmployeesAuthService:
-
     def __init__(self, uow: IUnitOfWork, cache: IEmployeesCacheRepository) -> None:
         self._uow = uow
         self._cache = cache
@@ -101,47 +103,44 @@ class EmployeesAuthService:
 
         payload = {
             "sub": employee_id_str,
-            "role": employee.role.value,           
-            "phone": employee.phone, 
-            "user_type": "employee"             
+            "role": employee.role.value,
+            "phone": employee.phone,
+            "user_type": "employee",
         }
         access_token = SecurityUtils.generate_access_token(payload)
         refresh_token = SecurityUtils.generate_refresh_token(payload)
 
         await self._cache.set_refresh_token(
-            employee_id=employee_id_str,
-            token=refresh_token
+            employee_id=employee_id_str, token=refresh_token
         )
 
         await self._cache.set_employee(
             employee_id=employee_id_str,
-            employee=AuthenticatedEmployee.from_entity(employee)
+            employee=AuthenticatedEmployee.from_entity(employee),
         )
 
         return TokenResponseDTO(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            user_id=employee.id
+            access_token=access_token, refresh_token=refresh_token, user_id=employee.id
         )
-    
+
     async def login(self, dto: EmployeeLoginDTO) -> EmployeeWithTokensResponse:
         employee = await self._uow.employees.get_by(phone=dto.phone)
         if not employee:
             raise UserNotFoundError()
-        
+
         if not SecurityUtils.verify_password(dto.password, employee.password_hash):
             raise InvalidPasswordError()
-        
+
         if not employee.is_active:
             raise UserNotActiveError()
-        
+
         tokens = await self._generate_auth_session(employee)
         employee_operations_total.labels(action="login").inc()
 
         return EmployeeWithTokensResponse(
             access_token=tokens.access_token,
             refresh_token=tokens.refresh_token,
-            employee=EmployeeResponse.model_validate(employee)
+            employee=EmployeeResponse.model_validate(employee),
         )
 
     async def refresh(self, refresh_token: str) -> TokenResponseDTO:
@@ -153,22 +152,24 @@ class EmployeesAuthService:
         stored_token = await self._cache.get_refresh_token(employee_id)
         if not stored_token or stored_token != refresh_token:
             raise ValueError("Refresh token is invalid")
-        
-        new_access = SecurityUtils.generate_access_token({
-            "sub": employee_id,
-            "role": payload.get("role"),
-            "phone": payload.get("phone"),
-            "user_type": "employee"
-        })
+
+        new_access = SecurityUtils.generate_access_token(
+            {
+                "sub": employee_id,
+                "role": payload.get("role"),
+                "phone": payload.get("phone"),
+                "user_type": "employee",
+            }
+        )
 
         employee_operations_total.labels(action="refresh").inc()
 
         return TokenResponseDTO(
             access_token=new_access,
             refresh_token=refresh_token,
-            user_id=UUID(employee_id)
+            user_id=UUID(employee_id),
         )
-    
+
     async def logout(self, employee_id: str) -> None:
         await self._cache.delete_refresh_token(employee_id)
         await self._cache.delete_employee(employee_id)

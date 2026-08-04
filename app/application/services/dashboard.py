@@ -2,17 +2,16 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
+from app.api.v1.schemas.dashboard import DailyReportDTO
 from app.application.interfaces.services.dashboard import (
     EmployeeDashboard,
     IDashboardService,
 )
 from app.application.interfaces.uow import IUnitOfWork
-from app.api.v1.schemas.dashboard import DailyReportDTO
 from app.core.exceptions import VisitPlanNotFoundError
 
 
 class DashboardService(IDashboardService):
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -27,18 +26,29 @@ class DashboardService(IDashboardService):
             raise VisitPlanNotFoundError()
 
         total_points = await self._uow.visit_plan_items.count_by_plan_id(plan.id)
-        completed_points = await self._uow.visits.count_completed_by_plan(plan.id, employee_id)
+        completed_points = await self._uow.visits.count_completed_by_plan(
+            plan.id, employee_id
+        )
 
         remaining_points = total_points - completed_points
 
         if total_points == 0:
-            completion_percentage = Decimal("0")
+            completion_percentage = Decimal(0)
         else:
-            completion_percentage = (Decimal(completed_points) / Decimal(total_points)) * Decimal("100")
+            completion_percentage = (
+                Decimal(completed_points) / Decimal(total_points)
+            ) * Decimal(100)
 
-        orders_count, orders_amount = await self._uow.orders.get_statistics_by_employee_and_date(employee_id, today)
+        (
+            orders_count,
+            orders_amount,
+        ) = await self._uow.orders.get_statistics_by_employee_and_date(
+            employee_id, today
+        )
 
-        debts_count = await self._uow.visit_debts.count_by_employee_and_date(employee_id, today)
+        debts_count = await self._uow.visit_debts.count_by_employee_and_date(
+            employee_id, today
+        )
 
         return EmployeeDashboard(
             total_points=total_points,

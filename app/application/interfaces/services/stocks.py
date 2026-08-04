@@ -9,7 +9,6 @@ from app.domain.entities.stocks import Stock
 
 
 class IStockService(ABC):
-
     @abstractmethod
     async def create_stock(self, dto: StockCreateDTO) -> Stock:
         raise NotImplementedError
@@ -31,7 +30,9 @@ class IStockService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def release_reservations_batch(self, dto: StockBatchOperationDTO) -> list[Stock]:
+    async def release_reservations_batch(
+        self, dto: StockBatchOperationDTO
+    ) -> list[Stock]:
         raise NotImplementedError
 
     @abstractmethod

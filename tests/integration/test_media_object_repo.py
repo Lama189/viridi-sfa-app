@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.media import MediaFile
 from app.domain.enums import MediaBucket
-from app.infrastructure.postgres.repos.media_objects import PostgresMediaObjectRepository
+from app.infrastructure.postgres.repos.media_objects import (
+    PostgresMediaObjectRepository,
+)
 
 
 @pytest.mark.asyncio

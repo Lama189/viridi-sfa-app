@@ -30,7 +30,9 @@ def test_employee_custom_values():
 
 
 def test_employee_role_admin():
-    e = Employee(phone="+998901234567", password_hash="h", full_name="A", role=EmployeeRole.ADMIN)
+    e = Employee(
+        phone="+998901234567", password_hash="h", full_name="A", role=EmployeeRole.ADMIN
+    )
     assert e.role == EmployeeRole.ADMIN
 
 

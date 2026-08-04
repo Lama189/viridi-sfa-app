@@ -1,6 +1,7 @@
-import pytest
 from decimal import Decimal
 from uuid import uuid4
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.entities.inventory import Category, Product
@@ -34,7 +35,9 @@ async def test_add_and_get_by_id(
 
 
 @pytest.mark.asyncio
-async def test_get_by_id_not_found(session: AsyncSession, product_repo: PostgresProductsRepository):
+async def test_get_by_id_not_found(
+    session: AsyncSession, product_repo: PostgresProductsRepository
+):
     found = await product_repo.get_by_id(uuid4())
     assert found is None
 
@@ -57,7 +60,9 @@ async def test_exists_by_true(
 
 
 @pytest.mark.asyncio
-async def test_exists_by_false(session: AsyncSession, product_repo: PostgresProductsRepository):
+async def test_exists_by_false(
+    session: AsyncSession, product_repo: PostgresProductsRepository
+):
     assert await product_repo.exists_by(name="Nonexistent") is False
 
 
@@ -89,8 +94,14 @@ async def test_list_all_only_active(
     await category_repo.add(c)
     await session.flush()
 
-    await product_repo.add(Product(category_id=c.id, name="Active", price=Decimal("10.00")))
-    await product_repo.add(Product(category_id=c.id, name="Inactive", price=Decimal("20.00"), is_active=False))
+    await product_repo.add(
+        Product(category_id=c.id, name="Active", price=Decimal("10.00"))
+    )
+    await product_repo.add(
+        Product(
+            category_id=c.id, name="Inactive", price=Decimal("20.00"), is_active=False
+        )
+    )
     await session.commit()
 
     active = await product_repo.list_all(only_active=True)
@@ -109,7 +120,9 @@ async def test_list_all_include_inactive(
     await session.flush()
 
     await product_repo.add(Product(category_id=c.id, name="A", price=Decimal("10.00")))
-    await product_repo.add(Product(category_id=c.id, name="B", price=Decimal("20.00"), is_active=False))
+    await product_repo.add(
+        Product(category_id=c.id, name="B", price=Decimal("20.00"), is_active=False)
+    )
     await session.commit()
 
     all_p = await product_repo.list_all(only_active=False)
@@ -117,7 +130,9 @@ async def test_list_all_include_inactive(
 
 
 @pytest.mark.asyncio
-async def test_list_all_empty(session: AsyncSession, product_repo: PostgresProductsRepository):
+async def test_list_all_empty(
+    session: AsyncSession, product_repo: PostgresProductsRepository
+):
     result = await product_repo.list_all()
     assert result == []
 
@@ -132,7 +147,14 @@ async def test_update(
     await category_repo.add(c)
     await session.flush()
 
-    p = Product(category_id=c.id, name="Old", price=Decimal("10.00"), volume=Decimal("1.000"), weight=Decimal("0.500"), items_in_box=10)
+    p = Product(
+        category_id=c.id,
+        name="Old",
+        price=Decimal("10.00"),
+        volume=Decimal("1.000"),
+        weight=Decimal("0.500"),
+        items_in_box=10,
+    )
     await product_repo.add(p)
     await session.commit()
 

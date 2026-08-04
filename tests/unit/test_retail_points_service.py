@@ -50,8 +50,11 @@ def service(mock_uow, mock_invite_codes, mock_assignments, mock_visits_rules):
 
 # --- create_retail_point ---
 
+
 @pytest.mark.asyncio
-async def test_create_retail_point_success(service, mock_uow, mock_invite_codes, mock_visits_rules):
+async def test_create_retail_point_success(
+    service, mock_uow, mock_invite_codes, mock_visits_rules
+):
     agent_id = uuid4()
     mock_invite_codes.create.return_value = "invite-raw-code"
     dto = CreateRetailPointRequest(name="Store-1", address="ul. Test 1")
@@ -70,7 +73,9 @@ async def test_create_retail_point_success(service, mock_uow, mock_invite_codes,
 
 
 @pytest.mark.asyncio
-async def test_create_retail_point_with_optional_fields(service, mock_uow, mock_invite_codes, mock_visits_rules):
+async def test_create_retail_point_with_optional_fields(
+    service, mock_uow, mock_invite_codes, mock_visits_rules
+):
     agent_id = uuid4()
     mock_invite_codes.create.return_value = "code"
     visits_dto = VisitsDatesDTO(mon=True, wed=True, fri=True)
@@ -100,11 +105,14 @@ async def test_create_retail_point_with_optional_fields(service, mock_uow, mock_
 
 # --- get_by_id ---
 
+
 @pytest.mark.asyncio
 async def test_get_by_id_found(service, mock_uow):
     uid = uuid4()
     mock_uow.retail_points.get_by_id.return_value = RetailPoint(
-        name="X", address="Addr", id=uid,
+        name="X",
+        address="Addr",
+        id=uid,
     )
 
     result = await service.get_by_id(uid)
@@ -121,6 +129,7 @@ async def test_get_by_id_not_found(service, mock_uow):
 
 
 # --- update_retail_point ---
+
 
 @pytest.mark.asyncio
 async def test_update_retail_point_success(service, mock_uow):
@@ -186,11 +195,14 @@ async def test_update_retail_point_not_found(service, mock_uow):
 
 # --- delete_retail_point ---
 
+
 @pytest.mark.asyncio
 async def test_delete_retail_point_success(service, mock_uow):
     uid = uuid4()
     mock_uow.retail_points.get_by_id.return_value = RetailPoint(
-        name="Del", address="D", id=uid,
+        name="Del",
+        address="D",
+        id=uid,
     )
 
     await service.delete_retail_point(uid)
@@ -212,6 +224,7 @@ async def test_delete_retail_point_not_found(service, mock_uow):
 @pytest.mark.asyncio
 async def test_list_by_employee_and_weekday_success(service, mock_uow):
     from app.domain.enums import Weekday
+
     emp_id = uuid4()
     point = RetailPoint(id=uuid4(), name="Mon Point", address="Addr 1")
     mock_uow.retail_points.list_by_employee_and_weekday.return_value = [point]
@@ -225,4 +238,3 @@ async def test_list_by_employee_and_weekday_success(service, mock_uow):
         weekday=Weekday.MONDAY,
         only_active=True,
     )
-

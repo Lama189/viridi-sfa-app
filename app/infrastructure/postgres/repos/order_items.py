@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from sqlalchemy import select, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.order_items import IOrderItemRepository
@@ -9,7 +10,6 @@ from app.infrastructure.postgres.models.order_items import OrderItem as OrderIte
 
 
 class PostgresOrderItemRepository(IOrderItemRepository):
-
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -10,8 +10,8 @@ from httpx import ASGITransport, AsyncClient
 from app.api.dependencies import get_current_user, get_orders_service
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 from app.domain.entities.orders import Order, OrderItem
+from app.domain.enums import EmployeeRole as PGEmployeeRole
 from app.domain.enums import OrderStatus
-from app.infrastructure.postgres.models.enums import EmployeeRole as PGEmployeeRole
 from app.main import app
 
 # ---------------------------------------------------------------------------
@@ -162,8 +162,7 @@ class TestOrdersClientEndpoints:
     @pytest.mark.asyncio
     async def test_get_order_success(self, client, mock_service, mock_client_entity):
         order = _order_response(client_id=mock_client_entity.id)
-        mock_service._uow = MagicMock()
-        mock_service._uow.orders.get_by_id = AsyncMock(return_value=order)
+        mock_service.get_by_id = AsyncMock(return_value=order)
 
         resp = await client.get(f"/api/v1/orders/{order.id}")
         assert resp.status_code == 200
@@ -171,8 +170,7 @@ class TestOrdersClientEndpoints:
 
     @pytest.mark.asyncio
     async def test_get_order_not_found(self, client, mock_service):
-        mock_service._uow = MagicMock()
-        mock_service._uow.orders.get_by_id = AsyncMock(return_value=None)
+        mock_service.get_by_id = AsyncMock(side_effect=ValueError("Order not found"))
 
         resp = await client.get(f"/api/v1/orders/{uuid4()}")
         assert resp.status_code == 404
@@ -180,8 +178,7 @@ class TestOrdersClientEndpoints:
     @pytest.mark.asyncio
     async def test_get_order_forbidden(self, client, mock_service):
         order = _order_response(client_id=uuid4())
-        mock_service._uow = MagicMock()
-        mock_service._uow.orders.get_by_id = AsyncMock(return_value=order)
+        mock_service.get_by_id = AsyncMock(return_value=order)
 
         resp = await client.get(f"/api/v1/orders/{order.id}")
         assert resp.status_code == 403
@@ -193,8 +190,7 @@ class TestOrdersClientEndpoints:
         self, client, mock_service, mock_client_entity
     ):
         order = _order_response(client_id=mock_client_entity.id)
-        mock_service._uow = MagicMock()
-        mock_service._uow.orders.get_by_id = AsyncMock(return_value=order)
+        mock_service.get_by_id = AsyncMock(return_value=order)
         mock_service.cancel = AsyncMock()
 
         resp = await client.delete(f"/api/v1/orders/{order.id}")
@@ -202,8 +198,7 @@ class TestOrdersClientEndpoints:
 
     @pytest.mark.asyncio
     async def test_cancel_order_by_client_not_found(self, client, mock_service):
-        mock_service._uow = MagicMock()
-        mock_service._uow.orders.get_by_id = AsyncMock(return_value=None)
+        mock_service.get_by_id = AsyncMock(side_effect=ValueError("Order not found"))
 
         resp = await client.delete(f"/api/v1/orders/{uuid4()}")
         assert resp.status_code == 404
@@ -211,8 +206,7 @@ class TestOrdersClientEndpoints:
     @pytest.mark.asyncio
     async def test_cancel_order_by_client_forbidden(self, client, mock_service):
         order = _order_response(client_id=uuid4())
-        mock_service._uow = MagicMock()
-        mock_service._uow.orders.get_by_id = AsyncMock(return_value=order)
+        mock_service.get_by_id = AsyncMock(return_value=order)
 
         resp = await client.delete(f"/api/v1/orders/{order.id}")
         assert resp.status_code == 403
@@ -222,8 +216,7 @@ class TestOrdersClientEndpoints:
         self, client, mock_service, mock_client_entity
     ):
         order = _order_response(client_id=mock_client_entity.id)
-        mock_service._uow = MagicMock()
-        mock_service._uow.orders.get_by_id = AsyncMock(return_value=order)
+        mock_service.get_by_id = AsyncMock(return_value=order)
         mock_service.cancel.side_effect = ValueError("Cannot confirm order")
 
         resp = await client.delete(f"/api/v1/orders/{order.id}")
@@ -317,9 +310,20 @@ class TestOrdersStaffEndpoints:
         resp = await client.post(f"/api/v1/orders/{uuid4()}/ship")
         assert resp.status_code == 400
 
-    @pytest.mark.asyncio
-    async def test_ship_order_wrong_status(self, client, mock_service):
-        mock_service.ship.side_effect = ValueError("Cannot confirm order")
+    # --- POST /api/v1/orders/{order_id}/start-assembly ---
 
-        resp = await client.post(f"/api/v1/orders/{uuid4()}/ship")
+    @pytest.mark.asyncio
+    async def test_start_assembly_success(self, client, mock_service):
+        order = _order_with_item(status=OrderStatus.ASSEMBLY_STARTED)
+        mock_service.start_assembly.return_value = order
+
+        resp = await client.post(f"/api/v1/orders/{order.id}/start-assembly")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == OrderStatus.ASSEMBLY_STARTED.value
+
+    @pytest.mark.asyncio
+    async def test_start_assembly_not_found(self, client, mock_service):
+        mock_service.start_assembly.side_effect = ValueError("not found")
+
+        resp = await client.post(f"/api/v1/orders/{uuid4()}/start-assembly")
         assert resp.status_code == 400

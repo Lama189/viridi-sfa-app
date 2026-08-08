@@ -307,10 +307,45 @@ class TestOrderLifecycle:
         order.ship()
         assert order.status == OrderStatus.SHIPPED
 
-    def test_ship_non_confirmed_raises(self):
+    def test_start_assembly_pending(self):
         order = self._make_order_with_item()
-        with pytest.raises(ValueError, match="confirmed"):
-            order.ship()
+        order.start_assembly()
+        assert order.status == OrderStatus.ASSEMBLY_STARTED
+
+    def test_start_assembly_confirmed(self):
+        order = self._make_order_with_item()
+        order.confirm()
+        order.start_assembly()
+        assert order.status == OrderStatus.ASSEMBLY_STARTED
+
+    def test_start_assembly_no_items_raises(self):
+        order = Order(
+            warehouse_id=uuid4(),
+            created_by_id=uuid4(),
+            retail_point_id=uuid4(),
+        )
+        with pytest.raises(ValueError, match="at least one item"):
+            order.start_assembly()
+
+    def test_start_assembly_shipped_raises(self):
+        order = self._make_order_with_item()
+        order.confirm()
+        order.ship()
+        with pytest.raises(ValueError, match="Cannot start assembly"):
+            order.start_assembly()
+
+    def test_complete_assembly(self):
+        order = self._make_order_with_item()
+        order.start_assembly()
+        order.complete_assembly()
+        assert order.status == OrderStatus.ASSEMBLED
+
+    def test_deliver_shipped(self):
+        order = self._make_order_with_item()
+        order.confirm()
+        order.ship()
+        order.deliver()
+        assert order.status == OrderStatus.DELIVERED
 
     def test_cancel_pending(self):
         order = self._make_order_with_item()
@@ -327,7 +362,15 @@ class TestOrderLifecycle:
         order = self._make_order_with_item()
         order.confirm()
         order.ship()
-        with pytest.raises(ValueError, match="Shipped"):
+        with pytest.raises(ValueError, match="cannot be cancelled"):
+            order.cancel()
+
+    def test_cancel_delivered_raises(self):
+        order = self._make_order_with_item()
+        order.confirm()
+        order.ship()
+        order.deliver()
+        with pytest.raises(ValueError, match="cannot be cancelled"):
             order.cancel()
 
     def test_cancel_already_cancelled_raises(self):

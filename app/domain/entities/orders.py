@@ -90,16 +90,40 @@ class Order:
         self.status = OrderStatus.CONFIRMED
         self._touch()
 
+    def start_assembly(self) -> None:
+        if self.status not in (OrderStatus.PENDING, OrderStatus.CONFIRMED):
+            raise ValueError(f"Cannot start assembly for order in status '{self.status}'")
+
+        if not self.items:
+            raise ValueError("Order must contain at least one item")
+
+        self.status = OrderStatus.ASSEMBLY_STARTED
+        self._touch()
+
+    def complete_assembly(self) -> None:
+        if self.status != OrderStatus.ASSEMBLY_STARTED:
+            raise ValueError(f"Cannot complete assembly for order in status '{self.status}'")
+
+        self.status = OrderStatus.ASSEMBLED
+        self._touch()
+
     def ship(self) -> None:
-        if self.status != OrderStatus.CONFIRMED:
-            raise ValueError("Only confirmed orders can be shipped")
+        if self.status not in (OrderStatus.CONFIRMED, OrderStatus.ASSEMBLY_STARTED, OrderStatus.ASSEMBLED):
+            raise ValueError(f"Cannot ship order in status '{self.status}'")
 
         self.status = OrderStatus.SHIPPED
         self._touch()
 
+    def deliver(self) -> None:
+        if self.status not in (OrderStatus.CONFIRMED, OrderStatus.ASSEMBLY_STARTED, OrderStatus.ASSEMBLED, OrderStatus.SHIPPED):
+            raise ValueError(f"Cannot deliver order in status '{self.status}'")
+
+        self.status = OrderStatus.DELIVERED
+        self._touch()
+
     def cancel(self) -> None:
-        if self.status == OrderStatus.SHIPPED:
-            raise ValueError("Shipped order cannot be cancelled")
+        if self.status in (OrderStatus.SHIPPED, OrderStatus.DELIVERED):
+            raise ValueError(f"Order in status '{self.status}' cannot be cancelled")
 
         if self.status == OrderStatus.CANCELLED:
             raise ValueError("Order is already cancelled")

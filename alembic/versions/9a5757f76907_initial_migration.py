@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 99d68b0b608c
+Revision ID: 9a5757f76907
 Revises: 
-Create Date: 2026-08-03 11:22:52.741202
+Create Date: 2026-08-08 05:27:36.035205
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '99d68b0b608c'
+revision: str = '9a5757f76907'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -219,7 +219,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('employee_id', sa.UUID(), nullable=False),
     sa.Column('retail_point_id', sa.UUID(), nullable=False),
-    sa.Column('status', sa.Enum('IN_PROGRESS', 'COMPLETED', 'SKIPPED', name='visit_status'), nullable=False),
+    sa.Column('status', sa.Enum('IN_PROGRESS', 'COMPLETED', 'CANCELLED', name='visit_status'), nullable=False),
     sa.Column('started_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('finished_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ondelete='RESTRICT'),
@@ -232,7 +232,7 @@ def upgrade() -> None:
     sa.Column('created_by_id', sa.UUID(), nullable=False),
     sa.Column('retail_point_id', sa.UUID(), nullable=False),
     sa.Column('visit_id', sa.UUID(), nullable=True),
-    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'SHIPPED', 'CANCELLED', name='order_status'), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'ASSEMBLY_STARTED', 'ASSEMBLED', 'SHIPPED', 'DELIVERED', 'CANCELLED', name='order_status'), nullable=False),
     sa.Column('total_amount', sa.Numeric(precision=15, scale=2), nullable=False),
     sa.Column('total_volume', sa.Numeric(precision=10, scale=3), nullable=False),
     sa.ForeignKeyConstraint(['created_by_id'], ['clients.id'], ondelete='RESTRICT'),

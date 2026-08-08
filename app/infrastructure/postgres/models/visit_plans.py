@@ -6,8 +6,8 @@ from sqlalchemy import Date, Enum, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.enums import VisitPlanStatus
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.infrastructure.postgres.models.enums import VisitPlanStatus
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee

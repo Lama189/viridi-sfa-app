@@ -8,8 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.dependencies import get_current_user, get_retail_points_service
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.retail_points import RetailPoint
-from app.domain.enums import ClientType
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import ClientType, EmployeeRole
 from app.main import app
 
 

@@ -11,8 +11,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.enums import EmployeeRole
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.infrastructure.postgres.models.enums import EmployeeRole
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.retail_point_assignments import (

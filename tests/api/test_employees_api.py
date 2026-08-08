@@ -12,7 +12,7 @@ from app.api.dependencies import (
 )
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.employees import Employee
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 from app.main import app
 
 

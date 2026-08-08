@@ -14,7 +14,10 @@ def test_client_type_values():
 def test_order_status_values():
     assert OrderStatus.PENDING == "pending"
     assert OrderStatus.CONFIRMED == "confirmed"
+    assert OrderStatus.ASSEMBLY_STARTED == "assembly_started"
+    assert OrderStatus.ASSEMBLED == "assembled"
     assert OrderStatus.SHIPPED == "shipped"
+    assert OrderStatus.DELIVERED == "delivered"
     assert OrderStatus.CANCELLED == "cancelled"
 
 

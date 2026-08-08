@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from app.domain.entities.employees import Employee
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 
 
 def test_employee_default_values():

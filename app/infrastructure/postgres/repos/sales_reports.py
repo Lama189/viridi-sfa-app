@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
 from app.application.interfaces.repos.sales_reports import ISalesReportRepository
+from app.domain.enums import OrderStatus
 from app.infrastructure.postgres.models.categories import Category
-from app.infrastructure.postgres.models.enums import OrderStatus
 from app.infrastructure.postgres.models.order_items import OrderItem
 from app.infrastructure.postgres.models.orders import Order
 from app.infrastructure.postgres.models.products import Product

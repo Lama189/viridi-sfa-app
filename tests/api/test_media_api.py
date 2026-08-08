@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.dependencies import get_current_user, get_media_service
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.media import MediaFile
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 from app.main import app
 
 

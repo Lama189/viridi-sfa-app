@@ -24,8 +24,12 @@ class ClientType(StrEnum):
 class OrderStatus(StrEnum):
     PENDING = "pending"
     CONFIRMED = "confirmed"
+    ASSEMBLY_STARTED = "assembly_started"
+    ASSEMBLED = "assembled"
     SHIPPED = "shipped"
+    DELIVERED = "delivered"
     CANCELLED = "cancelled"
+
 
 
 class StockTransactionType(StrEnum):

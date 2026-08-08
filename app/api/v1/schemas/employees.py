@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 
 
 class EmployeeCreate(BaseModel):

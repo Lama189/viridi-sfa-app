@@ -5,8 +5,8 @@ from sqlalchemy import CheckConstraint, Enum, ForeignKey, Integer, UniqueConstra
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.enums import VisitPlanItemStatus
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.infrastructure.postgres.models.enums import VisitPlanItemStatus
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.retail_points import RetailPoint

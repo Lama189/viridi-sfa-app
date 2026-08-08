@@ -1,6 +1,10 @@
 from aio_pika.abc import AbstractIncomingMessage
 
-from telegram_bot.events.order_events import OrderCreatedEvent, deserialize_event
+from telegram_bot.events.order_events import (
+    OrderAssemblyStartedEvent,
+    OrderCreatedEvent,
+    deserialize_event,
+)
 from telegram_bot.services.notifications import NotificationService
 
 
@@ -13,7 +17,7 @@ class OrderEventsConsumer:
 
     async def handle(self, message: AbstractIncomingMessage) -> None:
         async with message.process():
-            event = deserialize_event(message.body, OrderCreatedEvent)
+            event = deserialize_event(message.body)
 
             event_type = getattr(event, "event_type", None)
             if not event_type and isinstance(event, dict):
@@ -25,5 +29,9 @@ class OrderEventsConsumer:
             if not event_type and message.routing_key:
                 event_type = message.routing_key
 
-            if event_type == "order.created" or isinstance(event, OrderCreatedEvent):
+            if event_type == "order.assembly_started" or isinstance(
+                event, OrderAssemblyStartedEvent
+            ):
+                await self._notifications.order_assembly_started(event)
+            elif event_type == "order.created" or isinstance(event, OrderCreatedEvent):
                 await self._notifications.order_created(event)

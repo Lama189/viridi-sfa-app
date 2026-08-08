@@ -16,8 +16,7 @@ from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.visit_debts import VisitDebt
 from app.domain.entities.visit_media import VisitMedia
 from app.domain.entities.visits import Visit
-from app.domain.enums import VisitStatus
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole, VisitStatus
 from app.main import app
 
 

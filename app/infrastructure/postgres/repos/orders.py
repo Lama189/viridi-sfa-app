@@ -5,9 +5,10 @@ from uuid import UUID
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.application.interfaces.repos.orders import IOrderRepository
-from app.domain.entities.orders import Order
+from app.domain.entities.orders import Order, OrderItem
 from app.infrastructure.postgres.models.orders import Order as OrderModel
 from app.infrastructure.postgres.models.visits import Visit as VisitModel
 
@@ -23,7 +24,9 @@ class PostgresOrderRepository(IOrderRepository):
 
     async def get_by_id(self, order_id: UUID) -> Order | None:
         result = await self._session.execute(
-            select(OrderModel).where(OrderModel.id == order_id)
+            select(OrderModel)
+            .options(selectinload(OrderModel.items))
+            .where(OrderModel.id == order_id)
         )
 
         model = result.scalar_one_or_none()
@@ -34,14 +37,18 @@ class PostgresOrderRepository(IOrderRepository):
 
     async def list_by_client(self, client_id: UUID) -> list[Order]:
         result = await self._session.execute(
-            select(OrderModel).where(OrderModel.created_by_id == client_id)
+            select(OrderModel)
+            .options(selectinload(OrderModel.items))
+            .where(OrderModel.created_by_id == client_id)
         )
 
         return [self._to_domain(m) for m in result.scalars().all()]
 
     async def list_by_retail_point(self, retail_point_id: UUID) -> list[Order]:
         result = await self._session.execute(
-            select(OrderModel).where(OrderModel.retail_point_id == retail_point_id)
+            select(OrderModel)
+            .options(selectinload(OrderModel.items))
+            .where(OrderModel.retail_point_id == retail_point_id)
         )
 
         return [self._to_domain(m) for m in result.scalars().all()]
@@ -88,6 +95,17 @@ class PostgresOrderRepository(IOrderRepository):
         return count or 0, Decimal(str(amount or "0.00"))
 
     def _to_domain(self, model: OrderModel) -> Order:
+        items = [
+            OrderItem(
+                order_id=item.order_id,
+                product_id=item.product_id,
+                quantity=item.quantity,
+                price_at_order=item.price_at_order,
+                total_volume=item.total_volume,
+                id=item.id,
+            )
+            for item in getattr(model, "items", [])
+        ]
         return Order(
             warehouse_id=model.warehouse_id,
             created_by_id=model.created_by_id,
@@ -97,6 +115,7 @@ class PostgresOrderRepository(IOrderRepository):
             status=model.status,
             total_amount=model.total_amount,
             total_volume=model.total_volume,
+            items=items,
         )
 
     def _to_model(self, order: Order) -> OrderModel:

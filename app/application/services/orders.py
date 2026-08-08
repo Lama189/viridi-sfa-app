@@ -71,6 +71,18 @@ class OrdersService:
 
         return {product.id: product for product in products}
 
+    async def get_by_id(self, order_id: UUID) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
+        return order
+
+    async def list_by_client(self, client_id: UUID) -> list[Order]:
+        return await self._uow.orders.list_by_client(client_id)
+
+    async def list_by_retail_point(self, retail_point_id: UUID) -> list[Order]:
+        return await self._uow.orders.list_by_retail_point(retail_point_id)
+
     async def create(self, client_id: UUID, dto: CreateOrderRequest) -> Order:
         await self._validate(dto.warehouse_id, client_id, dto.retail_point_id)
 
@@ -124,6 +136,7 @@ class OrdersService:
             aggregate_type=AggregateType.ORDER,
             aggregate_id=order.id,
             payload={
+                "event_type": OrderEventType.CREATED,
                 "order_id": str(order.id),
                 "warehouse_id": str(order.warehouse_id),
                 "retail_point_id": str(order.retail_point_id),
@@ -176,8 +189,8 @@ class OrdersService:
         if order is None:
             raise ValueError(f"Order with ID {order_id} not found")
 
-        if order.status != OrderStatus.PENDING:
-            raise ValueError(f"Cannot cancel order with ID {order_id}")
+        if order.status in (OrderStatus.SHIPPED, OrderStatus.DELIVERED):
+            raise ValueError(f"Cannot cancel order in status {order.status}")
 
         batch_items = [
             StockBatchItemDTO(
@@ -200,22 +213,149 @@ class OrdersService:
 
         order.cancel()
 
+        event = OutboxMessage.create(
+            event_type=OrderEventType.CANCELLED,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "event_type": OrderEventType.CANCELLED,
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(order.created_by_id),
+            },
+        )
+        await self._uow.outbox.add(event)
+
         await self._uow.orders.update(order)
         await self._uow.commit()
 
         return order
 
-    async def ship(self, order_id: UUID) -> Order:
+    async def start_assembly(
+        self,
+        order_id: UUID,
+        employee_id: UUID | None = None,
+    ) -> Order:
         order = await self._uow.orders.get_by_id(order_id)
         if order is None:
             raise ValueError(f"Order with ID {order_id} not found")
 
-        if order.status != OrderStatus.CONFIRMED:
-            raise ValueError(f"Cannot ship order with ID {order_id}")
+        order.start_assembly()
+
+        await self._uow.orders.update(order)
+
+        event = OutboxMessage.create(
+            event_type=OrderEventType.ASSEMBLY_STARTED,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "event_type": OrderEventType.ASSEMBLY_STARTED,
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(order.created_by_id),
+                "employee_id": str(employee_id) if employee_id is not None else None,
+            },
+        )
+
+        await self._uow.outbox.add(event)
+        await self._uow.commit()
+
+        return order
+
+    async def complete_assembly(
+        self,
+        order_id: UUID,
+        employee_id: UUID | None = None,
+    ) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
+
+        order.complete_assembly()
+
+        await self._uow.orders.update(order)
+
+        event = OutboxMessage.create(
+            event_type=OrderEventType.ASSEMBLED,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "event_type": OrderEventType.ASSEMBLED,
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(order.created_by_id),
+                "employee_id": str(employee_id) if employee_id is not None else None,
+            },
+        )
+
+        await self._uow.outbox.add(event)
+        await self._uow.commit()
+
+        return order
+
+    async def ship(
+        self,
+        order_id: UUID,
+        employee_id: UUID | None = None,
+    ) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
 
         order.ship()
 
         await self._uow.orders.update(order)
+
+        event = OutboxMessage.create(
+            event_type=OrderEventType.TAKEN_BY_AGENT,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "event_type": OrderEventType.TAKEN_BY_AGENT,
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(order.created_by_id),
+                "employee_id": str(employee_id) if employee_id is not None else None,
+            },
+        )
+
+        await self._uow.outbox.add(event)
+        await self._uow.commit()
+
+        return order
+
+    async def deliver(
+        self,
+        order_id: UUID,
+        employee_id: UUID | None = None,
+    ) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
+
+        order.deliver()
+
+        await self._uow.orders.update(order)
+
+        event = OutboxMessage.create(
+            event_type=OrderEventType.DELIVERED,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "event_type": OrderEventType.DELIVERED,
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(order.created_by_id),
+                "employee_id": str(employee_id) if employee_id is not None else None,
+            },
+        )
+
+        await self._uow.outbox.add(event)
         await self._uow.commit()
 
         return order

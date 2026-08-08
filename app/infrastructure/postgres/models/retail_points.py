@@ -13,8 +13,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.enums import ClientType
 from app.infrastructure.postgres.models.base_model import BaseModel
-from app.infrastructure.postgres.models.enums import ClientType
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee

@@ -13,7 +13,7 @@ from app.api.v1.schemas.orders import (
     OrderResponse,
 )
 from app.application.services.orders import OrdersService
-from app.domain.entities.auth import AuthenticatedClient
+from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 
@@ -38,6 +38,17 @@ async def create_order(
 
 
 @router.get(
+    "",
+    response_model=list[OrderResponse],
+)
+async def list_my_orders(
+    client: Annotated[AuthenticatedClient, Depends(get_current_client)],
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+):
+    return await service.list_by_client(client.id)
+
+
+@router.get(
     "/{order_id}",
     response_model=OrderResponse,
 )
@@ -46,18 +57,19 @@ async def get_order(
     client: Annotated[AuthenticatedClient, Depends(get_current_client)],
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
-    order = await service._uow.orders.get_by_id(order_id)
-    if order is None:
+    try:
+        order = await service.get_by_id(order_id)
+        if order.created_by_id != client.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not your order",
+            )
+        return order
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Order {order_id} not found",
+            detail=str(e),
         )
-    if order.created_by_id != client.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not your order",
-        )
-    return order
 
 
 @router.delete(
@@ -70,12 +82,7 @@ async def cancel_order(
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:
-        order = await service._uow.orders.get_by_id(order_id)
-        if order is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Order {order_id} not found",
-            )
+        order = await service.get_by_id(order_id)
         if order.created_by_id != client.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -83,6 +90,11 @@ async def cancel_order(
             )
         await service.cancel(order_id)
     except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
@@ -136,6 +148,60 @@ async def ship_order(
 ):
     try:
         return await service.ship(order_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    "/{order_id}/start-assembly",
+    response_model=OrderResponse,
+)
+async def start_order_assembly(
+    order_id: UUID,
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
+):
+    try:
+        return await service.start_assembly(order_id, employee.id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    "/{order_id}/assemble",
+    response_model=OrderResponse,
+)
+async def assemble_order(
+    order_id: UUID,
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
+):
+    try:
+        return await service.complete_assembly(order_id, employee.id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    "/{order_id}/deliver",
+    response_model=OrderResponse,
+)
+async def deliver_order(
+    order_id: UUID,
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
+):
+    try:
+        return await service.deliver(order_id, employee.id)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

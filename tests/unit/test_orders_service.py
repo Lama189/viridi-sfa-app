@@ -81,6 +81,49 @@ def _create_dto(warehouse_id, retail_point_id, items):
 
 
 # ---------------------------------------------------------------------------
+# read methods
+# ---------------------------------------------------------------------------
+
+
+class TestOrdersServiceRead:
+    @pytest.mark.asyncio
+    async def test_get_by_id_success(self, service, mock_uow):
+        oid = uuid4()
+        order = _pending_order_with_item(oid)
+        mock_uow.orders.get_by_id.return_value = order
+
+        res = await service.get_by_id(oid)
+        assert res == order
+        mock_uow.orders.get_by_id.assert_awaited_once_with(oid)
+
+    @pytest.mark.asyncio
+    async def test_get_by_id_not_found(self, service, mock_uow):
+        mock_uow.orders.get_by_id.return_value = None
+        with pytest.raises(ValueError, match="not found"):
+            await service.get_by_id(uuid4())
+
+    @pytest.mark.asyncio
+    async def test_list_by_client(self, service, mock_uow):
+        cid = uuid4()
+        orders = [_pending_order_with_item()]
+        mock_uow.orders.list_by_client.return_value = orders
+
+        res = await service.list_by_client(cid)
+        assert res == orders
+        mock_uow.orders.list_by_client.assert_awaited_once_with(cid)
+
+    @pytest.mark.asyncio
+    async def test_list_by_retail_point(self, service, mock_uow):
+        rpid = uuid4()
+        orders = [_pending_order_with_item()]
+        mock_uow.orders.list_by_retail_point.return_value = orders
+
+        res = await service.list_by_retail_point(rpid)
+        assert res == orders
+        mock_uow.orders.list_by_retail_point.assert_awaited_once_with(rpid)
+
+
+# ---------------------------------------------------------------------------
 # create
 # ---------------------------------------------------------------------------
 
@@ -272,10 +315,10 @@ class TestOrdersServiceCancel:
             await service.cancel(uuid4())
 
     @pytest.mark.asyncio
-    async def test_cancel_non_pending(self, service, mock_uow, mock_stocks):
+    async def test_cancel_shipped(self, service, mock_uow, mock_stocks):
         oid = uuid4()
         order = _pending_order_with_item(oid)
-        order.status = OrderStatus.CONFIRMED
+        order.status = OrderStatus.SHIPPED
         mock_uow.orders.get_by_id.return_value = order
         with pytest.raises(ValueError, match="Cannot cancel"):
             await service.cancel(oid)
@@ -312,6 +355,32 @@ class TestOrdersServiceShip:
         mock_uow.orders.get_by_id.return_value = order
         with pytest.raises(ValueError, match="Cannot ship"):
             await service.ship(oid)
+
+
+# ---------------------------------------------------------------------------
+# start_assembly
+# ---------------------------------------------------------------------------
+
+
+class TestOrdersServiceStartAssembly:
+    @pytest.mark.asyncio
+    async def test_start_assembly_success(self, service, mock_uow):
+        oid = uuid4()
+        emp_id = uuid4()
+        order = _pending_order_with_item(oid)
+        mock_uow.orders.get_by_id.return_value = order
+
+        result = await service.start_assembly(oid, employee_id=emp_id)
+        assert result.status == OrderStatus.ASSEMBLY_STARTED
+        mock_uow.orders.update.assert_awaited_once_with(order)
+        mock_uow.outbox.add.assert_awaited_once()
+        mock_uow.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_start_assembly_not_found(self, service, mock_uow):
+        mock_uow.orders.get_by_id.return_value = None
+        with pytest.raises(ValueError, match="not found"):
+            await service.start_assembly(uuid4())
 
 
 # ---------------------------------------------------------------------------

@@ -7,11 +7,11 @@ from sqlalchemy import ForeignKey, Index, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.infrastructure.postgres.models.base_model import BaseModel
-from app.infrastructure.postgres.models.enums import (
+from app.domain.enums import (
     StockTransactionType,
     TransactionActorType,
 )
+from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.products import Product

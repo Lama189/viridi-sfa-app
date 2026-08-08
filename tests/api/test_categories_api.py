@@ -8,7 +8,7 @@ from httpx import ASGITransport, AsyncClient
 from app.api.dependencies import get_categories_service, get_current_user
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.inventory import Category
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 from app.main import app
 
 

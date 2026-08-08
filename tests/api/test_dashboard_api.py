@@ -16,7 +16,7 @@ from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
 from app.application.interfaces.services.dashboard import EmployeeDashboard
 from app.core.exceptions import VisitPlanNotFoundError
 from app.domain.entities.auth import AuthenticatedEmployee
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 from app.main import app
 
 

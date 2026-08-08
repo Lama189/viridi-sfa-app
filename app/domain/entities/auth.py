@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.domain.entities.clients import Client
 from app.domain.entities.employees import Employee
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 
 
 @dataclass(slots=True, frozen=True)

@@ -5,8 +5,8 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domain.enums import OrderStatus, VisitStatus
 from app.infrastructure.postgres.models.categories import Category
-from app.infrastructure.postgres.models.enums import OrderStatus, VisitStatus
 from app.infrastructure.postgres.models.order_items import OrderItem
 from app.infrastructure.postgres.models.orders import Order
 from app.infrastructure.postgres.models.products import Product

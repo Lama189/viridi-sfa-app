@@ -6,7 +6,7 @@ import pytest
 from app.api.v1.schemas.employees import EmployeeCreate, EmployeeUpdate
 from app.application.services.employees import EmployeesService
 from app.domain.entities.employees import Employee
-from app.infrastructure.postgres.models.enums import EmployeeRole
+from app.domain.enums import EmployeeRole
 
 
 @pytest.fixture

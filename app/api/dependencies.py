@@ -13,6 +13,7 @@ from app.application.interfaces.object_storage import IObjectStorage
 from app.application.interfaces.services.retail_point_assignments import (
     IRetailPointAssignmentService,
 )
+from app.application.interfaces.services.routes_generator import IRouteGenerationService
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.services.territories import ITerritoryClusteringService
 from app.application.interfaces.services.visit_debts import IVisitDebtService
@@ -251,7 +252,7 @@ async def get_routes_generator_service(
         IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)
     ],
     visit_plans_service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
-) -> RouteGenerationService:
+) -> IRouteGenerationService:
     return RouteGenerationService(
         uow=uow,
         clustering_service=clustering_service,

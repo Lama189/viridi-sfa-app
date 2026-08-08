@@ -161,6 +161,24 @@ services:
     networks:
       - app_network
 
+  route-scheduler-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: viridi_route_scheduler_worker
+    command: python -m app.workers.route_scheduler.runner
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
+      TZ: Asia/Tashkent
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app_network
+
   redis:
     image: redis:7-alpine
     container_name: viridi_redis

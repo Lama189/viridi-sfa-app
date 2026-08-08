@@ -1,10 +1,10 @@
 import asyncio
 
-from app.container import container
+from app.core.container import container
 from app.workers.outbox.worker import OutboxWorker
 
 
-async def runner() -> None:
+async def run() -> None:
     try:
         uow = container.uow()
         publisher = await container.rabbitmq_publisher()
@@ -18,4 +18,4 @@ async def runner() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(runner())
+    asyncio.run(run())

@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from app.application.interfaces.services.retail_point_assignments import (
     IRetailPointAssignmentService,
 )
+from app.application.interfaces.services.routes_generator import IRouteGenerationService
 from app.application.interfaces.services.territories import ITerritoryClusteringService
 from app.application.interfaces.services.visit_plans import IVisitPlanService
 from app.application.interfaces.uow import IUnitOfWork
@@ -16,7 +17,7 @@ from app.domain.entities.territories import TerritoryCluster
 from app.domain.enums import EmployeeRole
 
 
-class RouteGenerationService:
+class RouteGenerationService(IRouteGenerationService):
     def __init__(
         self,
         uow: IUnitOfWork,

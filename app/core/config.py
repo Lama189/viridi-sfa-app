@@ -28,6 +28,16 @@ class Settings(BaseSettings):
     )
 
 
+class RouteScheluderWorkerConfig:
+    day_of_week="sun"
+    hour=23
+    minute=0
+
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+@lru_cache
+def get_scheluder_worker_config() -> RouteScheluderWorkerConfig:
+    return RouteScheluderWorkerConfig()

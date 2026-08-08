@@ -14,6 +14,8 @@ from app.core.exceptions import (
     MediaNotFoundError,
     MembershipAlreadyExistsError,
     MembershipNotFoundError,
+    NoActiveAgentsFoundError,
+    NoActiveRetailPointsError,
     ProductInactiveError,
     ProductNotFoundError,
     RetailPointAlreadyExistsError,
@@ -25,6 +27,7 @@ from app.core.exceptions import (
     RetailPointNotFoundError,
     StockAlreadyExistsError,
     StockNotFoundError,
+    TerritoryClustersNotBuiltError,
     UserAlreadyExistsError,
     UserNotActiveError,
     UserNotFoundError,
@@ -77,6 +80,9 @@ ERROR_MAPPING = {
     InsufficientStockError: (400, "Insufficient stock"),
     InsufficientReservedStockError: (400, "Insufficient reserved stock"),
     InsufficientReservationError: (400, "Insufficient reservation"),
+    NoActiveAgentsFoundError: (422, "No active agents found"),
+    NoActiveRetailPointsError: (422, "No active retail points found"),
+    TerritoryClustersNotBuiltError: (422, "Failed to build territory clusters"),
 }
 
 

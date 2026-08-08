@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, status
 from app.api.dependencies import (
     allow_admin,
     get_current_employee,
+    get_routes_generator_service,
     get_visit_plans_service,
 )
 from app.api.v1.schemas.visit_plans import (
@@ -14,6 +15,7 @@ from app.api.v1.schemas.visit_plans import (
     VisitPlanItemRetailPointResponse,
     VisitPlanResponse,
 )
+from app.application.interfaces.services.routes_generator import IRouteGenerationService
 from app.application.services.visit_plans import VisitPlanService
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.visit_plans import VisitPlan
@@ -85,3 +87,14 @@ async def generate_visit_plan(
 ):
     plan = await service.generate_for_employee(dto.employee_id, dto.plan_date)
     return await _to_response(service, plan)
+
+
+@router.post(
+    path="/generate-routes",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(allow_admin)],
+)
+async def generate_routes(
+    service: Annotated[IRouteGenerationService, Depends(get_routes_generator_service)],
+) -> None:
+    await service.generate()

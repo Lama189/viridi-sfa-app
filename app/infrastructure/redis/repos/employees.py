@@ -1,4 +1,3 @@
-import logging
 from uuid import UUID
 
 from pydantic import TypeAdapter, ValidationError
@@ -6,10 +5,11 @@ from redis.asyncio import Redis, RedisError
 
 from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
 from app.core.config import get_settings
+from app.core.observability.logging import logger
 from app.domain.entities.auth import AuthenticatedEmployee
 
 settings = get_settings()
-logger = logging.getLogger(__name__)
+
 
 employee_adapter = TypeAdapter(AuthenticatedEmployee)
 

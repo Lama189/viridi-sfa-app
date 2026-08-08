@@ -1,3 +1,8 @@
+from collections.abc import AsyncGenerator
+
+from redis.asyncio import Redis
+
+from app.application.interfaces.cache.rate_limiter import IRateLimiter
 from app.application.interfaces.services.retail_point_assignments import (
     IRetailPointAssignmentService,
 )
@@ -16,6 +21,8 @@ from app.infrastructure.postgres.session import create_session_factory
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
 from app.infrastructure.rabbitmq.connection import RabbitMQConnectionManager
 from app.infrastructure.rabbitmq.publisher import RabbitMQPublisher
+from app.infrastructure.redis.client import get_redis_client
+from app.infrastructure.redis.repos.rate_limiter import RadisRateLimiter
 
 
 class Container:
@@ -59,7 +66,13 @@ class Container:
             assignments_service=self.retail_point_assignment_service(uow),
             visit_plans_service=self.visit_plan_service(uow)
         )
-    
+
+    def redis_client(self) -> AsyncGenerator[Redis]:
+        return get_redis_client()
+
+    def rate_limiter(self, redis_client: Redis) -> IRateLimiter:
+        return RadisRateLimiter(client=redis_client)
+
     async def close(self) -> None:
         await self._rabbitmq.close()
 

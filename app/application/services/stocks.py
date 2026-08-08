@@ -166,6 +166,7 @@ class StockService(IStockService):
             )
             stock_operations_total.labels(operation="create_stock").inc()
             return stock
+        
         except Exception as exc:
             logger.error(
                 "Failed to create stock",
@@ -212,6 +213,7 @@ class StockService(IStockService):
             stock_operations_total.labels(operation="add_stock").inc()
             stock_operation_units_total.labels(operation="add_stock").inc(dto.quantity)
             return stock
+        
         except Exception as exc:
             logger.error(
                 "Failed to add stock",
@@ -256,6 +258,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
+        
         except Exception as exc:
             logger.error(
                 "Failed to reserve stock",
@@ -322,6 +325,7 @@ class StockService(IStockService):
                     operation="reserve_stocks_batch"
                 ).inc(units)
             return updated_stocks
+        
         except Exception as exc:
             logger.error(
                 "Failed to reserve stocks batch",
@@ -365,6 +369,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
+        
         except Exception as exc:
             logger.error(
                 "Failed to release stock reservation",
@@ -436,6 +441,7 @@ class StockService(IStockService):
                     operation="release_reservations_batch"
                 ).inc(units)
             return updated_stocks
+        
         except Exception as exc:
             logger.error(
                 "Failed to release stock reservations batch",
@@ -480,6 +486,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
+        
         except Exception as exc:
             logger.error(
                 "Failed to confirm sale",
@@ -546,6 +553,7 @@ class StockService(IStockService):
                     units
                 )
             return updated_stocks
+        
         except Exception as exc:
             logger.error(
                 "Failed to confirm sales batch",
@@ -587,6 +595,7 @@ class StockService(IStockService):
             stock_operations_total.labels(operation="write_off").inc()
             stock_operation_units_total.labels(operation="write_off").inc(dto.quantity)
             return stock
+        
         except Exception as exc:
             logger.error(
                 "Failed to write off stock",
@@ -630,6 +639,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
+        
         except Exception as exc:
             logger.error(
                 "Failed to return stock",
@@ -639,5 +649,66 @@ class StockService(IStockService):
             )
             stock_operation_failures_total.labels(
                 operation="return_stock", reason=self._map_exception_to_reason(exc)
+            ).inc()
+            raise
+
+    async def list_transactions(
+        self,
+        warehouse_id: UUID | None = None,
+        product_id: UUID | None = None,
+        reference_id: UUID | None = None,
+    ) -> list[StockTransaction]:
+        if reference_id is not None:
+            return await self._uow.stock_transactions.list_by_reference(reference_id)
+        if product_id is not None:
+            return await self._uow.stock_transactions.list_by_product(product_id)
+        if warehouse_id is not None:
+            return await self._uow.stock_transactions.list_by_warehouse(warehouse_id)
+        return await self._uow.stock_transactions.list_all()
+
+    async def adjust_stock(
+        self,
+        warehouse_id: UUID,
+        product_id: UUID,
+        new_quantity: int,
+        actor_id: UUID | None = None,
+        reference_id: UUID | None = None,
+    ) -> Stock:
+        try:
+            await self._validate(warehouse_id, product_id)
+            stock = await self._get_stock_for_update(warehouse_id, product_id)
+            delta = stock.adjust(new_quantity)
+
+            await self._uow.stocks.update(stock)
+            await self._create_transaction(
+                stock=stock,
+                quantity_delta=delta,
+                transaction_type=StockTransactionType.ADJUSTMENT,
+                actor_type=TransactionActorType.EMPLOYEE,
+                created_by_id=actor_id,
+                reference_type=StockReferenceType.INVENTORY,
+                reference_id=reference_id,
+            )
+            await self._uow.commit()
+
+            logger.info(
+                "Stock successfully adjusted",
+                warehouse_id=str(stock.warehouse_id),
+                product_id=str(stock.product_id),
+                new_quantity=stock.quantity,
+                delta=delta,
+            )
+            stock_operations_total.labels(operation="adjust_stock").inc()
+            return stock
+        
+        except Exception as exc:
+            logger.error(
+                "Failed to adjust stock",
+                warehouse_id=str(warehouse_id),
+                product_id=str(product_id),
+                error=str(exc),
+            )
+            stock_operation_failures_total.labels(
+                operation="adjust_stock", reason=self._map_exception_to_reason(exc)
             ).inc()
             raise

@@ -183,3 +183,50 @@ async def test_list_retail_points_by_weekday(client, mock_service, mock_admin_em
         employee_id=mock_admin_employee.id,
         weekday=Weekday.MONDAY,
     )
+
+
+@pytest.mark.asyncio
+async def test_list_retail_point_debts(client):
+    from decimal import Decimal
+
+    from app.api.dependencies import get_visit_debts_service
+    from app.domain.entities.visit_debts import VisitDebt
+
+    mock_debt_service = AsyncMock()
+    point_id = uuid4()
+    debt = VisitDebt(visit_id=uuid4(), amount=Decimal("150000.00"), comment="Unpaid invoice")
+    mock_debt_service.list_by_retail_point.return_value = [debt]
+
+    app.dependency_overrides[get_visit_debts_service] = lambda: mock_debt_service
+
+    resp = await client.get(f"/api/v1/retail_points/{point_id}/debts")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["amount"] == "150000.00"
+    mock_debt_service.list_by_retail_point.assert_called_once_with(point_id)
+
+
+@pytest.mark.asyncio
+async def test_assign_agent_to_retail_point(client):
+    from app.api.dependencies import get_retail_point_assignment_service
+    from app.domain.entities.retail_point_assignments import RetailPointAssignment
+
+    mock_assign_service = AsyncMock()
+    point_id = uuid4()
+    agent_id = uuid4()
+    assignment = RetailPointAssignment(id=uuid4(), retail_point_id=point_id, employee_id=agent_id)
+    mock_assign_service.assign_employee.return_value = assignment
+
+    app.dependency_overrides[get_retail_point_assignment_service] = lambda: mock_assign_service
+
+    resp = await client.post(
+        f"/api/v1/retail_points/{point_id}/assign-agent",
+        json={"employee_id": str(agent_id)},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["retail_point_id"] == str(point_id)
+    assert data["employee_id"] == str(agent_id)
+    mock_assign_service.assign_employee.assert_called_once_with(point_id, agent_id)
+

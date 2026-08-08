@@ -451,6 +451,12 @@ def allow_staff_or_owner(
 allow_all_staff = RequireEmployeeRoles(
     EmployeeRole.ADMIN,
     EmployeeRole.AGENT,
+    EmployeeRole.WAREHOUSE_WORKER,
+)
+
+allow_warehouse_worker = RequireEmployeeRoles(
+    EmployeeRole.ADMIN,
+    EmployeeRole.WAREHOUSE_WORKER,
 )
 
 allow_admin = RequireEmployeeRoles(EmployeeRole.ADMIN)

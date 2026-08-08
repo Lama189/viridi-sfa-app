@@ -7,18 +7,27 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.api.dependencies import (
     allow_admin,
     allow_all_staff,
+    get_retail_point_assignment_service,
     get_retail_point_members_service,
     get_retail_points_service,
+    get_visit_debts_service,
 )
 from app.api.v1.schemas.retail_points import (
+    AssignAgentRequest,
     BulkCreateRetailPointsResponse,
     CreateRetailPointRequest,
     InviteCodeResponse,
+    RetailPointAssignmentResponse,
     RetailPointMemberResponse,
     RetailPointResponse,
     RetailPointWithCodeResponse,
     UpdateRetailPointRequest,
 )
+from app.api.v1.schemas.visits import VisitDebtResponse
+from app.application.interfaces.services.retail_point_assignments import (
+    IRetailPointAssignmentService,
+)
+from app.application.interfaces.services.visit_debts import IVisitDebtService
 from app.application.services.members import RetailPointMembersService
 from app.application.services.retail_points import RetailPointsService
 from app.domain.entities.auth import AuthenticatedEmployee
@@ -168,3 +177,37 @@ async def list_retail_point_members(
     ],
 ):
     return await service.list_members(retail_point_id)
+
+
+@router.get(
+    "/{retail_point_id}/debts",
+    response_model=list[VisitDebtResponse],
+    dependencies=[Depends(allow_all_staff)],
+)
+async def list_retail_point_debts(
+    retail_point_id: UUID,
+    service: Annotated[IVisitDebtService, Depends(get_visit_debts_service)],
+):
+    return await service.list_by_retail_point(retail_point_id)
+
+
+@router.post(
+    "/{retail_point_id}/assign-agent",
+    response_model=RetailPointAssignmentResponse,
+    dependencies=[Depends(allow_all_staff)],
+)
+async def assign_agent_to_retail_point(
+    retail_point_id: UUID,
+    dto: AssignAgentRequest,
+    service: Annotated[
+        IRetailPointAssignmentService, Depends(get_retail_point_assignment_service)
+    ],
+):
+    try:
+        return await service.assign_employee(retail_point_id, dto.employee_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+

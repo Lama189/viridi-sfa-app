@@ -4,6 +4,7 @@ from app.domain.enums import ClientType, EmployeeRole, OrderStatus, VisitStatus
 def test_employee_role_values():
     assert EmployeeRole.ADMIN == "admin"
     assert EmployeeRole.AGENT == "agent"
+    assert EmployeeRole.WAREHOUSE_WORKER == "warehouse_worker"
 
 
 def test_client_type_values():

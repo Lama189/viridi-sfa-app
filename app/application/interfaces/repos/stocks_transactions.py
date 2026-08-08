@@ -20,3 +20,7 @@ class IStockTransactionRepository(ABC):
     @abstractmethod
     async def list_by_warehouse(self, warehouse_id: UUID) -> list[StockTransaction]:
         raise NotImplementedError
+
+    @abstractmethod
+    async def list_all(self) -> list[StockTransaction]:
+        raise NotImplementedError

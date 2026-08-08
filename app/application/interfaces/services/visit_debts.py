@@ -33,5 +33,9 @@ class IVisitDebtService(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def list_by_retail_point(self, retail_point_id: UUID) -> list[VisitDebt]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_by_id(self, visit_debt_id: UUID) -> VisitDebt:
         raise NotImplementedError

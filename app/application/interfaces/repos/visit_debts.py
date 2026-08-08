@@ -19,6 +19,10 @@ class IVisitDebtRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def list_by_retail_point(self, retail_point_id: UUID) -> list[VisitDebt]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def update(self, visit_debt: VisitDebt) -> None:
         raise NotImplementedError
 

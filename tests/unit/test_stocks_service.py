@@ -360,3 +360,36 @@ class TestStockServiceReturn:
         dto = _op_dto()
         with pytest.raises(StockNotFoundError):
             await service.return_stock(dto)
+
+
+# ---------------------------------------------------------------------------
+# adjust_stock & list_transactions
+# ---------------------------------------------------------------------------
+
+
+class TestStockServiceAdjustAndList:
+    @pytest.mark.asyncio
+    async def test_adjust_stock_success(self, service, mock_uow):
+        wid, pid = uuid4(), uuid4()
+        wh = _warehouse(wid)
+        prod = _product(pid)
+        mock_uow.warehouses.get_by_id.return_value = wh
+        mock_uow.products.get_by_id.return_value = prod
+
+        stock = Stock(warehouse_id=wid, product_id=pid, quantity=100)
+        mock_uow.stocks.get_for_update.return_value = stock
+
+        result = await service.adjust_stock(wid, pid, 150)
+
+        assert result.quantity == 150
+        tx_call = mock_uow.stock_transactions.add.call_args[0][0]
+        assert tx_call.transaction_type == StockTransactionType.ADJUSTMENT
+        assert tx_call.quantity_delta == 50
+
+    @pytest.mark.asyncio
+    async def test_list_transactions_all(self, service, mock_uow):
+        mock_uow.stock_transactions.list_all.return_value = []
+        result = await service.list_transactions()
+        assert result == []
+        mock_uow.stock_transactions.list_all.assert_called_once()
+

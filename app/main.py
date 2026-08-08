@@ -19,6 +19,7 @@ from app.api.v1.routers.media import router as media_router
 from app.api.v1.routers.orders import router as orders_router
 from app.api.v1.routers.products import router as products_router
 from app.api.v1.routers.retail_points import router as retail_points_router
+from app.api.v1.routers.stocks import router as stocks_router
 from app.api.v1.routers.visit_plans import router as visit_plans_router
 from app.api.v1.routers.visits import router as visits_router
 from app.api.v1.routers.warehouses import router as inventory_router
@@ -74,6 +75,7 @@ app.include_router(clients_router)
 app.include_router(employees_router)
 app.include_router(orders_router)
 app.include_router(inventory_router)
+app.include_router(stocks_router)
 app.include_router(products_router)
 app.include_router(retail_points_router)
 app.include_router(media_router)

@@ -43,6 +43,9 @@ class VisitDebtService(IVisitDebtService):
     async def list_by_visit(self, visit_id: UUID) -> list[VisitDebt]:
         return await self._uow.visit_debts.list_by_visit(visit_id)
 
+    async def list_by_retail_point(self, retail_point_id: UUID) -> list[VisitDebt]:
+        return await self._uow.visit_debts.list_by_retail_point(retail_point_id)
+
     async def get_by_id(self, visit_debt_id: UUID) -> VisitDebt:
         debt = await self._uow.visit_debts.get_by_id(visit_debt_id)
         if not debt:

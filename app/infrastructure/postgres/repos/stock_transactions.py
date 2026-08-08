@@ -41,8 +41,17 @@ class PostgresStockTransactionRepository(IStockTransactionRepository):
 
     async def list_by_warehouse(self, warehouse_id: UUID) -> list[StockTransaction]:
         result = await self._session.execute(
-            select(StockTransactionModel).where(
-                StockTransactionModel.warehouse_id == warehouse_id
+            select(StockTransactionModel)
+            .where(StockTransactionModel.warehouse_id == warehouse_id)
+            .order_by(StockTransactionModel.created_at.desc())
+        )
+
+        return [self._to_domain(m) for m in result.scalars().all()]
+
+    async def list_all(self) -> list[StockTransaction]:
+        result = await self._session.execute(
+            select(StockTransactionModel).order_by(
+                StockTransactionModel.created_at.desc()
             )
         )
 

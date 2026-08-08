@@ -14,6 +14,7 @@ class Weekday(IntEnum):
 class EmployeeRole(StrEnum):
     ADMIN = "admin"
     AGENT = "agent"
+    WAREHOUSE_WORKER = "warehouse_worker"
 
 
 class ClientType(StrEnum):

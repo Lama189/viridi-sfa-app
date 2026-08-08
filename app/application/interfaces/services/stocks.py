@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from app.application.dto.stocks import (
     StockBatchOperationDTO,
     StockCreateDTO,
     StockOperationDTO,
 )
-from app.domain.entities.stocks import Stock
+from app.domain.entities.stocks import Stock, StockTransaction
 
 
 class IStockService(ABC):
@@ -49,4 +50,24 @@ class IStockService(ABC):
 
     @abstractmethod
     async def return_stock(self, dto: StockOperationDTO) -> Stock:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def list_transactions(
+        self,
+        warehouse_id: UUID | None = None,
+        product_id: UUID | None = None,
+        reference_id: UUID | None = None,
+    ) -> list[StockTransaction]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def adjust_stock(
+        self,
+        warehouse_id: UUID,
+        product_id: UUID,
+        new_quantity: int,
+        actor_id: UUID | None = None,
+        reference_id: UUID | None = None,
+    ) -> Stock:
         raise NotImplementedError

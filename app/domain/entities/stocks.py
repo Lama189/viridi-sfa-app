@@ -99,6 +99,20 @@ class Stock:
         self.quantity += amount
         self._touch()
 
+    def adjust(self, new_quantity: int) -> int:
+        if new_quantity < 0:
+            raise ValueError("Quantity cannot be negative")
+
+        if new_quantity < self.reserved_quantity:
+            raise ValueError(
+                f"New quantity ({new_quantity}) cannot be less than reserved quantity ({self.reserved_quantity})"
+            )
+
+        delta = new_quantity - self.quantity
+        self.quantity = new_quantity
+        self._touch()
+        return delta
+
     def _touch(self) -> None:
         self.updated_at = datetime.now(UTC)
 

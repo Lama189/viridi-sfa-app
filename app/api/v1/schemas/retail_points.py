@@ -128,3 +128,15 @@ class RetailPointMemberResponse(BaseModel):
     client_id: UUID
 
     model_config = {"from_attributes": True}
+
+
+class AssignAgentRequest(BaseModel):
+    employee_id: UUID
+
+
+class RetailPointAssignmentResponse(BaseModel):
+    id: UUID
+    retail_point_id: UUID
+    employee_id: UUID | None
+
+    model_config = {"from_attributes": True}

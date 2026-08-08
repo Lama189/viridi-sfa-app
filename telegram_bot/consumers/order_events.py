@@ -1,8 +1,12 @@
 from aio_pika.abc import AbstractIncomingMessage
 
 from telegram_bot.events.order_events import (
+    OrderAssembledEvent,
     OrderAssemblyStartedEvent,
+    OrderCancelledEvent,
     OrderCreatedEvent,
+    OrderDeliveredEvent,
+    OrderTakenByAgentEvent,
     deserialize_event,
 )
 from telegram_bot.services.notifications import NotificationService
@@ -35,3 +39,19 @@ class OrderEventsConsumer:
                 await self._notifications.order_assembly_started(event)
             elif event_type == "order.created" or isinstance(event, OrderCreatedEvent):
                 await self._notifications.order_created(event)
+            elif event_type == "order.assembled" or isinstance(
+                event, OrderAssembledEvent
+            ):
+                await self._notifications.order_assembled(event)
+            elif event_type == "order.taken_by_agent" or isinstance(
+                event, OrderTakenByAgentEvent
+            ):
+                await self._notifications.order_taken_by_agent(event)
+            elif event_type == "order.delivered" or isinstance(
+                event, OrderDeliveredEvent
+            ):
+                await self._notifications.order_delivered(event)
+            elif event_type == "order.cancelled" or isinstance(
+                event, OrderCancelledEvent
+            ):
+                await self._notifications.order_cancelled(event)

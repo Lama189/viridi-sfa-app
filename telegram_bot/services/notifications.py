@@ -5,8 +5,12 @@ from aiogram.exceptions import TelegramAPIError
 
 from app.core.observability.logging import logger
 from telegram_bot.events.order_events import (
+    OrderAssembledEvent,
     OrderAssemblyStartedEvent,
+    OrderCancelledEvent,
     OrderCreatedEvent,
+    OrderDeliveredEvent,
+    OrderTakenByAgentEvent,
 )
 from telegram_bot.services.clients import ClientsService
 from telegram_bot.services.retail_point_members import RetailPointMembersService
@@ -106,6 +110,226 @@ class NotificationService:
                 await self._bot.send_message(
                     chat_id=client.telegram_id,
                     text=f"📦 Ваш заказ №{order_id} начал собираться!",
+                )
+            except (TelegramAPIError, OSError) as exc:
+                logger.warning(
+                    "Failed to send Telegram notification",
+                    client_id=str(client.id),
+                    telegram_id=client.telegram_id,
+                    error=str(exc),
+                )
+
+    async def order_assembled(
+        self,
+        event: OrderAssembledEvent | dict,
+    ) -> None:
+        if isinstance(event, dict):
+            order_id = event["order_id"]
+            retail_point_id_val = event.get("retail_point_id")
+            retail_point_id = (
+                UUID(retail_point_id_val)
+                if isinstance(retail_point_id_val, str) and retail_point_id_val
+                else retail_point_id_val
+            )
+            created_by_id_val = event.get("created_by_id")
+            created_by_id = (
+                UUID(created_by_id_val)
+                if isinstance(created_by_id_val, str) and created_by_id_val
+                else created_by_id_val
+            )
+        else:
+            order_id = event.order_id
+            retail_point_id = event.retail_point_id
+            created_by_id = event.created_by_id
+
+        recipients = []
+
+        if created_by_id:
+            creator_client = await self._clients.get(created_by_id)
+            if creator_client and creator_client.telegram_id:
+                recipients.append(creator_client)
+
+        if retail_point_id:
+            members = await self._retail_point_members.list_members(retail_point_id)
+            for member in members:
+                client = await self._clients.get(member.client_id)
+                if (
+                    client
+                    and client.telegram_id
+                    and client.id not in {r.id for r in recipients}
+                ):
+                    recipients.append(client)
+
+        for client in recipients:
+            try:
+                await self._bot.send_message(
+                    chat_id=client.telegram_id,
+                    text=f"✅ Ваш заказ №{order_id} собран!",
+                )
+            except (TelegramAPIError, OSError) as exc:
+                logger.warning(
+                    "Failed to send Telegram notification",
+                    client_id=str(client.id),
+                    telegram_id=client.telegram_id,
+                    error=str(exc),
+                )
+
+    async def order_taken_by_agent(
+        self,
+        event: OrderTakenByAgentEvent | dict,
+    ) -> None:
+        if isinstance(event, dict):
+            order_id = event["order_id"]
+            retail_point_id_val = event.get("retail_point_id")
+            retail_point_id = (
+                UUID(retail_point_id_val)
+                if isinstance(retail_point_id_val, str) and retail_point_id_val
+                else retail_point_id_val
+            )
+            created_by_id_val = event.get("created_by_id")
+            created_by_id = (
+                UUID(created_by_id_val)
+                if isinstance(created_by_id_val, str) and created_by_id_val
+                else created_by_id_val
+            )
+        else:
+            order_id = event.order_id
+            retail_point_id = event.retail_point_id
+            created_by_id = event.created_by_id
+
+        recipients = []
+
+        if created_by_id:
+            creator_client = await self._clients.get(created_by_id)
+            if creator_client and creator_client.telegram_id:
+                recipients.append(creator_client)
+
+        if retail_point_id:
+            members = await self._retail_point_members.list_members(retail_point_id)
+            for member in members:
+                client = await self._clients.get(member.client_id)
+                if (
+                    client
+                    and client.telegram_id
+                    and client.id not in {r.id for r in recipients}
+                ):
+                    recipients.append(client)
+
+        for client in recipients:
+            try:
+                await self._bot.send_message(
+                    chat_id=client.telegram_id,
+                    text=f"🚗 Ваш заказ №{order_id} забран агентом и в пути!",
+                )
+            except (TelegramAPIError, OSError) as exc:
+                logger.warning(
+                    "Failed to send Telegram notification",
+                    client_id=str(client.id),
+                    telegram_id=client.telegram_id,
+                    error=str(exc),
+                )
+
+    async def order_delivered(
+        self,
+        event: OrderDeliveredEvent | dict,
+    ) -> None:
+        if isinstance(event, dict):
+            order_id = event["order_id"]
+            retail_point_id_val = event.get("retail_point_id")
+            retail_point_id = (
+                UUID(retail_point_id_val)
+                if isinstance(retail_point_id_val, str) and retail_point_id_val
+                else retail_point_id_val
+            )
+            created_by_id_val = event.get("created_by_id")
+            created_by_id = (
+                UUID(created_by_id_val)
+                if isinstance(created_by_id_val, str) and created_by_id_val
+                else created_by_id_val
+            )
+        else:
+            order_id = event.order_id
+            retail_point_id = event.retail_point_id
+            created_by_id = event.created_by_id
+
+        recipients = []
+
+        if created_by_id:
+            creator_client = await self._clients.get(created_by_id)
+            if creator_client and creator_client.telegram_id:
+                recipients.append(creator_client)
+
+        if retail_point_id:
+            members = await self._retail_point_members.list_members(retail_point_id)
+            for member in members:
+                client = await self._clients.get(member.client_id)
+                if (
+                    client
+                    and client.telegram_id
+                    and client.id not in {r.id for r in recipients}
+                ):
+                    recipients.append(client)
+
+        for client in recipients:
+            try:
+                await self._bot.send_message(
+                    chat_id=client.telegram_id,
+                    text=f"🎉 Ваш заказ №{order_id} доставлен!",
+                )
+            except (TelegramAPIError, OSError) as exc:
+                logger.warning(
+                    "Failed to send Telegram notification",
+                    client_id=str(client.id),
+                    telegram_id=client.telegram_id,
+                    error=str(exc),
+                )
+
+    async def order_cancelled(
+        self,
+        event: OrderCancelledEvent | dict,
+    ) -> None:
+        if isinstance(event, dict):
+            order_id = event["order_id"]
+            retail_point_id_val = event.get("retail_point_id")
+            retail_point_id = (
+                UUID(retail_point_id_val)
+                if isinstance(retail_point_id_val, str) and retail_point_id_val
+                else retail_point_id_val
+            )
+            created_by_id_val = event.get("created_by_id")
+            created_by_id = (
+                UUID(created_by_id_val)
+                if isinstance(created_by_id_val, str) and created_by_id_val
+                else created_by_id_val
+            )
+        else:
+            order_id = event.order_id
+            retail_point_id = event.retail_point_id
+            created_by_id = event.created_by_id
+
+        recipients = []
+
+        if created_by_id:
+            creator_client = await self._clients.get(created_by_id)
+            if creator_client and creator_client.telegram_id:
+                recipients.append(creator_client)
+
+        if retail_point_id:
+            members = await self._retail_point_members.list_members(retail_point_id)
+            for member in members:
+                client = await self._clients.get(member.client_id)
+                if (
+                    client
+                    and client.telegram_id
+                    and client.id not in {r.id for r in recipients}
+                ):
+                    recipients.append(client)
+
+        for client in recipients:
+            try:
+                await self._bot.send_message(
+                    chat_id=client.telegram_id,
+                    text=f"❌ Ваш заказ №{order_id} отменён",
                 )
             except (TelegramAPIError, OSError) as exc:
                 logger.warning(

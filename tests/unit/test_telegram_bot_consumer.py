@@ -5,8 +5,12 @@ import pytest
 
 from telegram_bot.consumers.order_events import OrderEventsConsumer
 from telegram_bot.events.order_events import (
+    OrderAssembledEvent,
     OrderAssemblyStartedEvent,
+    OrderCancelledEvent,
     OrderCreatedEvent,
+    OrderDeliveredEvent,
+    OrderTakenByAgentEvent,
     deserialize_event,
 )
 from telegram_bot.services.clients import ClientDTO
@@ -204,4 +208,318 @@ async def test_notification_service_order_assembly_started():
     mock_bot.send_message.assert_called_once_with(
         chat_id=987654321,
         text=f"📦 Ваш заказ №{order_id} начал собираться!",
+    )
+
+
+def test_deserialize_order_assembled_event():
+    order_id = uuid4()
+    retail_point_id = uuid4()
+    created_by_id = uuid4()
+    employee_id = uuid4()
+
+    body = (
+        f'{{"order_id": "{order_id}", "retail_point_id": "{retail_point_id}", '
+        f'"created_by_id": "{created_by_id}", "employee_id": "{employee_id}", '
+        f'"event_type": "order.assembled"}}'
+    ).encode()
+
+    event = deserialize_event(body)
+
+    assert isinstance(event, OrderAssembledEvent)
+    assert event.order_id == order_id
+    assert event.retail_point_id == retail_point_id
+    assert event.created_by_id == created_by_id
+    assert event.employee_id == employee_id
+    assert event.event_type == "order.assembled"
+
+
+@pytest.mark.asyncio
+async def test_order_events_consumer_handle_order_assembled():
+    mock_notifications = AsyncMock(spec=NotificationService)
+    consumer = OrderEventsConsumer(notification_service=mock_notifications)
+
+    order_id = uuid4()
+    body = f'{{"order_id": "{order_id}", "event_type": "order.assembled"}}'.encode()
+
+    mock_message = MagicMock()
+    mock_message.body = body
+    mock_message.headers = {"event_type": "order.assembled"}
+    mock_message.routing_key = "order.assembled"
+
+    process_cm = AsyncMock()
+    mock_message.process.return_value = process_cm
+
+    await consumer.handle(mock_message)
+
+    mock_notifications.order_assembled.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_notification_service_order_assembled():
+    mock_bot = AsyncMock()
+    mock_retail_point_members = AsyncMock()
+    mock_clients = AsyncMock()
+
+    order_id = uuid4()
+    client_id = uuid4()
+
+    client = ClientDTO(
+        id=client_id,
+        phone="+998901111111",
+        full_name="Client One",
+        telegram_id=987654321,
+    )
+    mock_clients.get.return_value = client
+    mock_retail_point_members.list_members.return_value = []
+
+    notification_service = NotificationService(
+        bot=mock_bot,
+        retail_point_members=mock_retail_point_members,
+        clients=mock_clients,
+    )
+    event = OrderAssembledEvent(
+        order_id=order_id,
+        created_by_id=client_id,
+    )
+
+    await notification_service.order_assembled(event)
+
+    mock_bot.send_message.assert_called_once_with(
+        chat_id=987654321,
+        text=f"✅ Ваш заказ №{order_id} собран!",
+    )
+
+
+def test_deserialize_order_taken_by_agent_event():
+    order_id = uuid4()
+    retail_point_id = uuid4()
+    created_by_id = uuid4()
+    employee_id = uuid4()
+
+    body = (
+        f'{{"order_id": "{order_id}", "retail_point_id": "{retail_point_id}", '
+        f'"created_by_id": "{created_by_id}", "employee_id": "{employee_id}", '
+        f'"event_type": "order.taken_by_agent"}}'
+    ).encode()
+
+    event = deserialize_event(body)
+
+    assert isinstance(event, OrderTakenByAgentEvent)
+    assert event.order_id == order_id
+    assert event.retail_point_id == retail_point_id
+    assert event.created_by_id == created_by_id
+    assert event.employee_id == employee_id
+    assert event.event_type == "order.taken_by_agent"
+
+
+@pytest.mark.asyncio
+async def test_order_events_consumer_handle_order_taken_by_agent():
+    mock_notifications = AsyncMock(spec=NotificationService)
+    consumer = OrderEventsConsumer(notification_service=mock_notifications)
+
+    order_id = uuid4()
+    body = f'{{"order_id": "{order_id}", "event_type": "order.taken_by_agent"}}'.encode()
+
+    mock_message = MagicMock()
+    mock_message.body = body
+    mock_message.headers = {"event_type": "order.taken_by_agent"}
+    mock_message.routing_key = "order.taken_by_agent"
+
+    process_cm = AsyncMock()
+    mock_message.process.return_value = process_cm
+
+    await consumer.handle(mock_message)
+
+    mock_notifications.order_taken_by_agent.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_notification_service_order_taken_by_agent():
+    mock_bot = AsyncMock()
+    mock_retail_point_members = AsyncMock()
+    mock_clients = AsyncMock()
+
+    order_id = uuid4()
+    client_id = uuid4()
+
+    client = ClientDTO(
+        id=client_id,
+        phone="+998901111111",
+        full_name="Client One",
+        telegram_id=987654321,
+    )
+    mock_clients.get.return_value = client
+    mock_retail_point_members.list_members.return_value = []
+
+    notification_service = NotificationService(
+        bot=mock_bot,
+        retail_point_members=mock_retail_point_members,
+        clients=mock_clients,
+    )
+    event = OrderTakenByAgentEvent(
+        order_id=order_id,
+        created_by_id=client_id,
+    )
+
+    await notification_service.order_taken_by_agent(event)
+
+    mock_bot.send_message.assert_called_once_with(
+        chat_id=987654321,
+        text=f"🚗 Ваш заказ №{order_id} забран агентом и в пути!",
+    )
+
+
+def test_deserialize_order_delivered_event():
+    order_id = uuid4()
+    retail_point_id = uuid4()
+    created_by_id = uuid4()
+    employee_id = uuid4()
+
+    body = (
+        f'{{"order_id": "{order_id}", "retail_point_id": "{retail_point_id}", '
+        f'"created_by_id": "{created_by_id}", "employee_id": "{employee_id}", '
+        f'"event_type": "order.delivered"}}'
+    ).encode()
+
+    event = deserialize_event(body)
+
+    assert isinstance(event, OrderDeliveredEvent)
+    assert event.order_id == order_id
+    assert event.retail_point_id == retail_point_id
+    assert event.created_by_id == created_by_id
+    assert event.employee_id == employee_id
+    assert event.event_type == "order.delivered"
+
+
+@pytest.mark.asyncio
+async def test_order_events_consumer_handle_order_delivered():
+    mock_notifications = AsyncMock(spec=NotificationService)
+    consumer = OrderEventsConsumer(notification_service=mock_notifications)
+
+    order_id = uuid4()
+    body = f'{{"order_id": "{order_id}", "event_type": "order.delivered"}}'.encode()
+
+    mock_message = MagicMock()
+    mock_message.body = body
+    mock_message.headers = {"event_type": "order.delivered"}
+    mock_message.routing_key = "order.delivered"
+
+    process_cm = AsyncMock()
+    mock_message.process.return_value = process_cm
+
+    await consumer.handle(mock_message)
+
+    mock_notifications.order_delivered.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_notification_service_order_delivered():
+    mock_bot = AsyncMock()
+    mock_retail_point_members = AsyncMock()
+    mock_clients = AsyncMock()
+
+    order_id = uuid4()
+    client_id = uuid4()
+
+    client = ClientDTO(
+        id=client_id,
+        phone="+998901111111",
+        full_name="Client One",
+        telegram_id=987654321,
+    )
+    mock_clients.get.return_value = client
+    mock_retail_point_members.list_members.return_value = []
+
+    notification_service = NotificationService(
+        bot=mock_bot,
+        retail_point_members=mock_retail_point_members,
+        clients=mock_clients,
+    )
+    event = OrderDeliveredEvent(
+        order_id=order_id,
+        created_by_id=client_id,
+    )
+
+    await notification_service.order_delivered(event)
+
+    mock_bot.send_message.assert_called_once_with(
+        chat_id=987654321,
+        text=f"🎉 Ваш заказ №{order_id} доставлен!",
+    )
+
+
+def test_deserialize_order_cancelled_event():
+    order_id = uuid4()
+    retail_point_id = uuid4()
+    created_by_id = uuid4()
+
+    body = (
+        f'{{"order_id": "{order_id}", "retail_point_id": "{retail_point_id}", '
+        f'"created_by_id": "{created_by_id}", '
+        f'"event_type": "order.cancelled"}}'
+    ).encode()
+
+    event = deserialize_event(body)
+
+    assert isinstance(event, OrderCancelledEvent)
+    assert event.order_id == order_id
+    assert event.retail_point_id == retail_point_id
+    assert event.created_by_id == created_by_id
+    assert event.event_type == "order.cancelled"
+
+
+@pytest.mark.asyncio
+async def test_order_events_consumer_handle_order_cancelled():
+    mock_notifications = AsyncMock(spec=NotificationService)
+    consumer = OrderEventsConsumer(notification_service=mock_notifications)
+
+    order_id = uuid4()
+    body = f'{{"order_id": "{order_id}", "event_type": "order.cancelled"}}'.encode()
+
+    mock_message = MagicMock()
+    mock_message.body = body
+    mock_message.headers = {"event_type": "order.cancelled"}
+    mock_message.routing_key = "order.cancelled"
+
+    process_cm = AsyncMock()
+    mock_message.process.return_value = process_cm
+
+    await consumer.handle(mock_message)
+
+    mock_notifications.order_cancelled.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_notification_service_order_cancelled():
+    mock_bot = AsyncMock()
+    mock_retail_point_members = AsyncMock()
+    mock_clients = AsyncMock()
+
+    order_id = uuid4()
+    client_id = uuid4()
+
+    client = ClientDTO(
+        id=client_id,
+        phone="+998901111111",
+        full_name="Client One",
+        telegram_id=987654321,
+    )
+    mock_clients.get.return_value = client
+    mock_retail_point_members.list_members.return_value = []
+
+    notification_service = NotificationService(
+        bot=mock_bot,
+        retail_point_members=mock_retail_point_members,
+        clients=mock_clients,
+    )
+    event = OrderCancelledEvent(
+        order_id=order_id,
+        created_by_id=client_id,
+    )
+
+    await notification_service.order_cancelled(event)
+
+    mock_bot.send_message.assert_called_once_with(
+        chat_id=987654321,
+        text=f"❌ Ваш заказ №{order_id} отменён",
     )

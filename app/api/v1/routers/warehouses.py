@@ -1,9 +1,9 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import get_warehouses_service
+from app.api.dependencies import allow_all_staff, get_warehouses_service
 from app.api.v1.schemas.inventory import (
     WarehouseCreate,
     WarehouseResponse,
@@ -30,17 +30,19 @@ async def create_warehouse(
     path="",
     response_model=list[WarehouseResponse],
     status_code=status.HTTP_200_OK,
+    dependencies=[Depends(allow_all_staff)]
 )
-async def get_warehouses(
+async def list_warehouses(
     service: Annotated[WarehousesService, Depends(get_warehouses_service)],
-    only_active: bool = True,
+    is_active: bool = Query(default=True)
 ):
-    return await service.get_all_warehouses(only_active=only_active)
+    return await service.list(is_active=is_active)
 
 
 @router.get(
-    "/{warehouse_id}",
+    path="/{warehouse_id}",
     response_model=WarehouseResponse,
+    dependencies=[Depends(allow_all_staff)]
 )
 async def get_warehouse(
     warehouse_id: UUID,
@@ -56,7 +58,7 @@ async def get_warehouse(
 
 
 @router.patch(
-    "/{warehouse_id}",
+    path="/{warehouse_id}",
     response_model=WarehouseResponse,
 )
 async def update_warehouse(

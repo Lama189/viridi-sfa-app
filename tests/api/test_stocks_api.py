@@ -94,3 +94,16 @@ async def test_adjust_stock(client, mock_stocks_service, mock_admin_employee):
         actor_id=mock_admin_employee.id,
         reference_id=None,
     )
+
+
+@pytest.mark.asyncio
+async def test_list_warehouse_stocks(client, mock_stocks_service):
+    wh_id = uuid4()
+    mock_stocks_service.get_warehouse_inventory.return_value = []
+
+    resp = await client.get(f"/api/v1/stocks?warehouse_id={wh_id}")
+    assert resp.status_code == 200
+    assert resp.json() == []
+    mock_stocks_service.get_warehouse_inventory.assert_called_once_with(
+        warehouse_id=wh_id
+    )

@@ -18,6 +18,10 @@ class IWarehouseRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def list(self, is_active: bool = True) -> list[Warehouse]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def list_all(self, only_active: bool = True) -> list[Warehouse]:
         raise NotImplementedError
 

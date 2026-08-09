@@ -4,29 +4,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.api.v1.schemas.common import (
+    RetailPointShortResponse,
+    UserShortResponse,
+    WarehouseShortResponse,
+)
 from app.domain.enums import OrderStatus
-
-
-class RetailPointShortResponse(BaseModel):
-    id: UUID
-    name: str
-    address: str
-
-    model_config = {"from_attributes": True}
-
-
-class WarehouseShortResponse(BaseModel):
-    id: UUID
-    name: str
-
-    model_config = {"from_attributes": True}
-
-
-class UserShortResponse(BaseModel):
-    id: UUID
-    full_name: str
-
-    model_config = {"from_attributes": True}
 
 
 class ProductShortResponse(BaseModel):

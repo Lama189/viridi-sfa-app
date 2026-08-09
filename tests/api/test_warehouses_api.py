@@ -5,8 +5,10 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.api.dependencies import get_warehouses_service
+from app.api.dependencies import allow_all_staff, get_warehouses_service
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.inventory import Warehouse
+from app.domain.enums import EmployeeRole
 from app.main import app
 
 
@@ -18,6 +20,9 @@ def mock_service():
 @pytest.fixture(autouse=True)
 def override_deps(mock_service):
     app.dependency_overrides[get_warehouses_service] = lambda: mock_service
+    app.dependency_overrides[allow_all_staff] = lambda: AuthenticatedEmployee(
+        id=uuid4(), phone="+998900000000", role=EmployeeRole.ADMIN, full_name="Admin", is_active=True
+    )
     yield
     app.dependency_overrides.clear()
 
@@ -52,10 +57,12 @@ async def test_create_warehouse_success(client, mock_service):
 
 @pytest.mark.asyncio
 async def test_get_warehouses(client, mock_service):
-    mock_service.get_all_warehouses.return_value = [
+    warehouses = [
         Warehouse(name="A"),
         Warehouse(name="B"),
     ]
+    mock_service.list.return_value = warehouses
+    mock_service.get_all_warehouses.return_value = warehouses
 
     resp = await client.get("/api/v1/warehouses")
     assert resp.status_code == 200

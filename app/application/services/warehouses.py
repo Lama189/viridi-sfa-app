@@ -24,8 +24,11 @@ class WarehousesService:
     async def get_by_id(self, warehouse_id: UUID) -> Warehouse | None:
         return await self._uow.warehouses.get_by_id(warehouse_id)
 
+    async def list(self, is_active: bool = True) -> list[Warehouse]:
+        return await self._uow.warehouses.list(is_active=is_active)
+
     async def get_all_warehouses(self, only_active: bool = True) -> list[Warehouse]:
-        return await self._uow.warehouses.list_all(only_active)
+        return await self._uow.warehouses.list_all(only_active=only_active)
 
     async def update_warehouse(
         self, warehouse_id: UUID, dto: WarehouseUpdate

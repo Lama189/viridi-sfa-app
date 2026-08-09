@@ -36,6 +36,10 @@ class IStockRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_stocks_by_warehouse(self, warehouse_id: UUID) -> list:
+        raise NotImplementedError
+
+    @abstractmethod
     async def update(self, stock: Stock) -> None:
         raise NotImplementedError
 

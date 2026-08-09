@@ -1,5 +1,10 @@
 from uuid import UUID
 
+from app.api.v1.schemas.common import CategoryResponse, WarehouseShortResponse
+from app.api.v1.schemas.inventory import (
+    ProductWithStockResponse,
+    StockSummaryResponse,
+)
 from app.application.dto.stocks import (
     StockBatchOperationDTO,
     StockCreateDTO,
@@ -712,3 +717,31 @@ class StockService(IStockService):
                 operation="adjust_stock", reason=self._map_exception_to_reason(exc)
             ).inc()
             raise
+
+    async def get_warehouse_inventory(
+        self, warehouse_id: UUID
+    ) -> list[ProductWithStockResponse]:
+        stocks = await self._uow.stocks.get_stocks_by_warehouse(warehouse_id)
+
+        result = []
+        for stock in stocks:
+            product_dto = ProductWithStockResponse(
+                id=stock.product.id,
+                name=stock.product.name,
+                price=stock.product.price,
+                volume=stock.product.volume,
+                weight=stock.product.weight,
+                items_in_box=stock.product.items_in_box,
+                photo_url=getattr(stock.product, "photo_url", None),
+                category=CategoryResponse.model_validate(stock.product.category),
+                stock=StockSummaryResponse(
+                    warehouse=WarehouseShortResponse.model_validate(stock.warehouse),
+                    quantity=stock.quantity,
+                    reserved_quantity=stock.reserved_quantity,
+                    available_quantity=stock.quantity - stock.reserved_quantity,
+                    updated_at=getattr(stock, "updated_at", None),
+                ),
+            )
+            result.append(product_dto)
+
+        return result

@@ -3,9 +3,11 @@ from uuid import UUID
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.application.interfaces.repos.stocks import IStockRepository
 from app.domain.entities.stocks import Stock
+from app.infrastructure.postgres.models.products import Product as ProductModel
 from app.infrastructure.postgres.models.stocks import Stock as StockModel
 
 
@@ -80,6 +82,18 @@ class PostgresStocksRepository(IStockRepository):
         )
 
         return [self._to_domain(m) for m in result.scalars().all()]
+
+    async def get_stocks_by_warehouse(self, warehouse_id: UUID) -> list[StockModel]:
+        stmt = (
+            select(StockModel)
+            .where(StockModel.warehouse_id == warehouse_id)
+            .options(
+                joinedload(StockModel.warehouse),
+                joinedload(StockModel.product).joinedload(ProductModel.category),
+            )
+        )
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
 
     async def update(self, stock: Stock) -> None:
         await self._session.execute(

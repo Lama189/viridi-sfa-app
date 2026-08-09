@@ -4,9 +4,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import allow_admin, get_categories_service
+from app.api.v1.schemas.common import CategoryResponse
 from app.api.v1.schemas.inventory import (
     CategoryCreate,
-    CategoryResponse,
     CategoryUpdate,
 )
 from app.application.services.categories import CategoriesService

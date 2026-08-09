@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import allow_all_staff, get_stocks_service
+from app.api.v1.schemas.inventory import ProductWithStockResponse
 from app.api.v1.schemas.stocks import (
     StockAdjustRequest,
     StockResponse,
@@ -56,3 +57,15 @@ async def adjust_stock(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+
+
+@router.get(
+    "",
+    response_model=list[ProductWithStockResponse],
+    dependencies=[Depends(allow_all_staff)],
+)
+async def list_warehouse_stocks(
+    warehouse_id: Annotated[UUID, Query(description="ID выбираемого склада")],
+    service: Annotated[IStockService, Depends(get_stocks_service)],
+):
+    return await service.get_warehouse_inventory(warehouse_id=warehouse_id)

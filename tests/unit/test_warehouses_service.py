@@ -81,7 +81,19 @@ async def test_get_by_id_not_found(service, mock_uow):
     assert result is None
 
 
-# --- get_all_warehouses ---
+# --- list / get_all_warehouses ---
+
+
+@pytest.mark.asyncio
+async def test_list_warehouses(service, mock_uow):
+    mock_uow.warehouses.list.return_value = [
+        Warehouse(name="A"),
+        Warehouse(name="B"),
+    ]
+
+    result = await service.list(is_active=True)
+    assert len(result) == 2
+    mock_uow.warehouses.list.assert_awaited_once_with(is_active=True)
 
 
 @pytest.mark.asyncio
@@ -93,7 +105,7 @@ async def test_get_all_warehouses(service, mock_uow):
 
     result = await service.get_all_warehouses(only_active=True)
     assert len(result) == 2
-    mock_uow.warehouses.list_all.assert_awaited_once_with(True)
+    mock_uow.warehouses.list_all.assert_awaited_once_with(only_active=True)
 
 
 # --- update_warehouse ---

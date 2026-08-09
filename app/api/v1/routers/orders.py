@@ -41,7 +41,7 @@ async def create_order(
 
 
 @router.get(
-    "",
+    path="",
     response_model=list[OrderResponse],
     dependencies=[Depends(allow_all_staff)],
 )
@@ -72,7 +72,7 @@ async def list_orders(
 
 
 @router.get(
-    "/counters",
+    path="/counters",
     response_model=dict[OrderStatus, int],
     dependencies=[Depends(allow_all_staff)],
 )
@@ -85,7 +85,7 @@ async def get_orders_counters(
 
 
 @router.get(
-    "/{order_id}",
+    path="/{order_id}",
     response_model=OrderResponse,
 )
 async def get_order(
@@ -112,7 +112,7 @@ async def get_order(
 
 
 @router.delete(
-    "/{order_id}",
+    path="/{order_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def cancel_order(
@@ -141,7 +141,7 @@ async def cancel_order(
 
 
 @router.post(
-    "/{order_id}/confirm",
+    path="/{order_id}/confirm",
     response_model=OrderResponse,
     dependencies=[Depends(allow_all_staff)],
 )
@@ -159,7 +159,7 @@ async def confirm_order(
 
 
 @router.post(
-    "/{order_id}/cancel",
+    path="/{order_id}/cancel",
     response_model=OrderResponse,
     dependencies=[Depends(allow_all_staff)],
 )
@@ -177,7 +177,7 @@ async def cancel_order_by_staff(
 
 
 @router.post(
-    "/{order_id}/ship",
+    path="/{order_id}/ship",
     response_model=OrderResponse,
     dependencies=[Depends(allow_all_staff)],
 )
@@ -195,7 +195,7 @@ async def ship_order(
 
 
 @router.post(
-    "/{order_id}/start-assembly",
+    path="/{order_id}/start-assembly",
     response_model=OrderResponse,
 )
 async def start_order_assembly(
@@ -213,7 +213,7 @@ async def start_order_assembly(
 
 
 @router.post(
-    "/{order_id}/assemble",
+    path="/{order_id}/assemble",
     response_model=OrderResponse,
 )
 async def assemble_order(
@@ -231,7 +231,7 @@ async def assemble_order(
 
 
 @router.post(
-    "/{order_id}/deliver",
+    path="/{order_id}/deliver",
     response_model=OrderResponse,
 )
 async def deliver_order(

@@ -55,3 +55,7 @@ class Stock(BaseModel):
     product: Mapped[Product] = relationship(
         back_populates="stocks",
     )
+
+    @property
+    def available_quantity(self) -> int:
+        return self.quantity - self.reserved_quantity

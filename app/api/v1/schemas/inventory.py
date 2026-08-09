@@ -1,6 +1,10 @@
+from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 
-from pydantic import UUID4, BaseModel, Field
+from pydantic import BaseModel, Field
+
+from app.api.v1.schemas.common import CategoryResponse, WarehouseShortResponse
 
 
 class WarehouseCreate(BaseModel):
@@ -29,7 +33,7 @@ class WarehouseUpdate(BaseModel):
 
 
 class WarehouseResponse(BaseModel):
-    id: UUID4
+    id: UUID
     name: str
     address: str | None
     is_active: bool
@@ -42,7 +46,7 @@ class ProductCreate(BaseModel):
     price: Decimal = Field(
         ..., gt=0, description="Цена товара в сумах (UZS)", examples=[53000.00]
     )
-    category_id: UUID4 = Field(..., description="ID существующей категории")
+    category_id: UUID = Field(..., description="ID существующей категории")
     volume: Decimal = Field(default=Decimal("0.000"), description="Объем в м³")
     weight: Decimal = Field(default=Decimal("0.000"), description="Вес в кг")
     items_in_box: int = Field(default=1, gt=0)
@@ -51,7 +55,7 @@ class ProductCreate(BaseModel):
 class ProductUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=150)
     price: Decimal | None = Field(None, gt=0, description="Цена товара в сумах (UZS)")
-    category_id: UUID4 | None = Field(None, description="ID существующей категории")
+    category_id: UUID | None = Field(None, description="ID существующей категории")
     volume: Decimal | None = Field(None, description="Объем в м³")
     weight: Decimal | None = Field(None, description="Вес в кг")
     items_in_box: int | None = Field(None, gt=0)
@@ -59,10 +63,10 @@ class ProductUpdate(BaseModel):
 
 
 class ProductResponse(BaseModel):
-    id: UUID4
+    id: UUID
     name: str
     price: Decimal
-    category_id: UUID4
+    category_id: UUID
     volume: Decimal
     weight: Decimal
     items_in_box: int
@@ -83,15 +87,31 @@ class CategoryUpdate(BaseModel):
     )
 
 
-class CategoryResponse(BaseModel):
-    id: UUID4
-    name: str
-    is_active: bool
+class ProductWithCategoryResponse(ProductResponse):
+    category: CategoryResponse
 
     model_config = {"from_attributes": True}
 
 
-class ProductWithCategoryResponse(ProductResponse):
+class StockSummaryResponse(BaseModel):
+    warehouse: WarehouseShortResponse
+    quantity: int = Field(description="Физический остаток")
+    reserved_quantity: int = Field(description="Зарезервировано в заказах")
+    available_quantity: int = Field(description="Доступно к продаже (quantity - reserved)")
+    updated_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class ProductWithStockResponse(BaseModel):
+    id: UUID
+    name: str
+    price: Decimal
+    volume: Decimal
+    weight: Decimal
+    items_in_box: int
+    photo_url: str | None = None
     category: CategoryResponse
+    stock: StockSummaryResponse | None = None
 
     model_config = {"from_attributes": True}

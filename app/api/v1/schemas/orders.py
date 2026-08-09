@@ -2,9 +2,40 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import UUID4, BaseModel, Field
+from pydantic import BaseModel, Field
 
 from app.domain.enums import OrderStatus
+
+
+class RetailPointShortResponse(BaseModel):
+    id: UUID
+    name: str
+    address: str
+
+    model_config = {"from_attributes": True}
+
+
+class WarehouseShortResponse(BaseModel):
+    id: UUID
+    name: str
+
+    model_config = {"from_attributes": True}
+
+
+class UserShortResponse(BaseModel):
+    id: UUID
+    full_name: str
+
+    model_config = {"from_attributes": True}
+
+
+class ProductShortResponse(BaseModel):
+    id: UUID
+    name: str
+    code: str | None = None
+    unit_of_measure: str | None = None
+
+    model_config = {"from_attributes": True}
 
 
 class OrderItemCreateRequest(BaseModel):
@@ -20,9 +51,9 @@ class CreateOrderRequest(BaseModel):
 
 
 class OrderItemResponse(BaseModel):
-    id: UUID4
-    order_id: UUID4
-    product_id: UUID4
+    id: UUID
+    order_id: UUID
+    product: ProductShortResponse 
     quantity: int
     price_at_order: Decimal
     total_volume: Decimal
@@ -31,16 +62,17 @@ class OrderItemResponse(BaseModel):
 
 
 class OrderResponse(BaseModel):
-    id: UUID4
-    warehouse_id: UUID4
-    created_by_id: UUID4
-    retail_point_id: UUID4
-    visit_id: UUID4 | None = None
+    id: UUID
     status: OrderStatus
     total_amount: Decimal
     total_volume: Decimal
-    created_at: datetime
-    updated_at: datetime
+    retail_point: RetailPointShortResponse
+    warehouse: WarehouseShortResponse
+    created_by: UserShortResponse
+    created_at: datetime | None = None 
+    updated_at: datetime | None = None
+    visit_id: UUID | None = None
+
     items: list[OrderItemResponse] = []
 
     model_config = {"from_attributes": True}

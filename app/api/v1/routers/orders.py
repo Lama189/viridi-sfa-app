@@ -1,11 +1,12 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
     allow_all_staff,
     get_current_client,
+    get_current_user,
     get_orders_service,
 )
 from app.api.v1.schemas.orders import (
@@ -13,7 +14,9 @@ from app.api.v1.schemas.orders import (
     OrderResponse,
 )
 from app.application.services.orders import OrdersService
+from app.core.exceptions import InvalidOrderStatusError
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
+from app.domain.enums import OrderStatus
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 
@@ -40,12 +43,45 @@ async def create_order(
 @router.get(
     "",
     response_model=list[OrderResponse],
+    dependencies=[Depends(allow_all_staff)],
 )
-async def list_my_orders(
-    client: Annotated[AuthenticatedClient, Depends(get_current_client)],
+async def list_orders(
     service: Annotated[OrdersService, Depends(get_orders_service)],
+    statuses: Annotated[
+        list[str] | None,
+        Query(description="Фильтр по статусам заказов"),
+    ] = None,
+    limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0, ge=0),
 ):
-    return await service.list_by_client(client.id)
+    parsed_statuses: list[OrderStatus] | None = None
+
+    if statuses:
+        parsed_statuses = []
+        for st in statuses:
+            try:
+                parsed_statuses.append(OrderStatus(st))
+            except ValueError:
+                raise InvalidOrderStatusError()
+
+    return await service.list_orders(
+        statuses=parsed_statuses,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get(
+    "/counters",
+    response_model=dict[OrderStatus, int],
+    dependencies=[Depends(allow_all_staff)],
+)
+async def get_orders_counters(
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+):
+    """Возвращает словарь с количеством заказов по каждому состоянию: {"pending": 3, "confirmed": 2, ...}"""
+    return await service.get_counts_by_status(employee_id=employee.id)
 
 
 @router.get(
@@ -54,17 +90,20 @@ async def list_my_orders(
 )
 async def get_order(
     order_id: UUID,
-    client: Annotated[AuthenticatedClient, Depends(get_current_client)],
+    user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:
         order = await service.get_by_id(order_id)
-        if order.created_by_id != client.id:
+
+        if isinstance(user, AuthenticatedClient) and order.created_by_id != user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not your order",
+                detail="Not your order"
             )
+
         return order
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

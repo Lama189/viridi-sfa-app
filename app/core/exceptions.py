@@ -74,6 +74,11 @@ class BulkCreateRetailPointsRequestIsEmptyError(DomainError):
     pass
 
 
+# Order Exceptions
+class InvalidOrderStatusError(DomainError):
+    pass
+
+
 # Warehouse & Product & Stock Exceptions
 class WarehouseNotFoundError(DomainError):
     pass

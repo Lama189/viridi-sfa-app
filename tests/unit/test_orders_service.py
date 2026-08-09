@@ -103,14 +103,23 @@ class TestOrdersServiceRead:
             await service.get_by_id(uuid4())
 
     @pytest.mark.asyncio
+    async def test_list_orders(self, service, mock_uow):
+        orders = [_pending_order_with_item()]
+        mock_uow.orders.list.return_value = orders
+
+        res = await service.list_orders(statuses=[OrderStatus.PENDING], limit=10, offset=0)
+        assert res == orders
+        mock_uow.orders.list.assert_awaited_once_with(statuses=[OrderStatus.PENDING], limit=10, offset=0)
+
+    @pytest.mark.asyncio
     async def test_list_by_client(self, service, mock_uow):
         cid = uuid4()
         orders = [_pending_order_with_item()]
         mock_uow.orders.list_by_client.return_value = orders
 
-        res = await service.list_by_client(cid)
+        res = await service.list_by_client(cid, statuses=[OrderStatus.PENDING])
         assert res == orders
-        mock_uow.orders.list_by_client.assert_awaited_once_with(cid)
+        mock_uow.orders.list_by_client.assert_awaited_once_with(cid, statuses=[OrderStatus.PENDING])
 
     @pytest.mark.asyncio
     async def test_list_by_retail_point(self, service, mock_uow):
@@ -121,6 +130,15 @@ class TestOrdersServiceRead:
         res = await service.list_by_retail_point(rpid)
         assert res == orders
         mock_uow.orders.list_by_retail_point.assert_awaited_once_with(rpid)
+
+    @pytest.mark.asyncio
+    async def test_get_counts_by_status(self, service, mock_uow):
+        counts = {OrderStatus.PENDING: 3, OrderStatus.DELIVERED: 10}
+        mock_uow.orders.get_counts_by_status.return_value = counts
+
+        res = await service.get_counts_by_status()
+        assert res == counts
+        mock_uow.orders.get_counts_by_status.assert_awaited_once_with(employee_id=None)
 
 
 # ---------------------------------------------------------------------------

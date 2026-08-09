@@ -7,6 +7,33 @@ from app.domain.enums import OrderStatus
 
 
 @dataclass(slots=True)
+class RetailPointShort:
+    id: UUID
+    name: str
+    address: str
+
+
+@dataclass(slots=True)
+class WarehouseShort:
+    id: UUID
+    name: str
+
+
+@dataclass(slots=True)
+class UserShort:
+    id: UUID
+    full_name: str
+
+
+@dataclass(slots=True)
+class ProductShort:
+    id: UUID
+    name: str
+    code: str | None = None
+    unit_of_measure: str | None = None
+
+
+@dataclass(slots=True)
 class OrderItem:
     order_id: UUID
     product_id: UUID
@@ -14,6 +41,8 @@ class OrderItem:
     price_at_order: Decimal
     total_volume: Decimal
     id: UUID = field(default_factory=uuid4)
+    product_name: str | None = None
+    product: ProductShort | None = None
 
     def __post_init__(self) -> None:
         if self.quantity <= 0:
@@ -43,6 +72,9 @@ class Order:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     items: list[OrderItem] = field(default_factory=list)
+    retail_point: RetailPointShort | None = None
+    warehouse: WarehouseShort | None = None
+    created_by: UserShort | None = None
 
     def __post_init__(self) -> None:
         if self.total_amount < 0:

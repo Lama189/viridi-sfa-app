@@ -9,7 +9,14 @@ from httpx import ASGITransport, AsyncClient
 
 from app.api.dependencies import get_current_user, get_orders_service
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
-from app.domain.entities.orders import Order, OrderItem
+from app.domain.entities.orders import (
+    Order,
+    OrderItem,
+    ProductShort,
+    RetailPointShort,
+    UserShort,
+    WarehouseShort,
+)
 from app.domain.enums import EmployeeRole as PGEmployeeRole
 from app.domain.enums import OrderStatus
 from app.main import app
@@ -48,41 +55,54 @@ def mock_admin_employee():
 def _order_response(order_id=None, client_id=None, status=OrderStatus.PENDING):
     oid = order_id or uuid4()
     cid = client_id or uuid4()
+    wid = uuid4()
+    rpid = uuid4()
     now = datetime.now(UTC)
     return Order(
         id=oid,
-        warehouse_id=uuid4(),
+        warehouse_id=wid,
         created_by_id=cid,
-        retail_point_id=uuid4(),
+        retail_point_id=rpid,
         status=status,
         total_amount=Decimal("150000.00"),
         total_volume=Decimal("0.500"),
         created_at=now,
         updated_at=now,
+        retail_point=RetailPointShort(id=rpid, name="Test Point", address="Test Address"),
+        warehouse=WarehouseShort(id=wid, name="Test Warehouse"),
+        created_by=UserShort(id=cid, full_name="Test Client"),
     )
 
 
 def _order_with_item(order_id=None, client_id=None, status=OrderStatus.PENDING):
     oid = order_id or uuid4()
     cid = client_id or uuid4()
+    wid = uuid4()
+    rpid = uuid4()
+    pid = uuid4()
     now = datetime.now(UTC)
     order = Order(
         id=oid,
-        warehouse_id=uuid4(),
+        warehouse_id=wid,
         created_by_id=cid,
-        retail_point_id=uuid4(),
+        retail_point_id=rpid,
         status=status,
         total_amount=Decimal("150000.00"),
         total_volume=Decimal("0.500"),
         created_at=now,
         updated_at=now,
+        retail_point=RetailPointShort(id=rpid, name="Test Point", address="Test Address"),
+        warehouse=WarehouseShort(id=wid, name="Test Warehouse"),
+        created_by=UserShort(id=cid, full_name="Test Client"),
     )
     item = OrderItem(
         order_id=oid,
-        product_id=uuid4(),
+        product_id=pid,
         quantity=10,
         price_at_order=Decimal("15000.00"),
         total_volume=Decimal("0.050"),
+        product_name="Test Product",
+        product=ProductShort(id=pid, name="Test Product"),
     )
     order.items.append(item)
     return order
@@ -224,7 +244,7 @@ class TestOrdersClientEndpoints:
 
 
 # ---------------------------------------------------------------------------
-# Staff endpoints: POST /{id}/confirm, POST /{id}/cancel, POST /{id}/ship
+# Staff endpoints: GET /api/v1/orders, GET /counters, POST /{id}/confirm...
 # ---------------------------------------------------------------------------
 
 
@@ -241,6 +261,62 @@ class TestOrdersStaffEndpoints:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             yield ac
+
+    # --- GET /api/v1/orders ---
+
+    @pytest.mark.asyncio
+    async def test_list_orders_success(self, client, mock_service):
+        order = _order_response()
+        mock_service.list_orders.return_value = [order]
+
+        resp = await client.get("/api/v1/orders")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 1
+        mock_service.list_orders.assert_awaited_once_with(statuses=None, limit=50, offset=0)
+
+    @pytest.mark.asyncio
+    async def test_list_orders_with_valid_statuses_filter(self, client, mock_service):
+        order1 = _order_response(status=OrderStatus.PENDING)
+        order2 = _order_response(status=OrderStatus.CONFIRMED)
+        mock_service.list_orders.return_value = [order1, order2]
+
+        resp = await client.get("/api/v1/orders?statuses=pending&statuses=confirmed")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        mock_service.list_orders.assert_awaited_once_with(
+            statuses=[OrderStatus.PENDING, OrderStatus.CONFIRMED],
+            limit=50,
+            offset=0,
+        )
+
+    @pytest.mark.asyncio
+    async def test_list_orders_invalid_status_error(self, client, mock_service):
+        resp = await client.get("/api/v1/orders?statuses=invalid_status_value")
+        assert resp.status_code == 400
+        assert resp.json()["detail"] == "Invalid order status"
+
+    @pytest.mark.asyncio
+    async def test_get_orders_counters_success(self, client, mock_service, mock_admin_employee):
+        expected_counters = {
+            OrderStatus.PENDING: 3,
+            OrderStatus.CONFIRMED: 2,
+            OrderStatus.ASSEMBLY_STARTED: 5,
+            OrderStatus.ASSEMBLED: 4,
+            OrderStatus.SHIPPED: 3,
+            OrderStatus.DELIVERED: 45,
+            OrderStatus.CANCELLED: 1,
+        }
+        mock_service.get_counts_by_status.return_value = expected_counters
+
+        resp = await client.get("/api/v1/orders/counters")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["pending"] == 3
+        assert data["confirmed"] == 2
+        assert data["delivered"] == 45
+        mock_service.get_counts_by_status.assert_awaited_once()
 
     # --- POST /api/v1/orders/{order_id}/confirm ---
 

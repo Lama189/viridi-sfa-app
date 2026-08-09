@@ -9,7 +9,14 @@ from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.exceptions import UserNotActiveError, UserNotFoundError
 from app.domain.entities.inventory import Product
-from app.domain.entities.orders import Order, OrderItem
+from app.domain.entities.orders import (
+    Order,
+    OrderItem,
+    ProductShort,
+    RetailPointShort,
+    UserShort,
+    WarehouseShort,
+)
 from app.domain.entities.outbox_messages import OutboxMessage
 from app.domain.enums import (
     AggregateType,
@@ -77,20 +84,55 @@ class OrdersService:
             raise ValueError(f"Order with ID {order_id} not found")
         return order
 
-    async def list_by_client(self, client_id: UUID) -> list[Order]:
-        return await self._uow.orders.list_by_client(client_id)
+    async def list_orders(
+        self,
+        statuses: list[OrderStatus] | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Order]:
+        return await self._uow.orders.list(statuses=statuses, limit=limit, offset=offset)
+
+    async def list_by_client(
+        self,
+        client_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        return await self._uow.orders.list_by_client(client_id, statuses=statuses)
 
     async def list_by_retail_point(self, retail_point_id: UUID) -> list[Order]:
         return await self._uow.orders.list_by_retail_point(retail_point_id)
 
+    async def get_counts_by_status(
+        self,
+        employee_id: UUID | None = None,
+    ) -> dict[OrderStatus, int]:
+        return await self._uow.orders.get_counts_by_status(employee_id=employee_id)
+
     async def create(self, client_id: UUID, dto: CreateOrderRequest) -> Order:
         await self._validate(dto.warehouse_id, client_id, dto.retail_point_id)
 
+        warehouse = await self._uow.warehouses.get_by_id(dto.warehouse_id)
+        client = await self._uow.clients.get_by_id(client_id)
+        retail_point = await self._uow.retail_points.get_by_id(dto.retail_point_id)
         products = await self._get_products(dto.items)
+
         order = Order(
             warehouse_id=dto.warehouse_id,
             created_by_id=client_id,
             retail_point_id=dto.retail_point_id,
+            retail_point=RetailPointShort(
+                id=retail_point.id,
+                name=retail_point.name,
+                address=retail_point.address,
+            ) if retail_point else None,
+            warehouse=WarehouseShort(
+                id=warehouse.id,
+                name=warehouse.name,
+            ) if warehouse else None,
+            created_by=UserShort(
+                id=client.id,
+                full_name=client.full_name,
+            ) if client else None,
         )
 
         order_items: list[OrderItem] = []
@@ -105,6 +147,13 @@ class OrdersService:
                 quantity=item.quantity,
                 price_at_order=product.price,
                 total_volume=product.volume * item.quantity,
+                product_name=product.name,
+                product=ProductShort(
+                    id=product.id,
+                    name=product.name,
+                    code=getattr(product, "code", None),
+                    unit_of_measure=getattr(product, "unit_of_measure", None),
+                ),
             )
 
             order.add_item(order_item)

@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.application.interfaces.repos.order_items import IOrderItemRepository
 from app.domain.entities.orders import OrderItem
@@ -20,7 +21,9 @@ class PostgresOrderItemRepository(IOrderItemRepository):
 
     async def list_by_order(self, order_id: UUID) -> list[OrderItem]:
         result = await self._session.execute(
-            select(OrderItemModel).where(OrderItemModel.order_id == order_id)
+            select(OrderItemModel)
+            .options(selectinload(OrderItemModel.product))
+            .where(OrderItemModel.order_id == order_id)
         )
 
         return [self._to_domain(m) for m in result.scalars().all()]
@@ -39,6 +42,7 @@ class PostgresOrderItemRepository(IOrderItemRepository):
             quantity=model.quantity,
             price_at_order=model.price_at_order,
             total_volume=model.total_volume,
+            product_name=model.product.name if getattr(model, "product", None) is not None else None,
         )
 
     def _to_model(self, item: OrderItem) -> OrderItemModel:

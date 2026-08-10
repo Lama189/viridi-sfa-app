@@ -208,6 +208,7 @@ class StockService(IStockService):
                 reference_type=dto.reference_type,
                 reference_id=dto.reference_id,
             )
+            await self._uow.commit()
 
             logger.info(
                 "Stock successfully increased",

@@ -97,6 +97,32 @@ async def test_adjust_stock(client, mock_stocks_service, mock_admin_employee):
 
 
 @pytest.mark.asyncio
+async def test_add_stock(client, mock_stocks_service, mock_admin_employee):
+    wh_id = uuid4()
+    p_id = uuid4()
+    stock = Stock(warehouse_id=wh_id, product_id=p_id, quantity=100, reserved_quantity=0)
+    mock_stocks_service.add_stock.return_value = stock
+
+    resp = await client.post(
+        "/api/v1/stocks/add",
+        json={
+            "warehouse_id": str(wh_id),
+            "product_id": str(p_id),
+            "quantity": 50,
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["quantity"] == 100
+    mock_stocks_service.add_stock.assert_called_once()
+    dto = mock_stocks_service.add_stock.call_args[0][0]
+    assert dto.warehouse_id == wh_id
+    assert dto.product_id == p_id
+    assert dto.quantity == 50
+    assert dto.created_by_id == mock_admin_employee.id
+
+
+@pytest.mark.asyncio
 async def test_list_warehouse_stocks(client, mock_stocks_service):
     wh_id = uuid4()
     mock_stocks_service.get_warehouse_inventory.return_value = []

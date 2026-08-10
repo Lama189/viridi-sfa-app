@@ -230,3 +230,20 @@ async def test_assign_agent_to_retail_point(client):
     assert data["employee_id"] == str(agent_id)
     mock_assign_service.assign_employee.assert_called_once_with(point_id, agent_id)
 
+
+@pytest.mark.asyncio
+async def test_list_retail_point_orders(client):
+    from app.api.dependencies import get_orders_service
+
+    mock_orders_service = AsyncMock()
+    point_id = uuid4()
+    mock_orders_service.list_by_retail_point.return_value = []
+
+    app.dependency_overrides[get_orders_service] = lambda: mock_orders_service
+
+    resp = await client.get(f"/api/v1/retail_points/{point_id}/orders")
+    assert resp.status_code == 200
+    assert resp.json() == []
+    mock_orders_service.list_by_retail_point.assert_called_once_with(point_id)
+
+

@@ -5,41 +5,40 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
     allow_all_staff,
+    get_current_employee,
     get_visit_media_service,
     get_visits_service,
 )
 from app.api.v1.schemas.visits import (
     AddDebtRequest,
     AttachMediaRequest,
+    StartVisitRequest,
     UpdateDebtRequest,
     VisitDebtResponse,
+    VisitDetailsResponse,
     VisitMediaResponse,
     VisitResponse,
 )
 from app.application.services.visit_media import VisitMediaService
 from app.application.services.visits import VisitService
+from app.core.exceptions import VisitNotFoundError
+from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.enums import VisitStatus
 
 router = APIRouter(prefix="/api/v1/visits", tags=["Visits"])
-
-
-# ======================================================================
-# 1. BASE VISIT OPERATIONS
-# ======================================================================
 
 
 @router.post(
     path="/start",
     response_model=VisitResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(allow_all_staff)],
 )
 async def start_visit(
     retail_point_id: UUID,
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
     service: Annotated[VisitService, Depends(get_visits_service)],
 ):
-    employee_id = ...  # TODO: extract from auth
-    visit = await service.start_visit(employee_id, retail_point_id)
+    visit = await service.start_visit(employee.id, retail_point_id)
     return VisitResponse.model_validate(visit)
 
 
@@ -92,6 +91,25 @@ async def get_visit(
 ):
     visit = await service.get_visit(visit_id)
     return VisitResponse.model_validate(visit)
+
+
+@router.get(
+    path="/{visit_id}/details",
+    response_model=VisitDetailsResponse,
+    dependencies=[Depends(allow_all_staff)],
+)
+async def get_visit_details(
+    visit_id: UUID,
+    service: Annotated[VisitService, Depends(get_visits_service)],
+):
+    try:
+        visit_details = await service.get_visit_details(visit_id)
+        return VisitDetailsResponse.model_validate(visit_details)
+    except VisitNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Visit not found",
+        )
 
 
 @router.get(

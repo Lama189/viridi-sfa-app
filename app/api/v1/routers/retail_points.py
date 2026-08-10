@@ -7,11 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.api.dependencies import (
     allow_admin,
     allow_all_staff,
+    get_orders_service,
     get_retail_point_assignment_service,
     get_retail_point_members_service,
     get_retail_points_service,
     get_visit_debts_service,
 )
+from app.api.v1.schemas.orders import OrderResponse
 from app.api.v1.schemas.retail_points import (
     AssignAgentRequest,
     BulkCreateRetailPointsResponse,
@@ -29,6 +31,7 @@ from app.application.interfaces.services.retail_point_assignments import (
 )
 from app.application.interfaces.services.visit_debts import IVisitDebtService
 from app.application.services.members import RetailPointMembersService
+from app.application.services.orders import OrdersService
 from app.application.services.retail_points import RetailPointsService
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.enums import Weekday
@@ -187,6 +190,18 @@ async def list_retail_point_members(
 async def list_retail_point_debts(
     retail_point_id: UUID,
     service: Annotated[IVisitDebtService, Depends(get_visit_debts_service)],
+):
+    return await service.list_by_retail_point(retail_point_id)
+
+
+@router.get(
+    "/{retail_point_id}/orders",
+    response_model=list[OrderResponse],
+    dependencies=[Depends(allow_all_staff)],
+)
+async def list_retail_point_orders(
+    retail_point_id: UUID,
+    service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     return await service.list_by_retail_point(retail_point_id)
 

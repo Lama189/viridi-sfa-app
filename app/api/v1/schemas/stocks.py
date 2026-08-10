@@ -19,10 +19,10 @@ class StockOperationRequest(BaseModel):
     warehouse_id: UUID
     product_id: UUID
     quantity: int
-    actor_type: TransactionActorType
+    actor_type: TransactionActorType = TransactionActorType.EMPLOYEE
     created_by_id: UUID | None = None
-    reference_id: UUID
-    reference_type: StockReferenceType
+    reference_id: UUID | None = None
+    reference_type: StockReferenceType = StockReferenceType.RECEIPT
 
 
 class StockAdjustRequest(BaseModel):

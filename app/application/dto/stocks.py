@@ -17,7 +17,7 @@ class StockOperationDTO:
     quantity: int
     actor_type: TransactionActorType
     reference_type: StockReferenceType
-    reference_id: UUID
+    reference_id: UUID | None = None
     created_by_id: UUID | None = None
 
 

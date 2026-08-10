@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.application.interfaces.repos.visits import IVisitRepository
 from app.domain.entities.visits import Visit
@@ -32,6 +33,20 @@ class PostgresVisitRepository(IVisitRepository):
             return None
 
         return self._to_domain(model)
+
+    async def get_details_by_id(self, visit_id: UUID) -> VisitModel | None:
+        stmt = (
+            select(VisitModel)
+            .where(VisitModel.id == visit_id)
+            .options(
+                joinedload(VisitModel.retail_point),
+                selectinload(VisitModel.orders),
+                selectinload(VisitModel.debts),
+                selectinload(VisitModel.media),
+            )
+        )
+        result = await self._session.execute(stmt)
+        return result.unique().scalar_one_or_none()
 
     async def list_by_employee(
         self, employee_id: UUID, active: bool = True, limit: int = 1

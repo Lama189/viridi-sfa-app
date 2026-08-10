@@ -231,6 +231,54 @@ async def test_get_visit_not_found(client, mock_visits_service):
     assert resp.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_get_visit_details_success(client, mock_visits_service):
+    visit_id = uuid4()
+    mock_details = type(
+        "MockVisitModel",
+        (),
+        {
+            "id": visit_id,
+            "status": VisitStatus.IN_PROGRESS,
+            "started_at": None,
+            "finished_at": None,
+            "retail_point": type(
+                "MockRP",
+                (),
+                {
+                    "id": uuid4(),
+                    "name": "Магазин",
+                    "address": "ул. Навои",
+                    "latitude": 41.311081,
+                    "longitude": 69.240562,
+                },
+            )(),
+            "orders": [],
+            "debts": [],
+            "media": [],
+        },
+    )()
+    mock_visits_service.get_visit_details.return_value = mock_details
+
+    resp = await client.get(f"/api/v1/visits/{visit_id}/details")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == str(visit_id)
+    assert data["retail_point"]["name"] == "Магазин"
+    assert float(data["retail_point"]["latitude"]) == 41.311081
+    assert float(data["retail_point"]["longitude"]) == 69.240562
+
+
+@pytest.mark.asyncio
+async def test_get_visit_details_not_found(client, mock_visits_service):
+    from app.core.exceptions import VisitNotFoundError
+
+    mock_visits_service.get_visit_details.side_effect = VisitNotFoundError()
+
+    resp = await client.get(f"/api/v1/visits/{uuid4()}/details")
+    assert resp.status_code == 404
+
+
 # --- GET /api/v1/visits ---
 
 

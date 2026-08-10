@@ -100,6 +100,13 @@ class VisitService:
 
         return visit
 
+    async def get_visit_details(self, visit_id: UUID):
+        visit = await self._uow.visits.get_details_by_id(visit_id)
+        if not visit:
+            raise VisitNotFoundError()
+
+        return visit
+
     async def list(
         self,
         employee_id: UUID | None = None,

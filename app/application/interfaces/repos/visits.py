@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 from uuid import UUID
 
 from app.domain.entities.visits import Visit
@@ -12,6 +13,10 @@ class IVisitRepository(ABC):
 
     @abstractmethod
     async def get_by_id(self, visit_id: UUID) -> Visit | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_details_by_id(self, visit_id: UUID) -> Any | None:
         raise NotImplementedError
 
     @abstractmethod

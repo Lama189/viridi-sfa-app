@@ -159,7 +159,7 @@ class TestStockServiceAdd:
         assert result.quantity == 15
         mock_uow.stocks.update.assert_awaited_once()
         mock_uow.stock_transactions.add.assert_awaited_once()
-        mock_uow.commit.assert_not_awaited()
+        mock_uow.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_add_stock_warehouse_not_found(self, service, mock_uow):

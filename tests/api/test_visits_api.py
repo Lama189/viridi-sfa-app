@@ -316,9 +316,9 @@ async def test_list_visits_with_filters(client, mock_visits_service):
 
 
 @pytest.mark.asyncio
-async def test_attach_media_success(client, mock_visit_media_service):
+async def test_attach_media_success(client, mock_visits_service):
     media = _visit_media_response()
-    mock_visit_media_service.attach.return_value = media
+    mock_visits_service.attach_media.return_value = media
 
     resp = await client.post(
         f"/api/v1/visits/{media.visit_id}/media",
@@ -328,13 +328,16 @@ async def test_attach_media_success(client, mock_visit_media_service):
     data = resp.json()
     assert data["visit_id"] == str(media.visit_id)
     assert data["media_id"] == str(media.media_id)
+    mock_visits_service.attach_media.assert_awaited_once_with(
+        media.visit_id, media.media_id
+    )
 
 
 @pytest.mark.asyncio
-async def test_attach_media_visit_not_found(client, mock_visit_media_service):
+async def test_attach_media_visit_not_found(client, mock_visits_service):
     from app.core.exceptions import VisitNotFoundError
 
-    mock_visit_media_service.attach.side_effect = VisitNotFoundError()
+    mock_visits_service.attach_media.side_effect = VisitNotFoundError()
 
     resp = await client.post(
         f"/api/v1/visits/{uuid4()}/media",
@@ -344,10 +347,10 @@ async def test_attach_media_visit_not_found(client, mock_visit_media_service):
 
 
 @pytest.mark.asyncio
-async def test_attach_media_already_attached(client, mock_visit_media_service):
+async def test_attach_media_already_attached(client, mock_visits_service):
     from app.core.exceptions import VisitMediaAlreadyAttachedError
 
-    mock_visit_media_service.attach.side_effect = VisitMediaAlreadyAttachedError()
+    mock_visits_service.attach_media.side_effect = VisitMediaAlreadyAttachedError()
 
     resp = await client.post(
         f"/api/v1/visits/{uuid4()}/media",
@@ -357,10 +360,10 @@ async def test_attach_media_already_attached(client, mock_visit_media_service):
 
 
 @pytest.mark.asyncio
-async def test_attach_media_not_active(client, mock_visit_media_service):
+async def test_attach_media_not_active(client, mock_visits_service):
     from app.core.exceptions import VisitNotActiveError
 
-    mock_visit_media_service.attach.side_effect = VisitNotActiveError()
+    mock_visits_service.attach_media.side_effect = VisitNotActiveError()
 
     resp = await client.post(
         f"/api/v1/visits/{uuid4()}/media",
@@ -373,18 +376,21 @@ async def test_attach_media_not_active(client, mock_visit_media_service):
 
 
 @pytest.mark.asyncio
-async def test_detach_media_success(client, mock_visit_media_service):
-    mock_visit_media_service.detach.return_value = None
+async def test_detach_media_success(client, mock_visits_service):
+    visit_id = uuid4()
+    media_id = uuid4()
+    mock_visits_service.detach_media.return_value = None
 
-    resp = await client.delete(f"/api/v1/visits/{uuid4()}/media/{uuid4()}")
+    resp = await client.delete(f"/api/v1/visits/{visit_id}/media/{media_id}")
     assert resp.status_code == 204
+    mock_visits_service.detach_media.assert_awaited_once_with(visit_id, media_id)
 
 
 @pytest.mark.asyncio
-async def test_detach_media_not_found(client, mock_visit_media_service):
+async def test_detach_media_not_found(client, mock_visits_service):
     from app.core.exceptions import VisitMediaNotFoundError
 
-    mock_visit_media_service.detach.side_effect = VisitMediaNotFoundError()
+    mock_visits_service.detach_media.side_effect = VisitMediaNotFoundError()
 
     resp = await client.delete(f"/api/v1/visits/{uuid4()}/media/{uuid4()}")
     assert resp.status_code == 404

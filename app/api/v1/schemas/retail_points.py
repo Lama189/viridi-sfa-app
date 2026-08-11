@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.api.v1.schemas.visits import OrderShortResponse, VisitDebtResponse
 from app.domain.enums import ClientType
 
 
@@ -98,6 +99,14 @@ class RetailPointResponse(BaseModel):
     visits: VisitsDatesDTO = Field(default_factory=VisitsDatesDTO)
 
     is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
+class RetailPointDetailsResponse(BaseModel):
+    retail_point: RetailPointResponse
+    orders: list[OrderShortResponse] = Field(default_factory=list)
+    debts: list[VisitDebtResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 

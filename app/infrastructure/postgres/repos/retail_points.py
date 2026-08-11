@@ -3,9 +3,16 @@ from uuid import UUID
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
-from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
+from app.domain.entities.orders import Order
+from app.domain.entities.retail_points import (
+    RetailPoint,
+    RetailPointDetails,
+    RetailPointIdentity,
+)
+from app.domain.entities.visit_debts import VisitDebt
 from app.domain.enums import Weekday
 from app.infrastructure.postgres.models.retail_point_assignments import (
     RetailPointAssignment as RetailPointAssignmentModel,
@@ -16,6 +23,7 @@ from app.infrastructure.postgres.models.retail_points import (
 from app.infrastructure.postgres.models.visit_schedule_rules import (
     VisitScheduleRule as VisitScheduleRuleModel,
 )
+from app.infrastructure.postgres.models.visits import Visit as VisitModel
 
 
 class PostgresRetailPointRepository(IRetailPointRepository):
@@ -72,6 +80,54 @@ class PostgresRetailPointRepository(IRetailPointRepository):
             return None
 
         return self._to_domain(model)
+
+    async def get_details_by_id(
+        self,
+        retail_point_id: UUID,
+    ) -> RetailPointDetails | None:
+        result = await self._session.execute(
+            select(RetailPointModel)
+            .where(RetailPointModel.id == retail_point_id)
+            .options(
+                joinedload(RetailPointModel.orders),
+                joinedload(RetailPointModel.visits).joinedload(VisitModel.debts),
+            )
+        )
+
+        model = result.unique().scalar_one_or_none()
+        if model is None:
+            return None
+
+        orders = [
+            Order(
+                id=order.id,
+                warehouse_id=order.warehouse_id,
+                created_by_id=order.created_by_id,
+                retail_point_id=order.retail_point_id,
+                visit_id=order.visit_id,
+                status=order.status,
+                total_amount=order.total_amount,
+                total_volume=order.total_volume,
+            )
+            for order in model.orders
+        ]
+        debts = [
+            VisitDebt(
+                id=debt.id,
+                visit_id=debt.visit_id,
+                amount=debt.amount,
+                comment=debt.comment,
+                created_at=debt.created_at,
+            )
+            for visit in model.visits
+            for debt in visit.debts
+        ]
+
+        return RetailPointDetails(
+            retail_point=self._to_domain(model),
+            orders=orders,
+            debts=debts,
+        )
 
     async def exists_by(self, **kwargs) -> bool:
         stmt = select(select(RetailPointModel).filter_by(**kwargs).exists())

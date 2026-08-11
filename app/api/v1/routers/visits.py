@@ -5,14 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
     allow_all_staff,
-    get_current_employee,
     get_visit_media_service,
     get_visits_service,
 )
 from app.api.v1.schemas.visits import (
     AddDebtRequest,
     AttachMediaRequest,
-    StartVisitRequest,
     UpdateDebtRequest,
     VisitDebtResponse,
     VisitDetailsResponse,
@@ -141,9 +139,9 @@ async def list_visits(
 async def attach_media(
     visit_id: UUID,
     dto: AttachMediaRequest,
-    service: Annotated[VisitMediaService, Depends(get_visit_media_service)],
+    service: Annotated[VisitService, Depends(get_visits_service)],
 ):
-    media = await service.attach(visit_id, dto.media_id)
+    media = await service.attach_media(visit_id, dto.media_id)
     return VisitMediaResponse.model_validate(media)
 
 
@@ -155,9 +153,9 @@ async def attach_media(
 async def detach_media(
     visit_id: UUID,
     media_id: UUID,
-    service: Annotated[VisitMediaService, Depends(get_visit_media_service)],
+    service: Annotated[VisitService, Depends(get_visits_service)],
 ):
-    await service.detach(visit_id, media_id)
+    await service.detach_media(visit_id, media_id)
 
 
 @router.get(

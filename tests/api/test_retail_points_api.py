@@ -111,6 +111,50 @@ async def test_get_retail_point_not_found(client, mock_service):
     assert resp.status_code == 404
 
 
+# --- GET /api/v1/retail_points/{id}/details ---
+
+
+@pytest.mark.asyncio
+async def test_get_retail_point_details(client, mock_service):
+    from datetime import UTC, datetime
+    from decimal import Decimal
+
+    from app.domain.entities.orders import Order
+    from app.domain.entities.retail_points import RetailPointDetails
+    from app.domain.entities.visit_debts import VisitDebt
+
+    point = _retail_point_response()
+    order = Order(
+        warehouse_id=uuid4(),
+        created_by_id=uuid4(),
+        retail_point_id=point.id,
+        total_amount=Decimal("250000.00"),
+        total_volume=Decimal("2.500"),
+        created_at=datetime.now(UTC),
+    )
+    debt = VisitDebt(
+        visit_id=uuid4(),
+        amount=Decimal("50000.00"),
+        comment="Unpaid",
+    )
+    mock_service.get_details.return_value = RetailPointDetails(
+        retail_point=point,
+        orders=[order],
+        debts=[debt],
+    )
+
+    resp = await client.get(f"/api/v1/retail_points/{point.id}/details")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["retail_point"]["id"] == str(point.id)
+    assert data["orders"][0]["id"] == str(order.id)
+    assert data["orders"][0]["total_amount"] == "250000.00"
+    assert data["debts"][0]["id"] == str(debt.id)
+    assert data["debts"][0]["amount"] == "50000.00"
+    mock_service.get_details.assert_awaited_once_with(point.id)
+
+
 # --- GET /api/v1/retail_points/{id}/code ---
 
 
@@ -245,5 +289,3 @@ async def test_list_retail_point_orders(client):
     assert resp.status_code == 200
     assert resp.json() == []
     mock_orders_service.list_by_retail_point.assert_called_once_with(point_id)
-
-

@@ -20,6 +20,7 @@ from app.api.v1.schemas.retail_points import (
     CreateRetailPointRequest,
     InviteCodeResponse,
     RetailPointAssignmentResponse,
+    RetailPointDetailsResponse,
     RetailPointMemberResponse,
     RetailPointResponse,
     RetailPointWithCodeResponse,
@@ -105,6 +106,19 @@ async def get_retail_point(
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
 ):
     return await service.get_by_id(retail_point_id)
+
+
+@router.get(
+    "/{retail_point_id}/details",
+    response_model=RetailPointDetailsResponse,
+    dependencies=[Depends(allow_all_staff)],
+)
+async def get_retail_point_details(
+    retail_point_id: UUID,
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
+):
+    details = await service.get_details(retail_point_id)
+    return RetailPointDetailsResponse.model_validate(details)
 
 
 @router.get(
@@ -225,4 +239,3 @@ async def assign_agent_to_retail_point(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-

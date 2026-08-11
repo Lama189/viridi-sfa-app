@@ -128,6 +128,45 @@ async def test_get_by_id_not_found(service, mock_uow):
         await service.get_by_id(uuid4())
 
 
+# --- get_details ---
+
+
+@pytest.mark.asyncio
+async def test_get_details_success(service, mock_uow):
+    from app.domain.entities.retail_points import RetailPointDetails
+
+    retail_point_id = uuid4()
+    retail_point = RetailPoint(
+        id=retail_point_id,
+        name="Point",
+        address="Address",
+    )
+    orders = [AsyncMock()]
+    debts = [AsyncMock()]
+    details = RetailPointDetails(
+        retail_point=retail_point,
+        orders=orders,
+        debts=debts,
+    )
+    mock_uow.retail_points.get_details_by_id.return_value = details
+
+    result = await service.get_details(retail_point_id)
+
+    assert result == details
+    mock_uow.retail_points.get_details_by_id.assert_awaited_once_with(retail_point_id)
+
+
+@pytest.mark.asyncio
+async def test_get_details_retail_point_not_found(service, mock_uow):
+    retail_point_id = uuid4()
+    mock_uow.retail_points.get_details_by_id.return_value = None
+
+    with pytest.raises(RetailPointNotFoundError):
+        await service.get_details(retail_point_id)
+
+    mock_uow.retail_points.get_details_by_id.assert_awaited_once_with(retail_point_id)
+
+
 # --- update_retail_point ---
 
 

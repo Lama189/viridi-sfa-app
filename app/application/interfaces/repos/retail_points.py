@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.domain.entities.retail_points import RetailPoint, RetailPointIdentity
+from app.domain.entities.retail_points import (
+    RetailPoint,
+    RetailPointDetails,
+    RetailPointIdentity,
+)
 from app.domain.enums import Weekday
 
 
@@ -23,6 +27,13 @@ class IRetailPointRepository(ABC):
 
     @abstractmethod
     async def get_by_id(self, category_id: UUID) -> RetailPoint | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_details_by_id(
+        self,
+        retail_point_id: UUID,
+    ) -> RetailPointDetails | None:
         raise NotImplementedError
 
     @abstractmethod

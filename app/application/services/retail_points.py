@@ -28,6 +28,7 @@ from app.core.observability.metrics import (
 from app.domain.entities.retail_points import (
     BulkCreateRetailPointsResult,
     RetailPoint,
+    RetailPointDetails,
     RetailPointIdentity,
 )
 from app.domain.enums import Weekday
@@ -173,6 +174,17 @@ class RetailPointsService:
             raise RetailPointNotFoundError()
 
         return retail_point
+
+    async def get_details(self, retail_point_id: UUID) -> RetailPointDetails:
+        details = await self._uow.retail_points.get_details_by_id(retail_point_id)
+        if details is None:
+            logger.warning(
+                "Retail point not found",
+                retail_point_id=str(retail_point_id),
+            )
+            raise RetailPointNotFoundError()
+
+        return details
 
     async def get_retail_point_invite_code(self, retail_point_id: UUID) -> str | None:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)

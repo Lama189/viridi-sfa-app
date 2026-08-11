@@ -104,7 +104,7 @@ async def test_add_stock(client, mock_stocks_service, mock_admin_employee):
     mock_stocks_service.add_stock.return_value = stock
 
     resp = await client.post(
-        "/api/v1/stocks/add",
+        "/api/v1/stocks/replenish",
         json={
             "warehouse_id": str(wh_id),
             "product_id": str(p_id),

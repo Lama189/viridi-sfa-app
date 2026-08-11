@@ -3,6 +3,8 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
+from app.domain.entities.orders import Order
+from app.domain.entities.visit_debts import VisitDebt
 from app.domain.enums import ClientType
 
 
@@ -90,3 +92,10 @@ class BulkCreateRetailPointsResult:
     @property
     def created_count(self) -> int:
         return len(self.created)
+
+
+@dataclass(slots=True)
+class RetailPointDetails:
+    retail_point: RetailPoint
+    orders: list[Order]
+    debts: list[VisitDebt]

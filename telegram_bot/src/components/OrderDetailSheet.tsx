@@ -2,10 +2,12 @@ import {
   Box,
   Building2,
   Calendar,
+  Check,
   Clock,
   Loader2,
   MapPin,
   Package,
+  PackageCheck,
   X,
   XCircle,
 } from 'lucide-react'
@@ -13,6 +15,7 @@ import { useState } from 'react'
 import axios from 'axios'
 
 import { useCancelOrder } from '../hooks/useCancelOrder'
+import { useDeliverOrder } from '../hooks/useDeliverOrder'
 import { useOrderDetails } from '../hooks/useOrderDetails'
 import { formatPrice, formatVolume } from '../lib/format'
 import { formatOrderFullDate, getOrderStatusInfo } from '../lib/order-status'
@@ -28,18 +31,23 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
   const order = freshOrder ?? initialOrder
 
   const cancelOrderMutation = useCancelOrder()
+  const deliverOrderMutation = useDeliverOrder()
+
   const [isConfirmingCancel, setIsConfirmingCancel] = useState(false)
-  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [isConfirmingDeliver, setIsConfirmingDeliver] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const statusInfo = getOrderStatusInfo(order.status)
   const orderShortId = order.id.slice(0, 8).toUpperCase()
   const totalItemsCount = order.items.reduce((acc, item) => acc + item.quantity, 0)
 
   const normalizedStatus = order.status.toLowerCase()
+  const isDelivered = normalizedStatus === 'delivered'
+  const canDeliver = ['shipped', 'delivering', 'assembled', 'assembly_started', 'confirmed'].includes(normalizedStatus)
   const canCancel = ['pending', 'confirmed'].includes(normalizedStatus)
 
   const handleCancelOrder = async () => {
-    setCancelError(null)
+    setActionError(null)
     try {
       await cancelOrderMutation.mutateAsync(order.id)
       setIsConfirmingCancel(false)
@@ -47,15 +55,36 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data?.detail
         if (typeof detail === 'string') {
-          setCancelError(detail)
+          setActionError(detail)
           return
         }
       }
       if (err instanceof Error) {
-        setCancelError(err.message)
+        setActionError(err.message)
         return
       }
-      setCancelError('Не удалось отменить заказ. Попробуйте позже.')
+      setActionError('Не удалось отменить заказ. Попробуйте позже.')
+    }
+  }
+
+  const handleDeliverOrder = async () => {
+    setActionError(null)
+    try {
+      await deliverOrderMutation.mutateAsync(order.id)
+      setIsConfirmingDeliver(false)
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.detail
+        if (typeof detail === 'string') {
+          setActionError(detail)
+          return
+        }
+      }
+      if (err instanceof Error) {
+        setActionError(err.message)
+        return
+      }
+      setActionError('Не удалось подтвердить получение заказа. Попробуйте позже.')
     }
   }
 
@@ -179,13 +208,72 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
             </div>
           </div>
 
-          {cancelError && (
+          {actionError && (
             <div className="checkout-error-banner" role="alert">
-              <span>{cancelError}</span>
+              <span>{actionError}</span>
             </div>
           )}
 
-          {canCancel && (
+          {isDelivered && (
+            <div className="order-detail-delivered-banner">
+              <Check size={18} strokeWidth={2.5} />
+              <span>Заказ успешно доставлен и принят</span>
+            </div>
+          )}
+
+          {canDeliver && (
+            <div className="order-detail-actions-section">
+              {isConfirmingDeliver ? (
+                <div className="order-deliver-confirm-box">
+                  <p className="order-deliver-confirm-text">
+                    Подтвердить получение заказа? Товар доставлен и проверен.
+                  </p>
+                  <div className="order-deliver-confirm-actions">
+                    <button
+                      className="order-deliver-confirm-yes-btn"
+                      type="button"
+                      disabled={deliverOrderMutation.isPending}
+                      onClick={handleDeliverOrder}
+                    >
+                      {deliverOrderMutation.isPending ? (
+                        <>
+                          <Loader2 className="spinner-icon" size={17} />
+                          <span>Принимаем…</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check size={17} strokeWidth={2.5} />
+                          <span>Да, заказ получен</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      className="order-deliver-confirm-no-btn"
+                      type="button"
+                      disabled={deliverOrderMutation.isPending}
+                      onClick={() => setIsConfirmingDeliver(false)}
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="order-detail-deliver-btn"
+                  type="button"
+                  onClick={() => {
+                    setIsConfirmingCancel(false)
+                    setIsConfirmingDeliver(true)
+                  }}
+                >
+                  <PackageCheck size={19} />
+                  <span>Подтвердить получение</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {canCancel && !isConfirmingDeliver && (
             <div className="order-detail-cancel-section">
               {isConfirmingCancel ? (
                 <div className="order-cancel-confirm-box">
@@ -222,7 +310,10 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
                 <button
                   className="order-detail-cancel-btn"
                   type="button"
-                  onClick={() => setIsConfirmingCancel(true)}
+                  onClick={() => {
+                    setIsConfirmingDeliver(false)
+                    setIsConfirmingCancel(true)
+                  }}
                 >
                   <XCircle size={18} />
                   <span>Отменить заказ</span>

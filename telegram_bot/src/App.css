@@ -1459,6 +1459,119 @@
   font-size: 13px;
 }
 
+.order-detail-delivered-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border: 1px solid #1f572c;
+  border-radius: 22px;
+  background: #0d2613;
+  color: #6edc82;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.order-detail-actions-section {
+  margin-top: 4px;
+}
+
+.order-detail-deliver-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 22px;
+  border: 0;
+  border-radius: 26px;
+  background: #ffffff;
+  color: #0d0d0d;
+  font-size: 16px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.order-detail-deliver-btn:hover {
+  background: #ececec;
+}
+
+.order-detail-deliver-btn:active {
+  transform: scale(0.985);
+}
+
+.order-deliver-confirm-box {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #1f522a;
+  border-radius: 26px;
+  background: #0c1a0e;
+  text-align: center;
+}
+
+.order-deliver-confirm-text {
+  margin: 0;
+  color: #bdf2c9;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.order-deliver-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.order-deliver-confirm-yes-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 12px;
+  border: 0;
+  border-radius: 18px;
+  background: #238636;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.order-deliver-confirm-yes-btn:hover {
+  background: #2ea043;
+}
+
+.order-deliver-confirm-yes-btn:disabled,
+.order-deliver-confirm-no-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.order-deliver-confirm-no-btn {
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid #333333;
+  border-radius: 18px;
+  background: #1f1f1f;
+  color: #cccccc;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.order-deliver-confirm-no-btn:hover {
+  background: #2b2b2b;
+  color: #ffffff;
+}
+
 .order-detail-cancel-section {
   margin-top: 4px;
 }

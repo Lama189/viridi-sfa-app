@@ -24,3 +24,8 @@ export async function getOrderById(orderId: string): Promise<OrderResponse> {
 export async function cancelOrder(orderId: string): Promise<void> {
   await apiClient.delete(`/orders/${orderId}`)
 }
+
+export async function deliverOrder(orderId: string): Promise<OrderResponse> {
+  const { data } = await apiClient.post<OrderResponse>(`/orders/${orderId}/deliver`)
+  return data
+}

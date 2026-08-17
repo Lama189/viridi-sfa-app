@@ -242,6 +242,37 @@ class TestOrdersClientEndpoints:
         resp = await client.delete(f"/api/v1/orders/{order.id}")
         assert resp.status_code == 400
 
+    # --- POST /api/v1/orders/{order_id}/deliver (by client) ---
+
+    @pytest.mark.asyncio
+    async def test_deliver_order_by_client_success(
+        self, client, mock_service, mock_client_entity
+    ):
+        order = _order_response(client_id=mock_client_entity.id, status=OrderStatus.DELIVERED)
+        mock_service.get_by_id = AsyncMock(return_value=order)
+        mock_service.deliver = AsyncMock(return_value=order)
+
+        resp = await client.post(f"/api/v1/orders/{order.id}/deliver")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == OrderStatus.DELIVERED.value
+        mock_service.deliver.assert_awaited_once_with(order.id, employee_id=None)
+
+    @pytest.mark.asyncio
+    async def test_deliver_order_by_client_forbidden(self, client, mock_service):
+        order = _order_response(client_id=uuid4())
+        mock_service.get_by_id = AsyncMock(return_value=order)
+
+        resp = await client.post(f"/api/v1/orders/{order.id}/deliver")
+        assert resp.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_deliver_order_by_client_not_found(self, client, mock_service):
+        mock_service.get_by_id = AsyncMock(side_effect=ValueError("Order not found"))
+
+        resp = await client.post(f"/api/v1/orders/{uuid4()}/deliver")
+        assert resp.status_code == 404
+
+
 
 # ---------------------------------------------------------------------------
 # Staff endpoints: GET /api/v1/orders, GET /counters, POST /{id}/confirm...

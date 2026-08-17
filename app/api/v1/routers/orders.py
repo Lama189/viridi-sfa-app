@@ -272,13 +272,28 @@ async def assemble_order(
 )
 async def deliver_order(
     order_id: UUID,
+    user: Annotated[
+        AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+    ],
     service: Annotated[OrdersService, Depends(get_orders_service)],
-    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
 ):
     try:
-        return await service.deliver(order_id, employee.id)
+        order = await service.get_by_id(order_id)
+        if isinstance(user, AuthenticatedClient) and order.created_by_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not your order",
+            )
+        employee_id = user.id if isinstance(user, AuthenticatedEmployee) else None
+        return await service.deliver(order_id, employee_id=employee_id)
     except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+

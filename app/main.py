@@ -28,7 +28,7 @@ from app.core.observability.logging import configure_logging
 from app.infrastructure.minio.bucket_initializer import ensure_buckets
 from app.infrastructure.minio.client import get_minio_client
 from app.infrastructure.redis.client import create_redis_client
-from app.infrastructure.redis.repos.rate_limiter import RadisRateLimiter
+from app.infrastructure.redis.repos.rate_limiter import RedisRateLimiter
 
 
 @asynccontextmanager
@@ -45,7 +45,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Viridi SFA API", version="0.1.0", lifespan=lifespan)
 
     redis_client = create_redis_client()
-    redis_rate_limiter = RadisRateLimiter(client=redis_client)
+    redis_rate_limiter = RedisRateLimiter(client=redis_client)
 
     custum_rules = [
         ("/api/v1/employees/login", 5, 60),

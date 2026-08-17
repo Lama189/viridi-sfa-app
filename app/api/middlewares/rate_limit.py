@@ -41,7 +41,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         redis_key = f"{client_identifier}:{request.url.path}"
 
         try:
-            is_limited = await self._rate_limiter.allow(
+            allowed = await self._rate_limiter.allow(
                 redis_key, 
                 limit=limit,
                 window=window
@@ -52,9 +52,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 error=str(e),
                 path=request.url.path,
             )
-            is_limited = False
+            allowed = True
             
-        if is_limited:
+        if not allowed:
             logger.warning(
                 "Rate limit exceeded",
                 client_id=client_identifier,
@@ -76,7 +76,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
     def _resolve_client_identifier(self, request: Request) -> str:
-        forwarded_for = request.headers.get("X-Forwarder-For")
+        forwarded_for = request.headers.get("X-Forwarded-For") or request.headers.get("X-Forwarder-For")
         if forwarded_for:
             return forwarded_for.split(",")[0].strip()
 

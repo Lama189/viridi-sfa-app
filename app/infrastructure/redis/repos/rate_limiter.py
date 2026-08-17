@@ -12,7 +12,7 @@ _LUA_SCRIPT_PATH = Path(__file__).parent.parent / "scripts" / "sliding_window.lu
 _SLIDING_WINDOW_LUA_SCRIPT = _LUA_SCRIPT_PATH.read_text(encoding="utf-8")
 
 
-class RadisRateLimiter(IRateLimiter):
+class RedisRateLimiter(IRateLimiter):
 
     def __init__(self, client: Redis) -> None:
         self._client = client
@@ -33,8 +33,12 @@ class RadisRateLimiter(IRateLimiter):
                 keys=[f"rate_limit:{key}"],
                 args=[now, window, limit, request_id]
             )
-            return bool(result)
+            return bool(result == 1)
         except RedisError as e:
             logger.error(f"Failed to check rate limit for key {key}: {e}")
-            return False
+            return True
+
+
+# Backward-compatibility alias
+RadisRateLimiter = RedisRateLimiter
     

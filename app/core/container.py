@@ -22,7 +22,7 @@ from app.infrastructure.postgres.uow import PostgresUnitOfWork
 from app.infrastructure.rabbitmq.connection import RabbitMQConnectionManager
 from app.infrastructure.rabbitmq.publisher import RabbitMQPublisher
 from app.infrastructure.redis.client import get_redis_client
-from app.infrastructure.redis.repos.rate_limiter import RadisRateLimiter
+from app.infrastructure.redis.repos.rate_limiter import RedisRateLimiter
 
 
 class Container:
@@ -71,7 +71,7 @@ class Container:
         return get_redis_client()
 
     def rate_limiter(self, redis_client: Redis) -> IRateLimiter:
-        return RadisRateLimiter(client=redis_client)
+        return RedisRateLimiter(client=redis_client)
 
     async def close(self) -> None:
         await self._rabbitmq.close()

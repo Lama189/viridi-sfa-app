@@ -11,10 +11,10 @@ redis.call("ZREMRANGEBYSCORE", key, "-inf", window_start)
 local current_requests = redis.call("ZCARD", key)
 
 if current_requests >= limit then
-    return 1 
+    return 0
 end
 
 redis.call("ZADD", key, now, request_id)
 redis.call("EXPIRE", key, window)
 
-return 0
+return 1

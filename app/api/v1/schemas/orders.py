@@ -27,8 +27,8 @@ class OrderItemCreateRequest(BaseModel):
 
 
 class CreateOrderRequest(BaseModel):
-    warehouse_id: UUID
-    retail_point_id: UUID
+    warehouse_id: UUID | None = None
+    retail_point_id: UUID | None = None
     visit_id: UUID | None = None
     items: list[OrderItemCreateRequest]
 

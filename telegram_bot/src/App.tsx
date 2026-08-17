@@ -52,6 +52,7 @@ function App() {
       {activePage === 'catalog' && <CatalogPage onProductSelect={setSelectedProduct} />}
       {activePage === 'cart' && (
         <CartPage
+          client={auth.data.client}
           onNavigateToCatalog={() => setActivePage('catalog')}
           onProductSelect={setSelectedProduct}
         />

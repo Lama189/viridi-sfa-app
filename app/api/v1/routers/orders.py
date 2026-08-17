@@ -33,9 +33,33 @@ async def create_order(
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:
+        warehouse_id = dto.warehouse_id
+        retail_point_id = dto.retail_point_id
+
+        if retail_point_id is None and client.telegram_chat_id:
+            member = await service._uow.retail_point_members.get_by_telegram_id(client.telegram_chat_id)
+            if member:
+                retail_point_id = member.retail_point_id
+
+        if warehouse_id is None:
+            active_warehouses = await service._uow.warehouses.list(is_active=True)
+            if active_warehouses:
+                warehouse_id = active_warehouses[0].id
+
+        if warehouse_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No active warehouse found for the order",
+            )
+        if retail_point_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Retail point ID is required",
+            )
+
         app_dto = OrderCreateDTO(
-            warehouse_id=dto.warehouse_id,
-            retail_point_id=dto.retail_point_id,
+            warehouse_id=warehouse_id,
+            retail_point_id=retail_point_id,
             items=[
                 OrderItemCreateDTO(
                     product_id=item.product_id,

@@ -28,3 +28,38 @@ export interface Product {
   items_in_box: number
   photo_url: string | null
 }
+
+export interface OrderItemCreate {
+  product_id: string
+  quantity: number
+}
+
+export interface CreateOrderPayload {
+  warehouse_id?: string
+  retail_point_id?: string
+  visit_id?: string
+  items: OrderItemCreate[]
+}
+
+export interface OrderItemResponse {
+  id: string
+  order_id: string
+  product: {
+    id: string
+    name: string
+    code?: string | null
+    unit_of_measure?: string | null
+  }
+  quantity: number
+  price_at_order: string
+  total_volume: string
+}
+
+export interface OrderResponse {
+  id: string
+  status: string
+  total_amount: string
+  total_volume: string
+  created_at?: string
+  items: OrderItemResponse[]
+}

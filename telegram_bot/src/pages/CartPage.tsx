@@ -7,17 +7,20 @@ import {
   ShoppingBag,
   Trash2,
 } from 'lucide-react'
+import { useState } from 'react'
 
+import { OrderConfirmationModal } from '../components/OrderConfirmationModal'
 import { useCart } from '../hooks/useCart'
 import { formatPrice, formatVolume, formatWeight } from '../lib/format'
-import type { Product } from '../types/api'
+import type { Client, Product } from '../types/api'
 
 interface CartPageProps {
+  client: Client
   onNavigateToCatalog: () => void
   onProductSelect?: (product: Product) => void
 }
 
-export function CartPage({ onNavigateToCatalog, onProductSelect }: CartPageProps) {
+export function CartPage({ client, onNavigateToCatalog, onProductSelect }: CartPageProps) {
   const {
     items,
     summary,
@@ -27,7 +30,9 @@ export function CartPage({ onNavigateToCatalog, onProductSelect }: CartPageProps
     clearCart,
   } = useCart()
 
-  if (items.length === 0) {
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+
+  if (items.length === 0 && !isCheckoutOpen) {
     return (
       <section className="page cart-page">
         <header className="page-heading">
@@ -186,12 +191,27 @@ export function CartPage({ onNavigateToCatalog, onProductSelect }: CartPageProps
         </div>
 
         <div className="cart-page__actions">
-          <button className="cart-submit-btn" type="button">
+          <button
+            className="cart-submit-btn"
+            type="button"
+            onClick={() => setIsCheckoutOpen(true)}
+          >
             <span>Оформить заказ</span>
             <ArrowRight size={20} />
           </button>
         </div>
       </div>
+
+      {isCheckoutOpen && (
+        <OrderConfirmationModal
+          client={client}
+          onClose={() => setIsCheckoutOpen(false)}
+          onSuccess={() => {
+            setIsCheckoutOpen(false)
+            onNavigateToCatalog()
+          }}
+        />
+      )}
     </section>
   )
 }

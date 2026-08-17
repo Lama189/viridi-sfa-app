@@ -9,6 +9,7 @@ from app.api.v1.schemas.inventory import (
     ProductResponse,
     ProductUpdate,
 )
+from app.application.dto.products import ProductCreateDTO, ProductUpdateDTO
 from app.application.services.products import ProductsService
 
 router = APIRouter(prefix="/api/v1/products", tags=["Products"])
@@ -25,7 +26,15 @@ async def create_product(
     service: Annotated[ProductsService, Depends(get_products_service)],
 ):
     try:
-        return await service.create_product(dto)
+        app_dto = ProductCreateDTO(
+            name=dto.name,
+            price=dto.price,
+            category_id=dto.category_id,
+            volume=dto.volume,
+            weight=dto.weight,
+            items_in_box=dto.items_in_box,
+        )
+        return await service.create_product(app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -70,7 +79,16 @@ async def update_product(
     service: Annotated[ProductsService, Depends(get_products_service)],
 ):
     try:
-        return await service.update_product(product_id, dto)
+        app_dto = ProductUpdateDTO(
+            name=dto.name,
+            price=dto.price,
+            category_id=dto.category_id,
+            volume=dto.volume,
+            weight=dto.weight,
+            items_in_box=dto.items_in_box,
+            is_active=dto.is_active,
+        )
+        return await service.update_product(product_id, app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

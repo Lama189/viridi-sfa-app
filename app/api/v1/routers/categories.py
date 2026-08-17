@@ -9,6 +9,7 @@ from app.api.v1.schemas.inventory import (
     CategoryCreate,
     CategoryUpdate,
 )
+from app.application.dto.categories import CategoryCreateDTO, CategoryUpdateDTO
 from app.application.services.categories import CategoriesService
 
 router = APIRouter(prefix="/api/v1/categories", tags=["Categories"])
@@ -25,7 +26,8 @@ async def create_category(
     service: Annotated[CategoriesService, Depends(get_categories_service)],
 ):
     try:
-        return await service.create_category(dto)
+        app_dto = CategoryCreateDTO(name=dto.name)
+        return await service.create_category(app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -72,7 +74,8 @@ async def update_category(
     service: Annotated[CategoriesService, Depends(get_categories_service)],
 ):
     try:
-        return await service.update_category(category_id, dto)
+        app_dto = CategoryUpdateDTO(name=dto.name, is_active=dto.is_active)
+        return await service.update_category(category_id, app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

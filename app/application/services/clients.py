@@ -11,7 +11,9 @@ from app.application.dto.clients import (
 from app.application.dto.tokens import TokenResponseDTO
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
-from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
+from app.application.interfaces.services.retail_point_members import (
+    IRetailPointMembersService,
+)
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.config import get_settings
 from app.core.context import client_id_ctx_var

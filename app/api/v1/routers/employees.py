@@ -9,12 +9,20 @@ from app.api.dependencies import (
     get_employees_service,
 )
 from app.api.v1.schemas.employees import (
-    EmployeeLoginDTO,
+    EmployeeCreate,
     EmployeeResponse,
     EmployeeUpdate,
     EmployeeWithTokensResponse,
 )
+from app.api.v1.schemas.employees import (
+    EmployeeLoginDTO as SchemaEmployeeLoginDTO,
+)
 from app.api.v1.schemas.tokens import RefreshTokenDTO, TokenResponseDTO
+from app.application.dto.employees import (
+    EmployeeCreateDTO,
+    EmployeeLoginDTO,
+    EmployeeUpdateDTO,
+)
 from app.application.services.employees import EmployeesAuthService, EmployeesService
 
 router = APIRouter(prefix="/api/v1/employees", tags=["Employees"])
@@ -26,11 +34,17 @@ router = APIRouter(prefix="/api/v1/employees", tags=["Employees"])
     response_model=EmployeeResponse,
 )
 async def register(
-    dto: EmployeeLoginDTO,
+    dto: EmployeeCreate,
     service: Annotated[EmployeesService, Depends(get_employees_service)],
 ):
     try:
-        return await service.create_employee(dto)
+        app_dto = EmployeeCreateDTO(
+            phone=dto.phone,
+            password=dto.password,
+            full_name=dto.full_name,
+            role=dto.role,
+        )
+        return await service.create_employee(app_dto)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -41,10 +55,11 @@ async def register(
     response_model=EmployeeWithTokensResponse,
 )
 async def login(
-    dto: EmployeeLoginDTO,
+    dto: SchemaEmployeeLoginDTO,
     service: Annotated[EmployeesAuthService, Depends(get_employees_auth_service)],
 ):
-    return await service.login(dto)
+    app_dto = EmployeeLoginDTO(phone=dto.phone, password=dto.password)
+    return await service.login(app_dto)
 
 
 @router.post(
@@ -74,7 +89,14 @@ async def update_employee(
     service: Annotated[EmployeesService, Depends(get_employees_service)],
 ):
     try:
-        return await service.update_employee(employee_id, dto)
+        app_dto = EmployeeUpdateDTO(
+            phone=dto.phone,
+            password_hash=dto.password_hash,
+            full_name=dto.full_name,
+            role=dto.role,
+            is_active=dto.is_active,
+        )
+        return await service.update_employee(employee_id, app_dto)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

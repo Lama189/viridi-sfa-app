@@ -1,4 +1,5 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -15,6 +16,11 @@ from app.api.v1.schemas.clients import (
     ClientWithTokensResponse,
 )
 from app.api.v1.schemas.tokens import RefreshTokenDTO, TokenResponseDTO
+from app.application.dto.clients import (
+    ClientRegisterDTO,
+    ClientTelegramLoginDTO,
+    ClientUpdateDTO,
+)
 from app.application.services.clients import (
     ClientsAuthService,
     ClientsService,
@@ -32,7 +38,13 @@ async def register(
     dto: ClientRegisterRequest,
     service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)],
 ):
-    return await service.register(dto)
+    app_dto = ClientRegisterDTO(
+        invite_code=dto.invite_code,
+        phone=dto.phone,
+        full_name=dto.full_name,
+        telegram_chat_id=dto.telegram_chat_id,
+    )
+    return await service.register(app_dto)
 
 
 @router.post(
@@ -45,7 +57,8 @@ async def telegram_login(
     service: Annotated[ClientsAuthService, Depends(get_clients_auth_service)],
 ):
     try:
-        return await service.telegram_login(dto)
+        app_dto = ClientTelegramLoginDTO(init_data=dto.init_data)
+        return await service.telegram_login(app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -91,7 +104,7 @@ async def refresh(
     response_model=ClientResponse,
 )
 async def get_client(
-    client_id: str,
+    client_id: UUID,
     service: Annotated[
         ClientsService,
         Depends(get_clients_service),
@@ -125,12 +138,18 @@ async def list_clients(
     dependencies=[Depends(allow_all_staff)],
 )
 async def update_client(
-    client_id: str,
+    client_id: UUID,
     dto: ClientUpdate,
     service: Annotated[ClientsService, Depends(get_clients_service)],
 ):
     try:
-        return await service.update_client(client_id, dto)
+        app_dto = ClientUpdateDTO(
+            phone=dto.phone,
+            full_name=dto.full_name,
+            telegram_chat_id=dto.telegram_chat_id,
+            is_active=dto.is_active,
+        )
+        return await service.update_client(client_id, app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -144,6 +163,6 @@ async def update_client(
     dependencies=[Depends(allow_all_staff)],
 )
 async def delete_client(
-    client_id: str, service: Annotated[ClientsService, Depends(get_clients_service)]
+    client_id: UUID, service: Annotated[ClientsService, Depends(get_clients_service)]
 ):
     await service.delete_client(client_id)

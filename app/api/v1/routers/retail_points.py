@@ -27,6 +27,11 @@ from app.api.v1.schemas.retail_points import (
     UpdateRetailPointRequest,
 )
 from app.api.v1.schemas.visits import VisitDebtResponse
+from app.application.dto.retail_points import (
+    RetailPointCreateDTO,
+    RetailPointUpdateDTO,
+    VisitsDatesDTO,
+)
 from app.application.interfaces.services.retail_point_assignments import (
     IRetailPointAssignmentService,
 )
@@ -66,7 +71,34 @@ async def create_retail_point(
     employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
 ):
     try:
-        point, invite_code = await service.create_retail_point(dto, employee.id)
+        visits_dto = VisitsDatesDTO(
+            mon=dto.visits.mon,
+            tue=dto.visits.tue,
+            wed=dto.visits.wed,
+            thu=dto.visits.thu,
+            fri=dto.visits.fri,
+            sat=dto.visits.sat,
+            sun=dto.visits.sun,
+        )
+        app_dto = RetailPointCreateDTO(
+            name=dto.name,
+            address=dto.address,
+            legal_name=dto.legal_name,
+            client_type=dto.client_type,
+            landmark=dto.landmark,
+            contact_person=dto.contact_person,
+            phone_number=dto.phone_number,
+            inn=dto.inn,
+            checking_account=dto.checking_account,
+            bank_name=dto.bank_name,
+            mfo=dto.mfo,
+            oked=dto.oked,
+            latitude=dto.latitude,
+            longitude=dto.longitude,
+            photo_id=dto.photo_id,
+            visits=visits_dto,
+        )
+        point, invite_code = await service.create_retail_point(app_dto, employee.id)
 
         return RetailPointWithCodeResponse(
             retail_point=asdict(point), invite_code=invite_code
@@ -90,7 +122,36 @@ async def bulk_create_retail_points(
     employee: Annotated[AuthenticatedEmployee, Depends(allow_admin)],
 ):
     try:
-        result = await service.bulk_create(employee.id, dto)
+        app_dtos = [
+            RetailPointCreateDTO(
+                name=p.name,
+                address=p.address,
+                legal_name=p.legal_name,
+                client_type=p.client_type,
+                landmark=p.landmark,
+                contact_person=p.contact_person,
+                phone_number=p.phone_number,
+                inn=p.inn,
+                checking_account=p.checking_account,
+                bank_name=p.bank_name,
+                mfo=p.mfo,
+                oked=p.oked,
+                latitude=p.latitude,
+                longitude=p.longitude,
+                photo_id=p.photo_id,
+                visits=VisitsDatesDTO(
+                    mon=p.visits.mon,
+                    tue=p.visits.tue,
+                    wed=p.visits.wed,
+                    thu=p.visits.thu,
+                    fri=p.visits.fri,
+                    sat=p.visits.sat,
+                    sun=p.visits.sun,
+                ),
+            )
+            for p in dto
+        ]
+        result = await service.bulk_create(employee.id, app_dtos)
 
         return BulkCreateRetailPointsResponse(
             created_count=result.created_count, created=result.created
@@ -146,7 +207,39 @@ async def update_retail_point(
     service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
 ):
     try:
-        return await service.update_retail_point(retail_point_id, dto)
+        visits_dto = (
+            VisitsDatesDTO(
+                mon=dto.visits.mon,
+                tue=dto.visits.tue,
+                wed=dto.visits.wed,
+                thu=dto.visits.thu,
+                fri=dto.visits.fri,
+                sat=dto.visits.sat,
+                sun=dto.visits.sun,
+            )
+            if dto.visits is not None
+            else None
+        )
+        app_dto = RetailPointUpdateDTO(
+            name=dto.name,
+            legal_name=dto.legal_name,
+            client_type=dto.client_type,
+            address=dto.address,
+            landmark=dto.landmark,
+            contact_person=dto.contact_person,
+            phone_number=dto.phone_number,
+            inn=dto.inn,
+            checking_account=dto.checking_account,
+            bank_name=dto.bank_name,
+            mfo=dto.mfo,
+            oked=dto.oked,
+            latitude=dto.latitude,
+            longitude=dto.longitude,
+            photo_id=dto.photo_id,
+            visits=visits_dto,
+            is_active=dto.is_active,
+        )
+        return await service.update_retail_point(retail_point_id, app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

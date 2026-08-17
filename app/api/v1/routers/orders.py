@@ -13,6 +13,7 @@ from app.api.v1.schemas.orders import (
     CreateOrderRequest,
     OrderResponse,
 )
+from app.application.dto.orders import OrderCreateDTO, OrderItemCreateDTO
 from app.application.services.orders import OrdersService
 from app.core.exceptions import InvalidOrderStatusError
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
@@ -32,7 +33,18 @@ async def create_order(
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:
-        return await service.create(client.id, dto)
+        app_dto = OrderCreateDTO(
+            warehouse_id=dto.warehouse_id,
+            retail_point_id=dto.retail_point_id,
+            items=[
+                OrderItemCreateDTO(
+                    product_id=item.product_id,
+                    quantity=item.quantity,
+                )
+                for item in dto.items
+            ],
+        )
+        return await service.create(client.id, app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

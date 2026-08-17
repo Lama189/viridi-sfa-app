@@ -139,7 +139,6 @@ export function OrderConfirmationModal({
         </div>
 
         <div className="checkout-sheet__body">
-          {/* Получатель */}
           <div className="checkout-section">
             <div className="checkout-section__title">
               <UserRound size={17} />
@@ -156,7 +155,6 @@ export function OrderConfirmationModal({
             </div>
           </div>
 
-          {/* Список товаров */}
           <div className="checkout-section">
             <div className="checkout-section__title">
               <ShoppingBag size={17} />
@@ -180,7 +178,6 @@ export function OrderConfirmationModal({
             </div>
           </div>
 
-          {/* Сводка итогов */}
           <div className="checkout-section">
             <div className="checkout-section__title">
               <Package size={17} />
@@ -213,7 +210,6 @@ export function OrderConfirmationModal({
             </div>
           </div>
 
-          {/* Ошибка при создании */}
           {errorMessage && (
             <div className="checkout-error-banner" role="alert">
               <span>{errorMessage}</span>

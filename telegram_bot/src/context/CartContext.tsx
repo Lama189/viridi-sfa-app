@@ -28,7 +28,6 @@ function loadInitialCart(): CartItem[] {
       )
     }
   } catch {
-    // Ignore corrupted local storage
   }
 
   return []
@@ -41,7 +40,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
     } catch {
-      // Ignore quota exceeded or storage error
     }
   }, [items])
 

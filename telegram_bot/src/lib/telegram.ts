@@ -22,7 +22,6 @@ export function initializeTelegram(): TelegramLaunchData {
       init()
       mountTelegramComponents()
     } catch {
-      // The local browser preview is not a Telegram Mini App environment.
     }
 
     isInitialized = true

@@ -10,7 +10,7 @@ import { CartPage } from './pages/CartPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SettingsPage } from './pages/SettingsPage'
-import type { Product } from './types/api'
+import type { OrderResponse, Product } from './types/api'
 import './App.css'
 
 function App() {
@@ -19,16 +19,20 @@ function App() {
   const { summary } = useCart()
   const [activePage, setActivePage] = useState<AppPage>('catalog')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null)
 
   useEffect(() => {
     if (selectedProduct) {
       return setTelegramBackButton(() => setSelectedProduct(null))
     }
+    if (selectedOrder) {
+      return setTelegramBackButton(() => setSelectedOrder(null))
+    }
     if (activePage !== 'catalog') {
       return setTelegramBackButton(() => setActivePage('catalog'))
     }
     return setTelegramBackButton(undefined)
-  }, [selectedProduct, activePage])
+  }, [selectedProduct, selectedOrder, activePage])
 
   if (!telegram.initData) {
     return <AccessState title="Откройте Viridi market в Telegram" />
@@ -57,13 +61,23 @@ function App() {
           onProductSelect={setSelectedProduct}
         />
       )}
-      {activePage === 'profile' && <ProfilePage client={auth.data.client} />}
+      {activePage === 'profile' && (
+        <ProfilePage
+          client={auth.data.client}
+          selectedOrder={selectedOrder}
+          onSelectOrder={setSelectedOrder}
+        />
+      )}
       {activePage === 'settings' && <SettingsPage />}
 
       <BottomNavigation
         activePage={activePage}
         cartCount={summary.totalItems}
-        onChange={setActivePage}
+        onChange={(page) => {
+          setSelectedOrder(null)
+          setSelectedProduct(null)
+          setActivePage(page)
+        }}
       />
 
       {selectedProduct && (

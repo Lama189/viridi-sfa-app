@@ -3,11 +3,16 @@ import {
   Building2,
   Calendar,
   Clock,
+  Loader2,
   MapPin,
   Package,
   X,
+  XCircle,
 } from 'lucide-react'
+import { useState } from 'react'
+import axios from 'axios'
 
+import { useCancelOrder } from '../hooks/useCancelOrder'
 import { useOrderDetails } from '../hooks/useOrderDetails'
 import { formatPrice, formatVolume } from '../lib/format'
 import { formatOrderFullDate, getOrderStatusInfo } from '../lib/order-status'
@@ -22,9 +27,37 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
   const { data: freshOrder } = useOrderDetails(initialOrder.id)
   const order = freshOrder ?? initialOrder
 
+  const cancelOrderMutation = useCancelOrder()
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+
   const statusInfo = getOrderStatusInfo(order.status)
   const orderShortId = order.id.slice(0, 8).toUpperCase()
   const totalItemsCount = order.items.reduce((acc, item) => acc + item.quantity, 0)
+
+  const normalizedStatus = order.status.toLowerCase()
+  const canCancel = ['pending', 'confirmed'].includes(normalizedStatus)
+
+  const handleCancelOrder = async () => {
+    setCancelError(null)
+    try {
+      await cancelOrderMutation.mutateAsync(order.id)
+      setIsConfirmingCancel(false)
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.detail
+        if (typeof detail === 'string') {
+          setCancelError(detail)
+          return
+        }
+      }
+      if (err instanceof Error) {
+        setCancelError(err.message)
+        return
+      }
+      setCancelError('Не удалось отменить заказ. Попробуйте позже.')
+    }
+  }
 
   return (
     <div className="product-sheet-backdrop" role="presentation" onClick={onClose}>
@@ -145,6 +178,58 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
               </strong>
             </div>
           </div>
+
+          {cancelError && (
+            <div className="checkout-error-banner" role="alert">
+              <span>{cancelError}</span>
+            </div>
+          )}
+
+          {canCancel && (
+            <div className="order-detail-cancel-section">
+              {isConfirmingCancel ? (
+                <div className="order-cancel-confirm-box">
+                  <p className="order-cancel-confirm-text">
+                    Вы уверены, что хотите отменить этот заказ?
+                  </p>
+                  <div className="order-cancel-confirm-actions">
+                    <button
+                      className="order-cancel-confirm-yes-btn"
+                      type="button"
+                      disabled={cancelOrderMutation.isPending}
+                      onClick={handleCancelOrder}
+                    >
+                      {cancelOrderMutation.isPending ? (
+                        <>
+                          <Loader2 className="spinner-icon" size={17} />
+                          <span>Отменяем…</span>
+                        </>
+                      ) : (
+                        <span>Да, отменить</span>
+                      )}
+                    </button>
+                    <button
+                      className="order-cancel-confirm-no-btn"
+                      type="button"
+                      disabled={cancelOrderMutation.isPending}
+                      onClick={() => setIsConfirmingCancel(false)}
+                    >
+                      Не отменять
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="order-detail-cancel-btn"
+                  type="button"
+                  onClick={() => setIsConfirmingCancel(true)}
+                >
+                  <XCircle size={18} />
+                  <span>Отменить заказ</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </section>
     </div>

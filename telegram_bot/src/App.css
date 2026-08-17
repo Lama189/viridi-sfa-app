@@ -1459,6 +1459,107 @@
   font-size: 13px;
 }
 
+.order-detail-cancel-section {
+  margin-top: 4px;
+}
+
+.order-detail-cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 20px;
+  border: 1px solid #441e1e;
+  border-radius: 24px;
+  background: rgba(55, 18, 18, 0.45);
+  color: #f58484;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.order-detail-cancel-btn:hover {
+  background: rgba(75, 22, 22, 0.65);
+  border-color: #662727;
+  color: #ff9e9e;
+}
+
+.order-detail-cancel-btn:active {
+  transform: scale(0.985);
+}
+
+.order-cancel-confirm-box {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #542020;
+  border-radius: 26px;
+  background: #1c0c0c;
+  text-align: center;
+}
+
+.order-cancel-confirm-text {
+  margin: 0;
+  color: #f7cece;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.order-cancel-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.order-cancel-confirm-yes-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 12px;
+  border: 0;
+  border-radius: 18px;
+  background: #c22b2b;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+
+.order-cancel-confirm-yes-btn:hover {
+  background: #d83535;
+}
+
+.order-cancel-confirm-yes-btn:disabled,
+.order-cancel-confirm-no-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.order-cancel-confirm-no-btn {
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid #333333;
+  border-radius: 18px;
+  background: #1f1f1f;
+  color: #cccccc;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.order-cancel-confirm-no-btn:hover {
+  background: #2b2b2b;
+  color: #ffffff;
+}
+
 .page-state {
   margin: 55px 0;
   color: #8d8d93;

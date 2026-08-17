@@ -20,3 +20,7 @@ export async function getOrderById(orderId: string): Promise<OrderResponse> {
   const { data } = await apiClient.get<OrderResponse>(`/orders/${orderId}`)
   return data
 }
+
+export async function cancelOrder(orderId: string): Promise<void> {
+  await apiClient.delete(`/orders/${orderId}`)
+}

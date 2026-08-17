@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.api.v1.schemas.retail_points import VisitsDatesDTO
+from app.application.dto.retail_points import VisitsDatesDTO
 from app.domain.entities.visit_schedule_rules import VisitScheduleRule
 from app.domain.enums import Weekday
 

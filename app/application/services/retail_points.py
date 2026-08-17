@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from app.api.v1.schemas.retail_points import (
-    CreateRetailPointRequest,
-    UpdateRetailPointRequest,
+from app.application.dto.retail_points import (
+    RetailPointCreateDTO,
+    RetailPointUpdateDTO,
 )
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
 from app.application.interfaces.services.retail_point_assignments import (
@@ -49,7 +49,7 @@ class RetailPointsService:
 
     async def create_retail_point(
         self,
-        dto: CreateRetailPointRequest,
+        dto: RetailPointCreateDTO,
         employee_id: UUID,
     ) -> tuple[RetailPoint, str]:
         point = RetailPoint(
@@ -88,7 +88,7 @@ class RetailPointsService:
     async def update_retail_point(
         self,
         retail_point_id: UUID,
-        dto: UpdateRetailPointRequest,
+        dto: RetailPointUpdateDTO,
     ) -> RetailPoint:
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
         if not retail_point:
@@ -317,7 +317,7 @@ class RetailPointsService:
     async def bulk_create(
         self,
         employee_id: UUID,
-        dto: list[CreateRetailPointRequest],
+        dto: list[RetailPointCreateDTO],
     ) -> BulkCreateRetailPointsResult:
         if not dto:
             logger.warning("Bulk create request is empty", employee_id=str(employee_id))
@@ -365,7 +365,7 @@ class RetailPointsService:
     async def _prepare_bulk_create(
         self,
         employee_id: UUID,
-        dto: list[CreateRetailPointRequest],
+        dto: list[RetailPointCreateDTO],
     ) -> list[RetailPoint]:
         identities: set[RetailPointIdentity] = set()
 

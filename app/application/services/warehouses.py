@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.api.v1.schemas.inventory import WarehouseCreate, WarehouseUpdate
+from app.application.dto.warehouses import WarehouseCreateDTO, WarehouseUpdateDTO
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.observability.metrics import warehouse_operations_total
 from app.domain.entities.inventory import Warehouse
@@ -10,7 +10,7 @@ class WarehousesService:
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
-    async def create_warehouse(self, dto: WarehouseCreate) -> Warehouse:
+    async def create_warehouse(self, dto: WarehouseCreateDTO) -> Warehouse:
         if await self._uow.warehouses.exists_by(name=dto.name):
             raise ValueError(f"Warehouse name {dto.name} already exists")
 
@@ -31,7 +31,7 @@ class WarehousesService:
         return await self._uow.warehouses.list_all(only_active=only_active)
 
     async def update_warehouse(
-        self, warehouse_id: UUID, dto: WarehouseUpdate
+        self, warehouse_id: UUID, dto: WarehouseUpdateDTO
     ) -> Warehouse:
         warehouse = await self._uow.warehouses.get_by_id(warehouse_id)
         if not warehouse:

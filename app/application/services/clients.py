@@ -1,19 +1,17 @@
 from uuid import UUID
 
-from app.api.v1.schemas.clients import (
+from app.application.dto.clients import (
+    ClientDTO,
     ClientLoginDTO,
-    ClientRegisterRequest,
-    ClientResponse,
-    ClientTelegramLoginRequest,
-    ClientUpdate,
-    ClientWithTokensResponse,
+    ClientRegisterDTO,
+    ClientTelegramLoginDTO,
+    ClientUpdateDTO,
+    ClientWithTokensDTO,
 )
-from app.api.v1.schemas.tokens import TokenResponseDTO
+from app.application.dto.tokens import TokenResponseDTO
 from app.application.interfaces.cache.clients_cache import IClientsCacheRepository
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
-from app.application.interfaces.services.retail_point_members import (
-    IRetailPointMembersService,
-)
+from app.application.interfaces.services.retail_point_members import IRetailPointMembersService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.config import get_settings
 from app.core.context import client_id_ctx_var
@@ -43,7 +41,7 @@ class ClientsService:
     async def list_clients(self, only_active: bool = True) -> list[Client]:
         return await self._uow.clients.list_all(only_active)
 
-    async def update_client(self, client_id: UUID, dto: ClientUpdate) -> Client:
+    async def update_client(self, client_id: UUID, dto: ClientUpdateDTO) -> Client:
         client = await self._uow.clients.get_by_id(client_id)
         if not client:
             raise ValueError(f"Client {client_id} not found")
@@ -125,8 +123,8 @@ class ClientsAuthService:
 
     async def register(
         self,
-        dto: ClientRegisterRequest,
-    ) -> ClientWithTokensResponse:
+        dto: ClientRegisterDTO,
+    ) -> ClientWithTokensDTO:
         existing_client = await self._uow.clients.get_by_phone(dto.phone)
 
         if existing_client is not None:
@@ -159,10 +157,16 @@ class ClientsAuthService:
             tokens = await self._generate_auth_session(existing_client)
             client_operations_total.labels(action="register").inc()
 
-            return ClientWithTokensResponse(
+            return ClientWithTokensDTO(
                 access_token=tokens.access_token,
                 refresh_token=tokens.refresh_token,
-                client=ClientResponse.model_validate(existing_client),
+                client=ClientDTO(
+                    id=existing_client.id,
+                    phone=existing_client.phone,
+                    full_name=existing_client.full_name,
+                    telegram_chat_id=existing_client.telegram_chat_id,
+                    is_active=existing_client.is_active,
+                ),
             )
 
         client = Client(
@@ -189,10 +193,16 @@ class ClientsAuthService:
         tokens = await self._generate_auth_session(client)
         client_operations_total.labels(action="register").inc()
 
-        return ClientWithTokensResponse(
+        return ClientWithTokensDTO(
             access_token=tokens.access_token,
             refresh_token=tokens.refresh_token,
-            client=ClientResponse.model_validate(client),
+            client=ClientDTO(
+                id=client.id,
+                phone=client.phone,
+                full_name=client.full_name,
+                telegram_chat_id=client.telegram_chat_id,
+                is_active=client.is_active,
+            ),
         )
 
     async def login(
@@ -220,8 +230,8 @@ class ClientsAuthService:
 
     async def telegram_login(
         self,
-        dto: ClientTelegramLoginRequest,
-    ) -> ClientWithTokensResponse:
+        dto: ClientTelegramLoginDTO,
+    ) -> ClientWithTokensDTO:
         try:
             parsed_data = SecurityUtils.verify_telegram_init_data(
                 dto.init_data,
@@ -246,10 +256,16 @@ class ClientsAuthService:
         tokens = await self._generate_auth_session(client)
         client_operations_total.labels(action="telegram_login").inc()
 
-        return ClientWithTokensResponse(
+        return ClientWithTokensDTO(
             access_token=tokens.access_token,
             refresh_token=tokens.refresh_token,
-            client=ClientResponse.model_validate(client),
+            client=ClientDTO(
+                id=client.id,
+                phone=client.phone,
+                full_name=client.full_name,
+                telegram_chat_id=client.telegram_chat_id,
+                is_active=client.is_active,
+            ),
         )
 
     async def refresh(

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest
+from app.application.dto.orders import OrderCreateDTO, OrderItemCreateDTO
 from app.application.dto.stocks import (
     StockBatchItemDTO,
     StockBatchOperationDTO,
@@ -61,7 +61,7 @@ class OrdersService:
 
     async def _get_products(
         self,
-        items: list[OrderItemCreateRequest],
+        items: list[OrderItemCreateDTO],
     ) -> dict[UUID, Product]:
         product_ids = [item.product_id for item in items]
 
@@ -108,7 +108,7 @@ class OrdersService:
     ) -> dict[OrderStatus, int]:
         return await self._uow.orders.get_counts_by_status(employee_id=employee_id)
 
-    async def create(self, client_id: UUID, dto: CreateOrderRequest) -> Order:
+    async def create(self, client_id: UUID, dto: OrderCreateDTO) -> Order:
         await self._validate(dto.warehouse_id, client_id, dto.retail_point_id)
 
         warehouse = await self._uow.warehouses.get_by_id(dto.warehouse_id)

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from uuid import UUID
 
 from app.application.dto.categories import CategoryDTO
-from app.application.dto.products import ProductDTO
 from app.domain.enums import (
     StockReferenceType,
     StockTransactionType,
@@ -88,6 +88,12 @@ class StockTransactionDTO:
 
 @dataclass(slots=True, frozen=True)
 class ProductWithStockDTO:
-    product: ProductDTO
+    id: UUID
+    name: str
+    price: Decimal
+    volume: Decimal
+    weight: Decimal
+    items_in_box: int
     category: CategoryDTO
+    photo_url: str | None = None
     stock: StockSummaryDTO | None = None

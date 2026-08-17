@@ -1,13 +1,13 @@
 from uuid import UUID
 
-from app.api.v1.schemas.employees import (
-    EmployeeCreate,
+from app.application.dto.employees import (
+    EmployeeCreateDTO,
+    EmployeeDTO,
     EmployeeLoginDTO,
-    EmployeeResponse,
-    EmployeeUpdate,
-    EmployeeWithTokensResponse,
+    EmployeeUpdateDTO,
+    EmployeeWithTokensDTO,
 )
-from app.api.v1.schemas.tokens import TokenResponseDTO
+from app.application.dto.tokens import TokenResponseDTO
 from app.application.interfaces.cache.employees_cache import IEmployeesCacheRepository
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.context import employee_id_ctx_var
@@ -26,7 +26,7 @@ class EmployeesService:
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
-    async def create_employee(self, dto: EmployeeCreate) -> Employee:
+    async def create_employee(self, dto: EmployeeCreateDTO) -> Employee:
         if await self._uow.employees.exists_by(phone=dto.phone):
             raise ValueError(
                 f"An employee with phone number '{dto.phone}' already exists."
@@ -54,7 +54,9 @@ class EmployeesService:
     async def list_employees(self, **kwargs) -> list[Employee]:
         return await self._uow.employees.list_by(**kwargs)
 
-    async def update_employee(self, employee_id: UUID, dto: EmployeeUpdate) -> Employee:
+    async def update_employee(
+        self, employee_id: UUID, dto: EmployeeUpdateDTO
+    ) -> Employee:
         employee = await self._uow.employees.get_by_id(employee_id)
         if not employee:
             raise ValueError(f"Employee {employee_id} not found")
@@ -123,7 +125,7 @@ class EmployeesAuthService:
             access_token=access_token, refresh_token=refresh_token, user_id=employee.id
         )
 
-    async def login(self, dto: EmployeeLoginDTO) -> EmployeeWithTokensResponse:
+    async def login(self, dto: EmployeeLoginDTO) -> EmployeeWithTokensDTO:
         employee = await self._uow.employees.get_by(phone=dto.phone)
         if not employee:
             raise UserNotFoundError()
@@ -137,10 +139,16 @@ class EmployeesAuthService:
         tokens = await self._generate_auth_session(employee)
         employee_operations_total.labels(action="login").inc()
 
-        return EmployeeWithTokensResponse(
+        return EmployeeWithTokensDTO(
             access_token=tokens.access_token,
             refresh_token=tokens.refresh_token,
-            employee=EmployeeResponse.model_validate(employee),
+            employee=EmployeeDTO(
+                id=employee.id,
+                phone=employee.phone,
+                full_name=employee.full_name,
+                role=employee.role,
+                is_active=employee.is_active,
+            ),
         )
 
     async def refresh(self, refresh_token: str) -> TokenResponseDTO:

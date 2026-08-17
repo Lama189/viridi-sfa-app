@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import Numeric, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
+from app.application.dto.dashboard import CategoryReportDTO, DailyReportDTO
 from app.application.interfaces.repos.sales_reports import ISalesReportRepository
 from app.domain.enums import OrderStatus
 from app.infrastructure.postgres.models.categories import Category

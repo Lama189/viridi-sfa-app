@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.api.v1.schemas.inventory import ProductWithStockResponse
 from app.application.dto.stocks import (
+    ProductWithStockDTO,
     StockBatchOperationDTO,
     StockCreateDTO,
     StockOperationDTO,
@@ -76,5 +76,5 @@ class IStockService(ABC):
     @abstractmethod
     async def get_warehouse_inventory(
         self, warehouse_id: UUID
-    ) -> list[ProductWithStockResponse]:
+    ) -> list[ProductWithStockDTO]:
         raise NotImplementedError

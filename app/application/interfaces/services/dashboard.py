@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from uuid import UUID
 
-from app.api.v1.schemas.dashboard import DailyReportDTO
+from app.application.dto.dashboard import DailyReportDTO
 from app.domain.entities.dashboard import EmployeeDashboard
 
 

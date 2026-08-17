@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.api.v1.schemas.inventory import ProductCreate, ProductUpdate
+from app.application.dto.products import ProductCreateDTO, ProductUpdateDTO
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.observability.metrics import product_operations_total
 from app.domain.entities.inventory import Product
@@ -10,7 +10,7 @@ class ProductsService:
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
-    async def create_product(self, dto: ProductCreate) -> Product:
+    async def create_product(self, dto: ProductCreateDTO) -> Product:
         category = await self._uow.categories.get_by_id(dto.category_id)
         if not category:
             raise ValueError(f"Category with ID {dto.category_id} not found")
@@ -41,7 +41,7 @@ class ProductsService:
     async def get_all_products(self, only_active: bool = True) -> list[Product]:
         return await self._uow.products.list_all(only_active)
 
-    async def update_product(self, product_id: UUID, dto: ProductUpdate) -> Product:
+    async def update_product(self, product_id: UUID, dto: ProductUpdateDTO) -> Product:
         product = await self._uow.products.get_by_id(product_id)
         if not product:
             raise ValueError(f"Product {product_id} not found")

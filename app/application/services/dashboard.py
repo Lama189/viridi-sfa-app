@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from app.api.v1.schemas.dashboard import DailyReportDTO
+from app.application.dto.dashboard import DailyReportDTO
 from app.application.interfaces.services.dashboard import (
     EmployeeDashboard,
     IDashboardService,

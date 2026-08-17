@@ -1,12 +1,14 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
     allow_all_staff,
     get_clients_auth_service,
     get_clients_service,
+    get_current_user,
+    get_orders_service,
 )
 from app.api.v1.schemas.clients import (
     ClientRegisterRequest,
@@ -15,6 +17,7 @@ from app.api.v1.schemas.clients import (
     ClientUpdate,
     ClientWithTokensResponse,
 )
+from app.api.v1.schemas.orders import OrderResponse
 from app.api.v1.schemas.tokens import RefreshTokenDTO, TokenResponseDTO
 from app.application.dto.clients import (
     ClientRegisterDTO,
@@ -25,6 +28,10 @@ from app.application.services.clients import (
     ClientsAuthService,
     ClientsService,
 )
+from app.application.services.orders import OrdersService
+from app.core.exceptions import InvalidOrderStatusError
+from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
+from app.domain.enums import OrderStatus
 
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 
@@ -119,6 +126,44 @@ async def get_client(
         )
 
     return client
+
+
+@router.get(
+    "/{client_id}/orders",
+    response_model=list[OrderResponse],
+)
+async def list_client_orders(
+    client_id: UUID,
+    user: Annotated[
+        AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+    ],
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    clients_service: Annotated[ClientsService, Depends(get_clients_service)],
+    statuses: Annotated[list[str] | None, Query()] = None,
+):
+    if isinstance(user, AuthenticatedClient) and user.id != client_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not your orders",
+        )
+
+    client = await clients_service.get_client(client_id)
+    if client is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )
+
+    parsed_statuses: list[OrderStatus] | None = None
+    if statuses:
+        parsed_statuses = []
+        for st in statuses:
+            try:
+                parsed_statuses.append(OrderStatus(st))
+            except ValueError:
+                raise InvalidOrderStatusError()
+
+    return await service.list_by_client(client_id=client_id, statuses=parsed_statuses)
 
 
 @router.get(

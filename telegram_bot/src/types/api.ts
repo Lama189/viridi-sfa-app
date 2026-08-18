@@ -41,6 +41,11 @@ export interface CreateOrderPayload {
   items: OrderItemCreate[]
 }
 
+export interface UserShort {
+  id: string
+  full_name: string
+}
+
 export interface RetailPointShort {
   id: string
   name: string
@@ -75,5 +80,6 @@ export interface OrderResponse {
   updated_at?: string | null
   retail_point?: RetailPointShort | null
   warehouse?: WarehouseShort | null
+  created_by?: UserShort | null
   items: OrderItemResponse[]
 }

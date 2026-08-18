@@ -1,6 +1,5 @@
 import {
   Box,
-  Building2,
   Calendar,
   Check,
   Clock,
@@ -8,6 +7,7 @@ import {
   MapPin,
   Package,
   PackageCheck,
+  UserRound,
   X,
   XCircle,
 } from 'lucide-react'
@@ -126,7 +126,7 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
         </div>
 
         <div className="order-detail-sheet__body">
-          {(order.retail_point || order.warehouse) && (
+          {(order.retail_point || order.created_by) && (
             <div className="order-detail-meta-card">
               {order.retail_point && (
                 <div className="order-detail-meta-item">
@@ -140,14 +140,14 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
                 </div>
               )}
 
-              {order.warehouse && (
+              {order.created_by && (
                 <div className="order-detail-meta-item">
                   <span className="order-detail-meta-icon" aria-hidden="true">
-                    <Building2 size={18} />
+                    <UserRound size={18} />
                   </span>
                   <div className="order-detail-meta-text">
-                    <strong>Склад отгрузки</strong>
-                    <span>{order.warehouse.name}</span>
+                    <strong>Создал заказ</strong>
+                    <span>{order.created_by.full_name}</span>
                   </div>
                 </div>
               )}

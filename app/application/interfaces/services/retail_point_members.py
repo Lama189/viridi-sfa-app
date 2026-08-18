@@ -22,6 +22,13 @@ class IRetailPointMembersService(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def leave_by_client(
+        self,
+        client_id: UUID,
+    ) -> list[RetailPointMember]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def remove(
         self,
         retail_point_id: UUID,

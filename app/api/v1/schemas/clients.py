@@ -96,6 +96,8 @@ class ClientResponse(BaseModel):
     full_name: str
     telegram_chat_id: int | None
     is_active: bool
+    has_retail_point: bool = False
+    retail_point_id: UUID | None = None
 
     model_config = {
         "from_attributes": True,
@@ -123,3 +125,9 @@ class ClientRegisterRequest(BaseModel):
     phone: str
     full_name: str
     telegram_chat_id: int
+
+
+class ClientJoinByInviteRequest(BaseModel):
+    invite_code: str
+    telegram_chat_id: int | None = None
+    client_id: UUID | None = None

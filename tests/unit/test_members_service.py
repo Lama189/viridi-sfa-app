@@ -166,6 +166,29 @@ async def test_leave_not_found(service, mock_uow):
         await service.leave(uuid4(), uuid4())
 
 
+@pytest.mark.asyncio
+async def test_leave_by_client_success(service, mock_uow):
+    client_id = uuid4()
+    mock_uow.clients.get_by_id.return_value = Client(
+        phone="+998901111111",
+        full_name="C",
+        id=client_id,
+        is_active=True,
+    )
+    membership1 = RetailPointMember(uuid4(), client_id)
+    membership2 = RetailPointMember(uuid4(), client_id)
+    mock_uow.retail_point_members.get_by_client_id.return_value = [
+        membership1,
+        membership2,
+    ]
+
+    result = await service.leave_by_client(client_id)
+
+    assert len(result) == 2
+    assert mock_uow.retail_point_members.delete.await_count == 2
+    mock_uow.commit.assert_awaited_once()
+
+
 # --- remove ---
 
 

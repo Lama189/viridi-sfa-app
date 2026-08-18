@@ -14,7 +14,10 @@ from telegram_bot.events.order_events import (
     deserialize_event,
 )
 from telegram_bot.services.clients import ClientDTO
-from telegram_bot.services.notifications import NotificationService, format_order_short_id
+from telegram_bot.services.notifications import (
+    NotificationService,
+    format_order_short_id,
+)
 from telegram_bot.services.retail_point_members import RetailPointMemberDTO
 
 

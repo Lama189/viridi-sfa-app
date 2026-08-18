@@ -8,8 +8,7 @@ class TokenResponseDTO(BaseModel):
     refresh_token: str
     user_id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class RefreshTokenDTO(BaseModel):

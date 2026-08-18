@@ -23,6 +23,7 @@ class Registration(StatesGroup):
     invite_code = State()
     phone = State()
     full_name = State()
+    invite_code_existing = State()
 
 
 def get_required_env(name: str) -> str:
@@ -59,13 +60,13 @@ def market_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
 def extract_error(response_text: str) -> str:
     try:
         detail = json.loads(response_text).get("detail")
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         detail = None
 
     if isinstance(detail, str):
         return detail
 
-    return "Не удалось завершить регистрацию. Проверьте код и попробуйте снова."
+    return "Не удалось завершить операцию. Проверьте код и попробуйте снова."
 
 
 def create_router(api_url: str, web_app_url: str) -> Router:
@@ -84,10 +85,22 @@ def create_router(api_url: str, web_app_url: str) -> Router:
                     ) as response,
                 ):
                     if response.status == 200:
-                        await state.clear()
+                        client_data = await response.json()
+                        if client_data.get("has_retail_point"):
+                            await state.clear()
+                            await message.answer(
+                                "С возвращением в Viridi market!\nНажмите кнопку ниже, чтобы открыть магазин.",
+                                reply_markup=market_keyboard(web_app_url),
+                            )
+                            return
+
+                        await state.set_state(Registration.invite_code_existing)
+                        client_name = client_data.get("full_name") or "клиент"
                         await message.answer(
-                            "С возвращением в Viridi market!\nНажмите кнопку ниже, чтобы открыть магазин.",
-                            reply_markup=market_keyboard(web_app_url),
+                            f"С возвращением, {client_name}!\n\n"
+                            "Вы не привязаны ни к одной торговой точке.\n"
+                            "Отправьте код активации новой торговой точки, чтобы продолжить.",
+                            reply_markup=ReplyKeyboardRemove(),
                         )
                         return
             except ClientError:
@@ -98,6 +111,49 @@ def create_router(api_url: str, web_app_url: str) -> Router:
             "Добро пожаловать в Viridi market.\n\nОтправьте код активации, чтобы зарегистрироваться.",
             reply_markup=ReplyKeyboardRemove(),
         )
+
+    @router.message(Registration.invite_code_existing, F.text)
+    async def save_existing_invite_code(message: Message, state: FSMContext) -> None:
+        if not message.text or message.from_user is None:
+            return
+
+        invite_code = message.text.strip()
+        if not invite_code:
+            await message.answer(
+                "Код не должен быть пустым. Отправьте код активации ещё раз."
+            )
+            return
+
+        payload = {
+            "invite_code": invite_code,
+            "telegram_chat_id": message.from_user.id,
+        }
+
+        try:
+            async with (
+                ClientSession(timeout=ClientTimeout(total=20)) as client,
+                client.post(
+                    f"{normalized_api_url}/api/v1/clients/join-by-invite",
+                    json=payload,
+                ) as response,
+            ):
+                response_text = await response.text()
+                is_success = response.ok
+        except ClientError:
+            await message.answer(
+                "Сервис временно недоступен. Попробуйте ещё раз позже."
+            )
+            return
+
+        if is_success:
+            await state.clear()
+            await message.answer(
+                "Вы успешно подключились к торговой точке! Добро пожаловать в Viridi market.",
+                reply_markup=market_keyboard(web_app_url),
+            )
+            return
+
+        await message.answer(extract_error(response_text))
 
     @router.message(Registration.invite_code, F.text)
     async def save_invite_code(message: Message, state: FSMContext) -> None:

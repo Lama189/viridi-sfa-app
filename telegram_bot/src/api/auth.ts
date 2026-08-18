@@ -9,3 +9,7 @@ export async function telegramLogin(initData: string): Promise<ClientAuthRespons
   saveAuthResponse(data)
   return data
 }
+
+export async function leaveRetailPoint(clientId: string): Promise<void> {
+  await apiClient.post(`/clients/${clientId}/leave-retail-point`)
+}

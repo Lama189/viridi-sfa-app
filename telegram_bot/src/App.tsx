@@ -68,7 +68,7 @@ function App() {
           onSelectOrder={setSelectedOrder}
         />
       )}
-      {activePage === 'settings' && <SettingsPage />}
+      {activePage === 'settings' && <SettingsPage client={auth.data.client} />}
 
       <BottomNavigation
         activePage={activePage}

@@ -79,3 +79,22 @@ export function setTelegramBackButton(onBack: (() => void) | undefined): () => v
     }
   }
 }
+
+export function closeTelegramMiniApp(): void {
+  try {
+    if (miniApp.close.isAvailable()) {
+      miniApp.close()
+      return
+    }
+  } catch {
+  }
+
+  try {
+    const webApp = (window as unknown as { Telegram?: { WebApp?: { close?: () => void } } })
+      ?.Telegram?.WebApp
+    if (typeof webApp?.close === 'function') {
+      webApp.close()
+    }
+  } catch {
+  }
+}

@@ -79,6 +79,18 @@ class RetailPointMembersService(IRetailPointMembersService):
 
         return membership
 
+    async def leave_by_client(self, client_id: UUID) -> list[RetailPointMember]:
+        await self._validate_client(client_id)
+        memberships = await self._uow.retail_point_members.get_by_client_id(client_id)
+        for membership in memberships:
+            await self._uow.retail_point_members.delete(membership)
+
+        await self._uow.commit()
+        retail_point_member_operations_total.labels(action="leave").inc(
+            len(memberships) or 1
+        )
+        return memberships
+
     async def remove(self, retail_point_id: UUID, client_id: UUID) -> RetailPointMember:
         membership = (
             await self._uow.retail_point_members.get_by_retail_point_and_client(

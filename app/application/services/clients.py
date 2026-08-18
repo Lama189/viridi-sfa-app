@@ -270,6 +270,43 @@ class ClientsAuthService:
             ),
         )
 
+    async def join_by_invite(
+        self,
+        invite_code: str,
+        telegram_chat_id: int | None = None,
+        client_id: UUID | None = None,
+    ) -> ClientWithTokensDTO:
+        client = None
+        if client_id is not None:
+            client = await self._uow.clients.get_by_id(client_id)
+        elif telegram_chat_id is not None:
+            client = await self._uow.clients.get_by_telegram_chat_id(telegram_chat_id)
+
+        if client is None:
+            raise UserNotFoundError()
+
+        if not client.is_active:
+            raise UserNotActiveError()
+
+        invite = await self._invite_codes.activate(invite_code, client.id)
+        await self._memberships.join(invite.retail_point_id, client.id)
+        await self._uow.commit()
+
+        tokens = await self._generate_auth_session(client)
+        client_operations_total.labels(action="join_by_invite").inc()
+
+        return ClientWithTokensDTO(
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            client=ClientDTO(
+                id=client.id,
+                phone=client.phone,
+                full_name=client.full_name,
+                telegram_chat_id=client.telegram_chat_id,
+                is_active=client.is_active,
+            ),
+        )
+
     async def refresh(
         self,
         refresh_token: str,

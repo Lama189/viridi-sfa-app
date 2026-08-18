@@ -11,6 +11,7 @@ from app.api.dependencies import (
     get_clients_service,
     get_current_user,
     get_orders_service,
+    get_retail_point_members_service,
 )
 from app.api.v1.schemas.clients import ClientResponse, ClientWithTokensResponse
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
@@ -43,6 +44,11 @@ def mock_orders_service():
 
 
 @pytest.fixture
+def mock_members_service():
+    return AsyncMock()
+
+
+@pytest.fixture
 def mock_admin_employee():
     return AuthenticatedEmployee(
         id=uuid4(),
@@ -54,10 +60,19 @@ def mock_admin_employee():
 
 
 @pytest.fixture(autouse=True)
-def override_deps(mock_service, mock_auth_service, mock_orders_service, mock_admin_employee):
+def override_deps(
+    mock_service,
+    mock_auth_service,
+    mock_orders_service,
+    mock_members_service,
+    mock_admin_employee,
+):
     app.dependency_overrides[get_clients_service] = lambda: mock_service
     app.dependency_overrides[get_clients_auth_service] = lambda: mock_auth_service
     app.dependency_overrides[get_orders_service] = lambda: mock_orders_service
+    app.dependency_overrides[get_retail_point_members_service] = (
+        lambda: mock_members_service
+    )
     app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
     yield
     app.dependency_overrides.clear()
@@ -294,3 +309,63 @@ async def test_list_client_retail_point_orders_forbidden(
 
     resp = await client.get(f"/api/v1/clients/{other_cid}/retail-point/orders")
     assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_leave_retail_point_success(client, mock_service, mock_members_service):
+    cid = uuid4()
+    mock_service.get_client.return_value = Client(
+        id=cid,
+        phone="+998901234567",
+        full_name="Test Client",
+        telegram_chat_id=123456,
+        is_active=True,
+    )
+    mock_members_service.leave_by_client.return_value = []
+
+    resp = await client.post(f"/api/v1/clients/{cid}/leave-retail-point")
+    assert resp.status_code == 200
+    assert resp.json()["status"] == "success"
+    mock_members_service.leave_by_client.assert_awaited_once_with(cid)
+
+
+@pytest.mark.asyncio
+async def test_leave_retail_point_forbidden(client, mock_members_service):
+    other_cid = uuid4()
+    my_cid = uuid4()
+    app.dependency_overrides[get_current_user] = lambda: AuthenticatedClient(
+        id=my_cid,
+        phone="+998901234567",
+        full_name="My User",
+        is_active=True,
+    )
+
+    resp = await client.post(f"/api/v1/clients/{other_cid}/leave-retail-point")
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_join_by_invite_success(client, mock_auth_service):
+    from app.application.dto.clients import ClientDTO, ClientWithTokensDTO
+
+    cid = uuid4()
+    mock_auth_service.join_by_invite.return_value = ClientWithTokensDTO(
+        access_token="access",
+        refresh_token="refresh",
+        client=ClientDTO(
+            id=cid,
+            phone="+998901234567",
+            full_name="Test Client",
+            telegram_chat_id=123456,
+            is_active=True,
+        ),
+    )
+
+    resp = await client.post(
+        "/api/v1/clients/join-by-invite",
+        json={"invite_code": "INVITE123", "telegram_chat_id": 123456},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["access_token"] == "access"
+    assert data["client"]["id"] == str(cid)

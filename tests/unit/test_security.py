@@ -29,7 +29,7 @@ def test_verify_password_exception_returns_false():
 @patch("app.core.security.get_settings")
 def test_generate_access_token(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         access_token_expire_minutes=15,
     )
@@ -41,7 +41,7 @@ def test_generate_access_token(mock_settings):
 @patch("app.core.security.get_settings")
 def test_generate_refresh_token(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         refresh_token_expire_days=30,
     )
@@ -56,7 +56,7 @@ def test_generate_refresh_token(mock_settings):
 @patch("app.core.security.get_settings")
 def test_verify_token_success(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         access_token_expire_minutes=15,
     )
@@ -70,7 +70,7 @@ def test_verify_token_success(mock_settings):
 @patch("app.core.security.get_settings")
 def test_verify_token_missing_sub(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         access_token_expire_minutes=15,
     )
@@ -79,7 +79,7 @@ def test_verify_token_missing_sub(mock_settings):
     now = datetime.now(UTC)
     token = _jwt.encode(
         {"exp": now + timedelta(minutes=15), "type": "access"},
-        "test-secret",
+        "test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
     )
 
@@ -91,7 +91,7 @@ def test_verify_token_missing_sub(mock_settings):
 @patch("app.core.security.get_settings")
 def test_verify_token_wrong_type(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         access_token_expire_minutes=15,
     )
@@ -106,7 +106,7 @@ def test_verify_token_wrong_type(mock_settings):
 @patch("app.core.security.get_settings")
 def test_verify_token_expired(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         access_token_expire_minutes=15,
     )
@@ -115,7 +115,7 @@ def test_verify_token_expired(mock_settings):
     now = datetime.now(UTC)
     expired_token = jwt.encode(
         {"sub": "user-123", "type": "access", "exp": now - timedelta(hours=1)},
-        "test-secret",
+        "test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
     )
 
@@ -127,7 +127,7 @@ def test_verify_token_expired(mock_settings):
 @patch("app.core.security.get_settings")
 def test_verify_token_invalid_signature(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         access_token_expire_minutes=15,
     )
@@ -136,7 +136,7 @@ def test_verify_token_invalid_signature(mock_settings):
     now = datetime.now(UTC)
     token = jwt.encode(
         {"sub": "user-123", "type": "access", "exp": now + timedelta(minutes=15)},
-        "wrong-secret",
+        "wrong-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
     )
 
@@ -151,7 +151,7 @@ def test_verify_token_invalid_signature(mock_settings):
 @patch("app.core.security.get_settings")
 def test_refresh_token_roundtrip(mock_settings):
     mock_settings.return_value = MagicMock(
-        secret_key="test-secret",
+        secret_key="test-secret-key-that-is-at-least-32-chars-long",
         algorithm="HS256",
         refresh_token_expire_days=30,
     )

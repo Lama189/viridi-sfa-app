@@ -253,3 +253,44 @@ async def test_list_client_orders_not_found(client, mock_service):
 
     resp = await client.get(f"/api/v1/clients/{cid}/orders")
     assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_list_client_retail_point_orders(
+    client, mock_service, mock_orders_service
+):
+    cid = uuid4()
+    mock_service.get_client.return_value = Client(
+        id=cid,
+        phone="+998901234567",
+        full_name="Test Client",
+        is_active=True,
+    )
+    mock_orders_service.list_by_client_retail_point.return_value = [_sample_order(cid)]
+
+    resp = await client.get(f"/api/v1/clients/{cid}/retail-point/orders")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert Decimal(data[0]["total_amount"]) == Decimal("150000.00")
+    mock_orders_service.list_by_client_retail_point.assert_awaited_once_with(
+        client_id=cid,
+        statuses=None,
+    )
+
+
+@pytest.mark.asyncio
+async def test_list_client_retail_point_orders_forbidden(
+    client, mock_service, mock_orders_service
+):
+    other_cid = uuid4()
+    my_cid = uuid4()
+    app.dependency_overrides[get_current_user] = lambda: AuthenticatedClient(
+        id=my_cid,
+        phone="+998901234567",
+        full_name="My User",
+        is_active=True,
+    )
+
+    resp = await client.get(f"/api/v1/clients/{other_cid}/retail-point/orders")
+    assert resp.status_code == 403

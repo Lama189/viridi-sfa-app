@@ -18,6 +18,10 @@ class IRetailPointMemberRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_by_client_id(self, client_id: UUID) -> list[RetailPointMember]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_by_retail_point(
         self, retail_point_id: UUID
     ) -> list[RetailPointMember]:

@@ -47,6 +47,17 @@ class PostgresRetailPointMemberRepository(IRetailPointMemberRepository):
 
         return self._to_domain(model)
 
+    async def get_by_client_id(
+        self, client_id: UUID
+    ) -> list[RetailPointMember]:
+        result = await self._session.execute(
+            select(RetailPointMemberModel).where(
+                RetailPointMemberModel.client_id == client_id
+            )
+        )
+
+        return [self._to_domain(m) for m in result.scalars().all()]
+
     async def get_by_retail_point(
         self, retail_point_id: UUID
     ) -> list[RetailPointMember]:

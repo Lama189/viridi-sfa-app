@@ -99,8 +99,28 @@ class OrdersService:
     ) -> list[Order]:
         return await self._uow.orders.list_by_client(client_id, statuses=statuses)
 
-    async def list_by_retail_point(self, retail_point_id: UUID) -> list[Order]:
-        return await self._uow.orders.list_by_retail_point(retail_point_id)
+    async def list_by_client_retail_point(
+        self,
+        client_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        memberships = await self._uow.retail_point_members.get_by_client_id(client_id)
+        if not memberships:
+            return []
+
+        retail_point_ids = [m.retail_point_id for m in memberships]
+        return await self._uow.orders.list_by_retail_points(
+            retail_point_ids, statuses=statuses
+        )
+
+    async def list_by_retail_point(
+        self,
+        retail_point_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        return await self._uow.orders.list_by_retail_point(
+            retail_point_id, statuses=statuses
+        )
 
     async def get_counts_by_status(
         self,

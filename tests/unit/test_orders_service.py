@@ -129,7 +129,23 @@ class TestOrdersServiceRead:
 
         res = await service.list_by_retail_point(rpid)
         assert res == orders
-        mock_uow.orders.list_by_retail_point.assert_awaited_once_with(rpid)
+        mock_uow.orders.list_by_retail_point.assert_awaited_once_with(rpid, statuses=None)
+
+    @pytest.mark.asyncio
+    async def test_list_by_client_retail_point(self, service, mock_uow):
+        cid = uuid4()
+        rpid = uuid4()
+        from app.domain.entities.retail_point_members import RetailPointMember
+        mock_uow.retail_point_members.get_by_client_id.return_value = [
+            RetailPointMember(retail_point_id=rpid, client_id=cid)
+        ]
+        orders = [_pending_order_with_item()]
+        mock_uow.orders.list_by_retail_points.return_value = orders
+
+        res = await service.list_by_client_retail_point(cid, statuses=[OrderStatus.PENDING])
+        assert res == orders
+        mock_uow.retail_point_members.get_by_client_id.assert_awaited_once_with(cid)
+        mock_uow.orders.list_by_retail_points.assert_awaited_once_with([rpid], statuses=[OrderStatus.PENDING])
 
     @pytest.mark.asyncio
     async def test_get_counts_by_status(self, service, mock_uow):

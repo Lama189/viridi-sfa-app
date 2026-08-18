@@ -16,6 +16,16 @@ export async function getClientOrders(
   return data
 }
 
+export async function getClientRetailPointOrders(
+  clientId: string,
+  statuses?: string[],
+): Promise<OrderResponse[]> {
+  const { data } = await apiClient.get<OrderResponse[]>(`/clients/${clientId}/retail-point/orders`, {
+    params: statuses && statuses.length > 0 ? { statuses } : undefined,
+  })
+  return data
+}
+
 export async function getOrderById(orderId: string): Promise<OrderResponse> {
   const { data } = await apiClient.get<OrderResponse>(`/orders/${orderId}`)
   return data

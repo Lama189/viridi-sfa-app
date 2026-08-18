@@ -167,6 +167,46 @@ async def list_client_orders(
 
 
 @router.get(
+    "/{client_id}/retail-point/orders",
+    response_model=list[OrderResponse],
+)
+async def list_client_retail_point_orders(
+    client_id: UUID,
+    user: Annotated[
+        AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+    ],
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    clients_service: Annotated[ClientsService, Depends(get_clients_service)],
+    statuses: Annotated[list[str] | None, Query()] = None,
+):
+    if isinstance(user, AuthenticatedClient) and user.id != client_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not your orders",
+        )
+
+    client = await clients_service.get_client(client_id)
+    if client is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )
+
+    parsed_statuses: list[OrderStatus] | None = None
+    if statuses:
+        parsed_statuses = []
+        for st in statuses:
+            try:
+                parsed_statuses.append(OrderStatus(st))
+            except ValueError:
+                raise InvalidOrderStatusError()
+
+    return await service.list_by_client_retail_point(
+        client_id=client_id, statuses=parsed_statuses
+    )
+
+
+@router.get(
     "",
     response_model=list[ClientResponse],
     dependencies=[Depends(allow_all_staff)],

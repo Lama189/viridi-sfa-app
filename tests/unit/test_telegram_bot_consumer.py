@@ -14,7 +14,7 @@ from telegram_bot.events.order_events import (
     deserialize_event,
 )
 from telegram_bot.services.clients import ClientDTO
-from telegram_bot.services.notifications import NotificationService
+from telegram_bot.services.notifications import NotificationService, format_order_short_id
 from telegram_bot.services.retail_point_members import RetailPointMemberDTO
 
 
@@ -128,7 +128,7 @@ async def test_notification_service_order_created():
     # Only client_1 has telegram_id (12345678), so send_message should be called once
     mock_bot.send_message.assert_called_once_with(
         chat_id=12345678,
-        text=f"🛒 Новый заказ №{order_id}",
+        text=f"🛒 Новый заказ #{format_order_short_id(order_id)}",
     )
 
 
@@ -207,7 +207,7 @@ async def test_notification_service_order_assembly_started():
 
     mock_bot.send_message.assert_called_once_with(
         chat_id=987654321,
-        text=f"📦 Ваш заказ №{order_id} начал собираться!",
+        text=f"📦 Ваш заказ #{format_order_short_id(order_id)} начал собираться!",
     )
 
 
@@ -286,7 +286,7 @@ async def test_notification_service_order_assembled():
 
     mock_bot.send_message.assert_called_once_with(
         chat_id=987654321,
-        text=f"✅ Ваш заказ №{order_id} собран!",
+        text=f"✅ Ваш заказ #{format_order_short_id(order_id)} собран!",
     )
 
 
@@ -365,7 +365,7 @@ async def test_notification_service_order_taken_by_agent():
 
     mock_bot.send_message.assert_called_once_with(
         chat_id=987654321,
-        text=f"🚗 Ваш заказ №{order_id} забран агентом и в пути!",
+        text=f"🚗 Ваш заказ #{format_order_short_id(order_id)} забран агентом и в пути!",
     )
 
 
@@ -444,7 +444,7 @@ async def test_notification_service_order_delivered():
 
     mock_bot.send_message.assert_called_once_with(
         chat_id=987654321,
-        text=f"🎉 Ваш заказ №{order_id} доставлен!",
+        text=f"🎉 Ваш заказ #{format_order_short_id(order_id)} доставлен!",
     )
 
 
@@ -521,5 +521,5 @@ async def test_notification_service_order_cancelled():
 
     mock_bot.send_message.assert_called_once_with(
         chat_id=987654321,
-        text=f"❌ Ваш заказ №{order_id} отменён",
+        text=f"❌ Ваш заказ #{format_order_short_id(order_id)} отменён",
     )

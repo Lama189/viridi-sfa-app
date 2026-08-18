@@ -90,12 +90,40 @@ class PostgresOrderRepository(IOrderRepository):
 
         return [self._to_domain(m) for m in result.unique().scalars().all()]
 
-    async def list_by_retail_point(self, retail_point_id: UUID) -> list[Order]:
-        result = await self._session.execute(
+    async def list_by_retail_point(
+        self,
+        retail_point_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        stmt = (
             select(OrderModel)
             .options(*self._hydrated_options())
             .where(OrderModel.retail_point_id == retail_point_id)
         )
+        if statuses:
+            stmt = stmt.where(OrderModel.status.in_(statuses))
+
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(m) for m in result.unique().scalars().all()]
+
+    async def list_by_retail_points(
+        self,
+        retail_point_ids: list[UUID],
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        if not retail_point_ids:
+            return []
+
+        stmt = (
+            select(OrderModel)
+            .options(*self._hydrated_options())
+            .where(OrderModel.retail_point_id.in_(retail_point_ids))
+        )
+        if statuses:
+            stmt = stmt.where(OrderModel.status.in_(statuses))
+
+        result = await self._session.execute(stmt)
 
         return [self._to_domain(m) for m in result.unique().scalars().all()]
 

@@ -38,7 +38,19 @@ class IOrderRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def list_by_retail_point(self, retail_point_id: UUID) -> list[Order]:
+    async def list_by_retail_point(
+        self,
+        retail_point_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def list_by_retail_points(
+        self,
+        retail_point_ids: list[UUID],
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
         raise NotImplementedError
 
     @abstractmethod

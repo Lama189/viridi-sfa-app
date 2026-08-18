@@ -133,10 +133,14 @@ async def get_order(
         order = await service.get_by_id(order_id)
 
         if isinstance(user, AuthenticatedClient) and order.created_by_id != user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not your order"
+            is_member = await service._uow.retail_point_members.exists(
+                order.retail_point_id, user.id
             )
+            if not is_member:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not your order"
+                )
 
         return order
 
@@ -159,10 +163,14 @@ async def cancel_order(
     try:
         order = await service.get_by_id(order_id)
         if order.created_by_id != client.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not your order",
+            is_member = await service._uow.retail_point_members.exists(
+                order.retail_point_id, client.id
             )
+            if not is_member:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not your order",
+                )
         await service.cancel(order_id)
     except ValueError as e:
         if "not found" in str(e).lower():
@@ -280,10 +288,14 @@ async def deliver_order(
     try:
         order = await service.get_by_id(order_id)
         if isinstance(user, AuthenticatedClient) and order.created_by_id != user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not your order",
+            is_member = await service._uow.retail_point_members.exists(
+                order.retail_point_id, user.id
             )
+            if not is_member:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not your order",
+                )
         employee_id = user.id if isinstance(user, AuthenticatedEmployee) else None
         return await service.deliver(order_id, employee_id=employee_id)
     except ValueError as e:

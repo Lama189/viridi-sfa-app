@@ -9,6 +9,7 @@ export function useDeliverOrder() {
     onSuccess: async (_, orderId) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['client-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['client-retail-point-orders'] }),
         queryClient.invalidateQueries({ queryKey: ['order-details', orderId] }),
       ])
     },

@@ -28,7 +28,9 @@ from app.main import app
 
 @pytest.fixture
 def mock_service():
-    return AsyncMock()
+    service = AsyncMock()
+    service._uow.retail_point_members.exists = AsyncMock(return_value=False)
+    return service
 
 
 @pytest.fixture

@@ -16,6 +16,10 @@ from telegram_bot.services.clients import ClientsService
 from telegram_bot.services.retail_point_members import RetailPointMembersService
 
 
+def format_order_short_id(order_id: UUID | str) -> str:
+    return str(order_id).replace("-", "")[:8].upper()
+
+
 class NotificationService:
     def __init__(
         self,
@@ -43,6 +47,7 @@ class NotificationService:
             order_id = event.order_id
             retail_point_id = event.retail_point_id
 
+        short_order_id = format_order_short_id(order_id)
         members = await self._retail_point_members.list_members(retail_point_id)
 
         for member in members:
@@ -54,7 +59,7 @@ class NotificationService:
             try:
                 await self._bot.send_message(
                     chat_id=client.telegram_id,
-                    text=f"🛒 Новый заказ №{order_id}",
+                    text=f"🛒 Новый заказ #{short_order_id}",
                 )
             except (TelegramAPIError, OSError) as exc:
                 logger.warning(
@@ -105,11 +110,12 @@ class NotificationService:
                 ):
                     recipients.append(client)
 
+        short_order_id = format_order_short_id(order_id)
         for client in recipients:
             try:
                 await self._bot.send_message(
                     chat_id=client.telegram_id,
-                    text=f"📦 Ваш заказ №{order_id} начал собираться!",
+                    text=f"📦 Ваш заказ #{short_order_id} начал собираться!",
                 )
             except (TelegramAPIError, OSError) as exc:
                 logger.warning(
@@ -160,11 +166,12 @@ class NotificationService:
                 ):
                     recipients.append(client)
 
+        short_order_id = format_order_short_id(order_id)
         for client in recipients:
             try:
                 await self._bot.send_message(
                     chat_id=client.telegram_id,
-                    text=f"✅ Ваш заказ №{order_id} собран!",
+                    text=f"✅ Ваш заказ #{short_order_id} собран!",
                 )
             except (TelegramAPIError, OSError) as exc:
                 logger.warning(
@@ -215,11 +222,12 @@ class NotificationService:
                 ):
                     recipients.append(client)
 
+        short_order_id = format_order_short_id(order_id)
         for client in recipients:
             try:
                 await self._bot.send_message(
                     chat_id=client.telegram_id,
-                    text=f"🚗 Ваш заказ №{order_id} забран агентом и в пути!",
+                    text=f"🚗 Ваш заказ #{short_order_id} забран агентом и в пути!",
                 )
             except (TelegramAPIError, OSError) as exc:
                 logger.warning(
@@ -270,11 +278,12 @@ class NotificationService:
                 ):
                     recipients.append(client)
 
+        short_order_id = format_order_short_id(order_id)
         for client in recipients:
             try:
                 await self._bot.send_message(
                     chat_id=client.telegram_id,
-                    text=f"🎉 Ваш заказ №{order_id} доставлен!",
+                    text=f"🎉 Ваш заказ #{short_order_id} доставлен!",
                 )
             except (TelegramAPIError, OSError) as exc:
                 logger.warning(
@@ -325,11 +334,12 @@ class NotificationService:
                 ):
                     recipients.append(client)
 
+        short_order_id = format_order_short_id(order_id)
         for client in recipients:
             try:
                 await self._bot.send_message(
                     chat_id=client.telegram_id,
-                    text=f"❌ Ваш заказ №{order_id} отменён",
+                    text=f"❌ Ваш заказ #{short_order_id} отменён",
                 )
             except (TelegramAPIError, OSError) as exc:
                 logger.warning(

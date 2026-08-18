@@ -41,9 +41,9 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
   const orderShortId = order.id.slice(0, 8).toUpperCase()
   const totalItemsCount = order.items.reduce((acc, item) => acc + item.quantity, 0)
 
-  const normalizedStatus = order.status.toLowerCase()
+  const normalizedStatus = order.status.toLowerCase().trim()
   const isDelivered = normalizedStatus === 'delivered'
-  const canDeliver = ['shipped', 'delivering', 'assembled', 'assembly_started', 'confirmed'].includes(normalizedStatus)
+  const canDeliver = ['shipped', 'delivering', 'taken_by_agent'].includes(normalizedStatus)
   const canCancel = ['pending', 'confirmed'].includes(normalizedStatus)
 
   const handleCancelOrder = async () => {
@@ -97,18 +97,28 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="product-sheet__close" type="button" onClick={onClose}>
-          <X size={22} aria-label="Закрыть" />
+        <button
+          className="product-sheet__close"
+          type="button"
+          aria-label="Закрыть детали заказа"
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
+        >
+          <X size={22} aria-hidden="true" />
         </button>
 
         <div className="order-detail-sheet__header">
-          <div className="order-detail-sheet__id-row">
+          <div className="order-detail-sheet__top-row">
             <span className="brand-mark">Viridi market</span>
+          </div>
+          <div className="order-detail-sheet__title-row">
+            <h2>Заказ #{orderShortId}</h2>
             <span className={`status-badge ${statusInfo.className}`}>
               {statusInfo.label}
             </span>
           </div>
-          <h2>Заказ #{orderShortId}</h2>
           <p className="order-detail-sheet__date">
             <Calendar size={14} />
             <span>{formatOrderFullDate(order.created_at)}</span>

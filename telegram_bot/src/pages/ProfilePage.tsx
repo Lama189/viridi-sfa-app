@@ -45,9 +45,18 @@ export function ProfilePage({
     if (activeFilter === 'all') return orders
 
     return orders.filter((order) => {
-      const st = order.status.toLowerCase()
+      const st = order.status.toLowerCase().trim()
       if (activeFilter === 'active') {
-        return ['pending', 'confirmed', 'assembling', 'assembled', 'shipped', 'delivering'].includes(st)
+        return [
+          'pending',
+          'confirmed',
+          'assembly_started',
+          'assembling',
+          'assembled',
+          'shipped',
+          'taken_by_agent',
+          'delivering',
+        ].includes(st)
       }
       if (activeFilter === 'completed') {
         return st === 'delivered'

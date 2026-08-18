@@ -50,8 +50,16 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
         aria-modal="true"
         onClick={(event) => event.stopPropagation()}
       >
-        <button className="product-sheet__close" type="button" onClick={onClose}>
-          <X size={22} aria-label="Закрыть" />
+        <button
+          className="product-sheet__close"
+          type="button"
+          aria-label="Закрыть"
+          onClick={(event) => {
+            event.stopPropagation()
+            onClose()
+          }}
+        >
+          <X size={22} aria-hidden="true" />
         </button>
         <span className="product-sheet__visual" aria-hidden="true">
           <Box size={44} strokeWidth={1.4} />

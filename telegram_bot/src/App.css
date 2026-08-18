@@ -456,6 +456,7 @@
   position: absolute;
   top: 18px;
   right: 18px;
+  z-index: 20;
   display: grid;
   width: 42px;
   height: 42px;
@@ -465,6 +466,23 @@
   color: #eee;
   background: #171717;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.product-sheet__close:hover {
+  background: #242424;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+
+.product-sheet__close:active {
+  transform: scale(0.92);
+}
+
+.product-sheet__close svg {
+  pointer-events: none;
 }
 
 .product-sheet__visual {
@@ -1305,20 +1323,34 @@
 }
 
 .order-detail-sheet__header {
+  position: relative;
   margin-bottom: 18px;
+  padding-right: 50px;
 }
 
-.order-detail-sheet__id-row {
+.order-detail-sheet__top-row {
+  margin-bottom: 6px;
+}
+
+.order-detail-sheet__top-row .brand-mark {
+  margin: 0;
+  font-size: 14px;
+  color: #8d8d93;
+}
+
+.order-detail-sheet__title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.order-detail-sheet__id-row .brand-mark {
+.order-detail-sheet__title-row h2 {
   margin: 0;
-  font-size: 16px;
-  color: #8d8d93;
+  font-size: 22px;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: -0.5px;
 }
 
 .order-detail-sheet__date {
@@ -1327,7 +1359,7 @@
   gap: 6px;
   color: #8d8d93;
   font-size: 14px;
-  margin: 6px 0 0;
+  margin: 8px 0 0;
 }
 
 .order-detail-sheet__body {

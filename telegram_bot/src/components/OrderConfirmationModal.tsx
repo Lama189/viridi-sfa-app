@@ -126,8 +126,16 @@ export function OrderConfirmationModal({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
-        <button className="product-sheet__close" type="button" onClick={onClose}>
-          <X size={22} aria-label="Закрыть" />
+        <button
+          className="product-sheet__close"
+          type="button"
+          aria-label="Закрыть"
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
+        >
+          <X size={22} aria-hidden="true" />
         </button>
 
         <div className="checkout-sheet__header">

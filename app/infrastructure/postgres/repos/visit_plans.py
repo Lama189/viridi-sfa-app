@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete as sa_delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.interfaces.repos.visit_plans import IVisitPlanRepository
@@ -53,6 +53,10 @@ class PostgresVisitPlanRepository(IVisitPlanRepository):
         )
 
         return [self._to_domain(m) for m in result.scalars().all()]
+
+    async def delete_all(self) -> None:
+        await self._session.execute(sa_delete(VisitPlanModel))
+        await self._session.flush()
 
     def _to_domain(self, model: VisitPlanModel) -> VisitPlan:
         return VisitPlan(

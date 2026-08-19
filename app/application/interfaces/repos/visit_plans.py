@@ -25,3 +25,7 @@ class IVisitPlanRepository(ABC):
     @abstractmethod
     async def list_by_employee(self, employee_id: UUID) -> list[VisitPlan]:
         raise NotImplementedError
+
+    @abstractmethod
+    async def delete_all(self) -> None:
+        raise NotImplementedError

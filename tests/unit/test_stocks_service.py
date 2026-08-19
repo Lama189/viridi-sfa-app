@@ -393,3 +393,41 @@ class TestStockServiceAdjustAndList:
         assert result == []
         mock_uow.stock_transactions.list_all.assert_called_once()
 
+    @pytest.mark.asyncio
+    async def test_get_warehouse_inventory(self, service, mock_uow):
+        from types import SimpleNamespace
+
+        wid, pid, cid = uuid4(), uuid4(), uuid4()
+        wh = SimpleNamespace(id=wid, name="Central WH")
+        cat = SimpleNamespace(id=cid, name="Test Cat", is_active=True)
+        prod = SimpleNamespace(
+            id=pid,
+            name="Test Prod",
+            price=Decimal("100.00"),
+            volume=Decimal("1.000"),
+            weight=Decimal("2.000"),
+            items_in_box=10,
+            category=cat,
+            photo_url=None,
+        )
+        stock = SimpleNamespace(
+            warehouse=wh,
+            product=prod,
+            quantity=100,
+            reserved_quantity=20,
+            updated_at=None,
+        )
+
+        mock_uow.stocks.get_stocks_by_warehouse.return_value = [stock]
+        result = await service.get_warehouse_inventory(wid)
+
+        assert len(result) == 1
+        item = result[0]
+        assert item.id == pid
+        assert item.stock is not None
+        assert item.stock.warehouse.id == wid
+        assert item.stock.warehouse.name == "Central WH"
+        assert item.stock.quantity == 100
+        assert item.stock.reserved_quantity == 20
+        assert item.stock.available_quantity == 80
+

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -6,6 +7,9 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.api.dependencies import get_current_user, get_stocks_service
+from app.application.dto.categories import CategoryDTO
+from app.application.dto.stocks import ProductWithStockDTO, StockSummaryDTO
+from app.application.dto.warehouses import WarehouseShortDTO
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.stocks import Stock, StockTransaction
 from app.domain.enums import (
@@ -133,3 +137,41 @@ async def test_list_warehouse_stocks(client, mock_stocks_service):
     mock_stocks_service.get_warehouse_inventory.assert_called_once_with(
         warehouse_id=wh_id
     )
+
+
+@pytest.mark.asyncio
+async def test_list_warehouse_stocks_with_data(client, mock_stocks_service):
+    wh_id = uuid4()
+    p_id = uuid4()
+    cat_id = uuid4()
+
+    mock_dto = ProductWithStockDTO(
+        id=p_id,
+        name="Test Product",
+        price=Decimal("100.00"),
+        volume=Decimal("1.500"),
+        weight=Decimal("2.000"),
+        items_in_box=10,
+        category=CategoryDTO(id=cat_id, name="Test Cat", is_active=True),
+        photo_url=None,
+        stock=StockSummaryDTO(
+            warehouse=WarehouseShortDTO(id=wh_id, name="Central WH"),
+            quantity=1000,
+            reserved_quantity=100,
+            available_quantity=900,
+            updated_at=None,
+        ),
+    )
+    mock_stocks_service.get_warehouse_inventory.return_value = [mock_dto]
+
+    resp = await client.get(f"/api/v1/stocks?warehouse_id={wh_id}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["id"] == str(p_id)
+    assert data[0]["name"] == "Test Product"
+    assert data[0]["stock"]["warehouse"]["id"] == str(wh_id)
+    assert data[0]["stock"]["warehouse"]["name"] == "Central WH"
+    assert data[0]["stock"]["quantity"] == 1000
+    assert data[0]["stock"]["reserved_quantity"] == 100
+    assert data[0]["stock"]["available_quantity"] == 900

@@ -65,6 +65,16 @@ class RouteGenerationService(IRouteGenerationService):
 
         await self._uow.commit()
 
+    async def clear_all(self) -> None:
+        retail_points = await self._uow.retail_points.list_all()
+        if retail_points:
+            await self._assignments_service.clear_employee_assignments(
+                [point.id for point in retail_points]
+            )
+
+        await self._uow.visit_plans.delete_all()
+        await self._uow.commit()
+
     async def _assign_clusters(
         self,
         clusters: list[TerritoryCluster],

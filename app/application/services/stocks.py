@@ -8,6 +8,7 @@ from app.application.dto.stocks import (
     StockOperationDTO,
     StockSummaryDTO,
 )
+from app.application.dto.warehouses import WarehouseShortDTO
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.exceptions import (
@@ -730,8 +731,10 @@ class StockService(IStockService):
                 is_active=stock.product.category.is_active,
             )
             stock_summary_dto = StockSummaryDTO(
-                warehouse_id=stock.warehouse.id,
-                warehouse_name=stock.warehouse.name,
+                warehouse=WarehouseShortDTO(
+                    id=stock.warehouse.id,
+                    name=stock.warehouse.name,
+                ),
                 quantity=stock.quantity,
                 reserved_quantity=stock.reserved_quantity,
                 available_quantity=stock.quantity - stock.reserved_quantity,

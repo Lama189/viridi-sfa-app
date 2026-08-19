@@ -20,6 +20,7 @@ def mock_uow():
     uow = AsyncMock()
     uow.employees = AsyncMock()
     uow.retail_points = AsyncMock()
+    uow.visit_plans = AsyncMock()
     uow.commit = AsyncMock()
     return uow
 
@@ -120,4 +121,38 @@ async def test_generate_success(
         employee_id=agent1.id,
     )
     assert mock_visit_plans_service.generate_for_employee.await_count == 7
+    mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_clear_all_with_retail_points(
+    service,
+    mock_uow,
+    mock_assignments_service,
+):
+    point1 = RetailPoint(name="P1", address="A1")
+    point2 = RetailPoint(name="P2", address="A2")
+    mock_uow.retail_points.list_all.return_value = [point1, point2]
+
+    await service.clear_all()
+
+    mock_assignments_service.clear_employee_assignments.assert_awaited_once_with(
+        [point1.id, point2.id]
+    )
+    mock_uow.visit_plans.delete_all.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_clear_all_without_retail_points(
+    service,
+    mock_uow,
+    mock_assignments_service,
+):
+    mock_uow.retail_points.list_all.return_value = []
+
+    await service.clear_all()
+
+    mock_assignments_service.clear_employee_assignments.assert_not_awaited()
+    mock_uow.visit_plans.delete_all.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()

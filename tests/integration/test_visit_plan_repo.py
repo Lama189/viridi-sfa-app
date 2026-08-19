@@ -31,3 +31,21 @@ async def test_visit_plan_repo_add_get(session: AsyncSession):
     list_emp = await repo.list_by_employee(emp_id)
     assert len(list_emp) == 1
     assert list_emp[0].id == plan.id
+
+
+@pytest.mark.asyncio
+async def test_visit_plan_repo_delete_all(session: AsyncSession):
+    repo = PostgresVisitPlanRepository(session)
+    plan1 = VisitPlan(employee_id=uuid4(), plan_date=date(2026, 8, 3))
+    plan2 = VisitPlan(employee_id=uuid4(), plan_date=date(2026, 8, 4))
+    await repo.add(plan1)
+    await repo.add(plan2)
+    await session.commit()
+
+    await repo.delete_all()
+    await session.commit()
+
+    found1 = await repo.get_by_id(plan1.id)
+    found2 = await repo.get_by_id(plan2.id)
+    assert found1 is None
+    assert found2 is None

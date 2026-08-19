@@ -98,3 +98,14 @@ async def generate_routes(
     service: Annotated[IRouteGenerationService, Depends(get_routes_generator_service)],
 ) -> None:
     await service.generate()
+
+
+@router.post(
+    path="/clear-routes",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(allow_admin)],
+)
+async def clear_routes(
+    service: Annotated[IRouteGenerationService, Depends(get_routes_generator_service)],
+) -> None:
+    await service.clear_all()

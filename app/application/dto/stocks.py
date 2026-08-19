@@ -4,6 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from app.application.dto.categories import CategoryDTO
+from app.application.dto.warehouses import WarehouseShortDTO
 from app.domain.enums import (
     StockReferenceType,
     StockTransactionType,
@@ -64,8 +65,7 @@ class StockDTO:
 
 @dataclass(slots=True, frozen=True)
 class StockSummaryDTO:
-    warehouse_id: UUID
-    warehouse_name: str
+    warehouse: WarehouseShortDTO
     quantity: int
     reserved_quantity: int
     available_quantity: int

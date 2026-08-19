@@ -7,6 +7,9 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.infrastructure.postgres.database import async_session_maker
 from app.infrastructure.postgres.repos.categories import PostgresCategoriesRepository
 from app.infrastructure.postgres.repos.clients import PostgresClientRepository
+from app.infrastructure.postgres.repos.employee_devices import (
+    PostgresEmployeeDeviceRepository,
+)
 from app.infrastructure.postgres.repos.employees import PostgresEmployeeRepository
 from app.infrastructure.postgres.repos.invite_codes import PostgresInviteCodeRepository
 from app.infrastructure.postgres.repos.media_objects import (
@@ -86,6 +89,7 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.visit_plan_items = PostgresVisitPlanItemRepository(self._session)
         self.visit_schedule_rules = PostgresVisitScheduleRuleRepository(self._session)
         self.notifications = PostgresNotificationRepository(self._session)
+        self.employee_devices = PostgresEmployeeDeviceRepository(self._session)
         self.outbox = PostgresOutboxRepository(self._session)
 
         return self

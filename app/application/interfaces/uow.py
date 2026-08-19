@@ -4,6 +4,9 @@ from typing import Self
 
 from app.application.interfaces.repos.categories import ICategoryRepository
 from app.application.interfaces.repos.clients import IClientRepository
+from app.application.interfaces.repos.employee_devices import (
+    IEmployeeDeviceRepository,
+)
 from app.application.interfaces.repos.employees import IEmployeeRepository
 from app.application.interfaces.repos.invite_codes import IInviteCodeRepository
 from app.application.interfaces.repos.media_objects import IMediaObjectRepository
@@ -58,6 +61,7 @@ class IUnitOfWork(ABC):
     visit_plan_items: IVisitPlanItemRepository
     visit_schedule_rules: IVisitScheduleRuleRepository
     notifications: INotificationRepository
+    employee_devices: IEmployeeDeviceRepository
     outbox: IOutboxRepository
 
     @abstractmethod

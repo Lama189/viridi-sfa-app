@@ -8,8 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.application.interfaces.repos.visit_plans import IVisitPlanRepository
 from app.domain.entities.visit_plans import VisitPlan
 from app.domain.enums import VisitPlanItemStatus, VisitPlanStatus
+from app.infrastructure.postgres.models.visit_plan_items import (
+    VisitPlanItem as VisitPlanItemModel,
+)
 from app.infrastructure.postgres.models.visit_plans import VisitPlan as VisitPlanModel
-from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem as VisitPlanItemModel
+
 
 class PostgresVisitPlanRepository(IVisitPlanRepository):
     def __init__(self, session: AsyncSession) -> None:

@@ -26,6 +26,7 @@ from app.application.services.categories import CategoriesService
 from app.application.services.clients import ClientsAuthService, ClientsService
 from app.application.services.dashboard import DashboardService
 from app.application.services.delivery_proposals import DeliveryProposalService
+from app.application.services.employee_devices import EmployeeDeviceService
 from app.application.services.employees import EmployeesAuthService, EmployeesService
 from app.application.services.invite_codes import ClientInviteCodesService
 from app.application.services.media import MediaService
@@ -50,6 +51,9 @@ from app.core.config import get_settings
 from app.core.security import SecurityUtils
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 from app.domain.enums import EmployeeRole
+from app.infrastructure.firebase.push_service import (
+    FirebasePushNotificationService,
+)
 from app.infrastructure.minio.client import get_minio_client
 from app.infrastructure.minio.storage import MinioStorage
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
@@ -247,13 +251,28 @@ async def get_notifications_service(
     return NotificationsService(uow)
 
 
+async def get_push_notification_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> FirebasePushNotificationService:
+    return FirebasePushNotificationService(uow)
+
+
 async def get_delivery_proposal_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
     notifications_service: Annotated[
         NotificationsService, Depends(get_notifications_service)
     ],
+    push_service: Annotated[
+        FirebasePushNotificationService, Depends(get_push_notification_service)
+    ],
 ) -> DeliveryProposalService:
-    return DeliveryProposalService(uow, notifications_service)
+    return DeliveryProposalService(uow, notifications_service, push_service)
+
+
+async def get_employee_device_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> EmployeeDeviceService:
+    return EmployeeDeviceService(uow)
 
 
 def get_territory_clustering_service() -> ITerritoryClusteringService:

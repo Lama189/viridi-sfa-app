@@ -7,6 +7,10 @@ class UserNotFoundError(DomainError):
     pass
 
 
+class EmployeeNotFoundError(UserNotFoundError):
+    pass
+
+
 class UserAlreadyExistsError(DomainError):
     pass
 

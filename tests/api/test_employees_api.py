@@ -6,11 +6,14 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app.api.dependencies import (
+    get_current_employee,
     get_current_user,
+    get_employee_device_service,
     get_employees_auth_service,
     get_employees_service,
 )
 from app.domain.entities.auth import AuthenticatedEmployee
+from app.domain.entities.employee_devices import EmployeeDevice
 from app.domain.entities.employees import Employee
 from app.domain.enums import EmployeeRole
 from app.main import app
@@ -27,6 +30,11 @@ def mock_auth_service():
 
 
 @pytest.fixture
+def mock_device_service():
+    return AsyncMock()
+
+
+@pytest.fixture
 def mock_admin_employee():
     return AuthenticatedEmployee(
         id=uuid4(),
@@ -38,10 +46,12 @@ def mock_admin_employee():
 
 
 @pytest.fixture(autouse=True)
-def override_deps(mock_service, mock_auth_service, mock_admin_employee):
+def override_deps(mock_service, mock_auth_service, mock_device_service, mock_admin_employee):
     app.dependency_overrides[get_employees_service] = lambda: mock_service
     app.dependency_overrides[get_employees_auth_service] = lambda: mock_auth_service
+    app.dependency_overrides[get_employee_device_service] = lambda: mock_device_service
     app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
+    app.dependency_overrides[get_current_employee] = lambda: mock_admin_employee
     yield
     app.dependency_overrides.clear()
 
@@ -221,3 +231,59 @@ async def test_delete_employee_not_found(client, mock_service):
 
     resp = await client.delete(f"/api/v1/employees/{uuid4()}")
     assert resp.status_code == 404
+
+
+# --- POST /api/v1/employees/fcm-token ---
+
+
+@pytest.mark.asyncio
+async def test_register_fcm_token_success(
+    client, mock_device_service, mock_admin_employee
+):
+    device = EmployeeDevice(
+        employee_id=mock_admin_employee.id,
+        fcm_token="token_sample_12345",
+        device_type="android",
+    )
+    mock_device_service.register_device.return_value = device
+
+    resp = await client.post(
+        "/api/v1/employees/fcm-token",
+        json={"fcm_token": "token_sample_12345", "device_type": "android"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["fcm_token"] == "token_sample_12345"
+    mock_device_service.register_device.assert_awaited_once()
+
+
+# --- DELETE /api/v1/employees/fcm-token ---
+
+
+@pytest.mark.asyncio
+async def test_remove_fcm_token_success(client, mock_device_service):
+    resp = await client.delete(
+        "/api/v1/employees/fcm-token",
+        params={"fcm_token": "token_sample_12345"},
+    )
+    assert resp.status_code == 204
+    mock_device_service.remove_device.assert_awaited_once_with("token_sample_12345")
+
+
+# --- GET /api/v1/employees/devices ---
+
+
+@pytest.mark.asyncio
+async def test_list_my_devices_success(
+    client, mock_device_service, mock_admin_employee
+):
+    device = EmployeeDevice(
+        employee_id=mock_admin_employee.id,
+        fcm_token="token_sample_12345",
+        device_type="android",
+    )
+    mock_device_service.list_by_employee.return_value = [device]
+
+    resp = await client.get("/api/v1/employees/devices")
+    assert resp.status_code == 200
+    assert len(resp.json()) == 1
+    assert resp.json()[0]["fcm_token"] == "token_sample_12345"

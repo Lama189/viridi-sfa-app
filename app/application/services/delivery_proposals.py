@@ -6,6 +6,9 @@ from app.application.interfaces.services.delivery_proposals import (
     IDeliveryProposalService,
 )
 from app.application.interfaces.services.notifications import INotificationsService
+from app.application.interfaces.services.push_notifications import (
+    IPushNotificationService,
+)
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.observability.logging import logger
 from app.domain.entities.notifications import Notification
@@ -17,9 +20,11 @@ class DeliveryProposalService(IDeliveryProposalService):
         self,
         uow: IUnitOfWork,
         notifications_service: INotificationsService,
+        push_service: IPushNotificationService | None = None,
     ) -> None:
         self._uow = uow
         self._notifications_service = notifications_service
+        self._push_service = push_service
 
     async def process_assembled_order(self, order_id: UUID) -> Notification | None:
         order = await self._uow.orders.get_by_id(order_id)
@@ -92,4 +97,28 @@ class DeliveryProposalService(IDeliveryProposalService):
             order_id=str(order.id),
             notification_id=str(notification.id),
         )
+
+        if self._push_service:
+            try:
+                await self._push_service.send_to_employee(
+                    employee_id=assignment.employee_id,
+                    title=title,
+                    body=body,
+                    data={
+                        "order_id": str(order.id),
+                        "retail_point_id": str(order.retail_point_id),
+                        "retail_point_name": point_name,
+                        "visit_plan_id": str(next_plan.id),
+                        "plan_date": str(next_plan.plan_date),
+                        "notification_type": "order_delivery_proposal",
+                    },
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "Failed to send push notification for delivery proposal",
+                    employee_id=str(assignment.employee_id),
+                    order_id=str(order.id),
+                    error=str(exc),
+                )
+
         return notification

@@ -31,13 +31,21 @@ def mock_notifications_service():
 
 
 @pytest.fixture
-def service(mock_uow, mock_notifications_service):
-    return DeliveryProposalService(mock_uow, mock_notifications_service)
+def mock_push_service():
+    service = AsyncMock()
+    return service
+
+
+@pytest.fixture
+def service(mock_uow, mock_notifications_service, mock_push_service):
+    return DeliveryProposalService(
+        mock_uow, mock_notifications_service, mock_push_service
+    )
 
 
 @pytest.mark.asyncio
 async def test_process_assembled_order_success(
-    service, mock_uow, mock_notifications_service
+    service, mock_uow, mock_notifications_service, mock_push_service
 ):
     order_id = uuid4()
     retail_point_id = uuid4()
@@ -100,6 +108,20 @@ async def test_process_assembled_order_success(
     assert dto.payload["order_id"] == str(order_id)
     assert dto.payload["retail_point_id"] == str(retail_point_id)
     assert dto.payload["visit_plan_id"] == str(plan_id)
+
+    mock_push_service.send_to_employee.assert_awaited_once_with(
+        employee_id=employee_id,
+        title="Заказ готов к доставке",
+        body=dto.body,
+        data={
+            "order_id": str(order_id),
+            "retail_point_id": str(retail_point_id),
+            "retail_point_name": "Супермаркет Корзинка",
+            "visit_plan_id": str(plan_id),
+            "plan_date": str(plan_date),
+            "notification_type": "order_delivery_proposal",
+        },
+    )
 
 
 @pytest.mark.asyncio

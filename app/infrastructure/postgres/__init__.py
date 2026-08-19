@@ -1,8 +1,10 @@
 from app.infrastructure.postgres.models.categories import Category
 from app.infrastructure.postgres.models.clients import Client
+from app.infrastructure.postgres.models.employee_devices import EmployeeDevice
 from app.infrastructure.postgres.models.employees import Employee
 from app.infrastructure.postgres.models.invite_codes import RetailPointInviteCode
 from app.infrastructure.postgres.models.media_objects import MediaObject
+from app.infrastructure.postgres.models.notifications import Notification
 from app.infrastructure.postgres.models.order_items import OrderItem
 from app.infrastructure.postgres.models.orders import Order
 from app.infrastructure.postgres.models.outbox_messages import OutboxMessage
@@ -26,7 +28,9 @@ __all__ = [
     "Category",
     "Client",
     "Employee",
+    "EmployeeDevice",
     "MediaObject",
+    "Notification",
     "Order",
     "OrderItem",
     "OutboxMessage",

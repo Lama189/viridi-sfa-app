@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     minio_secret_key: str = ""
     minio_secure: bool = False
 
+    firebase_credentials_path: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

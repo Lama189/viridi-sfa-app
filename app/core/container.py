@@ -2,10 +2,17 @@ from collections.abc import AsyncGenerator
 
 from redis.asyncio import Redis
 
+from app.application.interfaces.cache.rate_limiter import IRateLimiter
 from app.application.interfaces.services.delivery_proposals import (
     IDeliveryProposalService,
 )
+from app.application.interfaces.services.employee_devices import (
+    IEmployeeDeviceService,
+)
 from app.application.interfaces.services.notifications import INotificationsService
+from app.application.interfaces.services.push_notifications import (
+    IPushNotificationService,
+)
 from app.application.interfaces.services.retail_point_assignments import (
     IRetailPointAssignmentService,
 )
@@ -14,6 +21,7 @@ from app.application.interfaces.services.territories import ITerritoryClustering
 from app.application.interfaces.services.visit_plans import IVisitPlanService
 from app.application.interfaces.uow import IUnitOfWork
 from app.application.services.delivery_proposals import DeliveryProposalService
+from app.application.services.employee_devices import EmployeeDeviceService
 from app.application.services.notifications import NotificationsService
 from app.application.services.retail_point_assignments import (
     RetailPointAssignmentService,
@@ -22,6 +30,9 @@ from app.application.services.routes_generator import RouteGenerationService
 from app.application.services.territories import TerritoryClusteringService
 from app.application.services.visit_plans import VisitPlanService
 from app.core.config import get_settings
+from app.infrastructure.firebase.push_service import (
+    FirebasePushNotificationService,
+)
 from app.infrastructure.postgres.session import create_session_factory
 from app.infrastructure.postgres.uow import PostgresUnitOfWork
 from app.infrastructure.rabbitmq.connection import RabbitMQConnectionManager
@@ -75,11 +86,18 @@ class Container:
     def notifications_service(self, uow: IUnitOfWork) -> INotificationsService:
         return NotificationsService(uow)
 
+    def push_notification_service(self, uow: IUnitOfWork) -> IPushNotificationService:
+        return FirebasePushNotificationService(uow)
+
     def delivery_proposal_service(self, uow: IUnitOfWork) -> IDeliveryProposalService:
         return DeliveryProposalService(
             uow=uow,
             notifications_service=self.notifications_service(uow),
+            push_service=self.push_notification_service(uow),
         )
+
+    def employee_device_service(self, uow: IUnitOfWork) -> IEmployeeDeviceService:
+        return EmployeeDeviceService(uow)
 
     def redis_client(self) -> AsyncGenerator[Redis]:
         return get_redis_client()

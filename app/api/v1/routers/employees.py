@@ -1,12 +1,18 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
     allow_admin,
+    get_current_employee,
+    get_employee_device_service,
     get_employees_auth_service,
     get_employees_service,
+)
+from app.api.v1.schemas.employee_devices import (
+    DeviceResponse,
+    RegisterDeviceRequest,
 )
 from app.api.v1.schemas.employees import (
     EmployeeCreate,
@@ -18,12 +24,15 @@ from app.api.v1.schemas.employees import (
     EmployeeLoginDTO as SchemaEmployeeLoginDTO,
 )
 from app.api.v1.schemas.tokens import RefreshTokenDTO, TokenResponseDTO
+from app.application.dto.employee_devices import RegisterDeviceDTO
 from app.application.dto.employees import (
     EmployeeCreateDTO,
     EmployeeLoginDTO,
     EmployeeUpdateDTO,
 )
+from app.application.services.employee_devices import EmployeeDeviceService
 from app.application.services.employees import EmployeesAuthService, EmployeesService
+from app.domain.entities.auth import AuthenticatedEmployee
 
 router = APIRouter(prefix="/api/v1/employees", tags=["Employees"])
 
@@ -75,6 +84,59 @@ async def refresh(
         return await service.refresh(dto.refresh_token)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+
+
+# ======================================================================
+# FCM DEVICE TOKENS
+# ======================================================================
+
+
+@router.post(
+    path="/fcm-token",
+    status_code=status.HTTP_200_OK,
+    response_model=DeviceResponse,
+)
+async def register_fcm_token(
+    dto: RegisterDeviceRequest,
+    employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
+    device_service: Annotated[
+        EmployeeDeviceService, Depends(get_employee_device_service)
+    ],
+):
+    app_dto = RegisterDeviceDTO(
+        employee_id=employee.id,
+        fcm_token=dto.fcm_token,
+        device_type=dto.device_type,
+    )
+    return await device_service.register_device(app_dto)
+
+
+@router.delete(
+    path="/fcm-token",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def remove_fcm_token(
+    employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
+    device_service: Annotated[
+        EmployeeDeviceService, Depends(get_employee_device_service)
+    ],
+    fcm_token: str = Query(..., min_length=10, max_length=512),
+):
+    await device_service.remove_device(fcm_token)
+
+
+@router.get(
+    path="/devices",
+    status_code=status.HTTP_200_OK,
+    response_model=list[DeviceResponse],
+)
+async def list_my_devices(
+    employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
+    device_service: Annotated[
+        EmployeeDeviceService, Depends(get_employee_device_service)
+    ],
+):
+    return await device_service.list_by_employee(employee.id)
 
 
 @router.patch(

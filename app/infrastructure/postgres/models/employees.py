@@ -15,6 +15,7 @@ from app.domain.enums import EmployeeRole
 from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
+    from app.infrastructure.postgres.models.employee_devices import EmployeeDevice
     from app.infrastructure.postgres.models.notifications import Notification
     from app.infrastructure.postgres.models.retail_point_assignments import (
         RetailPointAssignment,
@@ -93,6 +94,11 @@ class Employee(BaseModel):
     )
 
     notifications: Mapped[list[Notification]] = relationship(
+        back_populates="employee",
+        cascade="all, delete-orphan",
+    )
+
+    devices: Mapped[list[EmployeeDevice]] = relationship(
         back_populates="employee",
         cascade="all, delete-orphan",
     )

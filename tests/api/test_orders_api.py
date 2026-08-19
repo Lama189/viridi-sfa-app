@@ -436,3 +436,31 @@ class TestOrdersStaffEndpoints:
 
         resp = await client.post(f"/api/v1/orders/{uuid4()}/start-assembly")
         assert resp.status_code == 400
+
+    # --- POST /api/v1/orders/{order_id}/accept-delivery ---
+
+    @pytest.mark.asyncio
+    async def test_accept_delivery_success(self, client, mock_service):
+        visit_id = uuid4()
+        order = _order_with_item(status=OrderStatus.ASSEMBLED)
+        order.visit_id = visit_id
+        mock_service.accept_delivery.return_value = order
+
+        resp = await client.post(
+            f"/api/v1/orders/{order.id}/accept-delivery",
+            json={"visit_id": str(visit_id)},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["status"] == OrderStatus.ASSEMBLED.value
+        assert resp.json()["visit_id"] == str(visit_id)
+        mock_service.accept_delivery.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_accept_delivery_not_found(self, client, mock_service):
+        mock_service.accept_delivery.side_effect = ValueError("not found")
+
+        resp = await client.post(
+            f"/api/v1/orders/{uuid4()}/accept-delivery",
+            json={"visit_id": str(uuid4())},
+        )
+        assert resp.status_code == 404

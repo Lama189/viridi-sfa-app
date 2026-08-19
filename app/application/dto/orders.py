@@ -64,3 +64,10 @@ class OrderDTO:
     updated_at: datetime | None = None
     visit_id: UUID | None = None
     items: list[OrderItemDTO] = field(default_factory=list)
+
+
+@dataclass(slots=True, frozen=True)
+class AcceptDeliveryDTO:
+    order_id: UUID
+    employee_id: UUID
+    visit_id: UUID

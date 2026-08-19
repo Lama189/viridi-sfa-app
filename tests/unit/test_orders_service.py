@@ -446,6 +446,53 @@ class TestOrdersServiceDeliver:
 
 
 # ---------------------------------------------------------------------------
+# accept_delivery
+# ---------------------------------------------------------------------------
+
+
+class TestOrdersServiceAcceptDelivery:
+    @pytest.mark.asyncio
+    async def test_accept_delivery_success(self, service, mock_uow):
+        from app.application.dto.orders import AcceptDeliveryDTO
+
+        oid = uuid4()
+        emp_id = uuid4()
+        visit_id = uuid4()
+        order = _pending_order_with_item(oid)
+        order.status = OrderStatus.ASSEMBLED
+        mock_uow.orders.get_by_id.return_value = order
+
+        dto = AcceptDeliveryDTO(order_id=oid, employee_id=emp_id, visit_id=visit_id)
+        result = await service.accept_delivery(dto)
+        assert result.status == OrderStatus.ASSEMBLED
+        assert result.visit_id == visit_id
+        mock_uow.orders.update.assert_awaited_once_with(order)
+        mock_uow.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_accept_delivery_not_found(self, service, mock_uow):
+        from app.application.dto.orders import AcceptDeliveryDTO
+
+        mock_uow.orders.get_by_id.return_value = None
+        dto = AcceptDeliveryDTO(order_id=uuid4(), employee_id=uuid4(), visit_id=uuid4())
+        with pytest.raises(ValueError, match="not found"):
+            await service.accept_delivery(dto)
+
+    @pytest.mark.asyncio
+    async def test_accept_delivery_invalid_status(self, service, mock_uow):
+        from app.application.dto.orders import AcceptDeliveryDTO
+
+        oid = uuid4()
+        order = _pending_order_with_item(oid)
+        order.status = OrderStatus.PENDING
+        mock_uow.orders.get_by_id.return_value = order
+
+        dto = AcceptDeliveryDTO(order_id=oid, employee_id=uuid4(), visit_id=uuid4())
+        with pytest.raises(ValueError, match="Cannot accept delivery"):
+            await service.accept_delivery(dto)
+
+
+# ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 

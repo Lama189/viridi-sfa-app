@@ -10,10 +10,15 @@ from app.api.dependencies import (
     get_orders_service,
 )
 from app.api.v1.schemas.orders import (
+    AcceptDeliveryRequest,
     CreateOrderRequest,
     OrderResponse,
 )
-from app.application.dto.orders import OrderCreateDTO, OrderItemCreateDTO
+from app.application.dto.orders import (
+    AcceptDeliveryDTO,
+    OrderCreateDTO,
+    OrderItemCreateDTO,
+)
 from app.application.services.orders import OrdersService
 from app.core.exceptions import InvalidOrderStatusError
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
@@ -298,6 +303,36 @@ async def deliver_order(
                 )
         employee_id = user.id if isinstance(user, AuthenticatedEmployee) else None
         return await service.deliver(order_id, employee_id=employee_id)
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    path="/{order_id}/accept-delivery",
+    response_model=OrderResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def accept_order_delivery(
+    order_id: UUID,
+    body: AcceptDeliveryRequest,
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+):
+    try:
+        dto = AcceptDeliveryDTO(
+            order_id=order_id,
+            employee_id=employee.id,
+            visit_id=body.visit_id,
+        )
+        return await service.accept_delivery(dto)
     except ValueError as e:
         if "not found" in str(e).lower():
             raise HTTPException(

@@ -17,6 +17,7 @@ from app.api.v1.routers.clients import router as clients_router
 from app.api.v1.routers.dashboard import router as dashboard_router
 from app.api.v1.routers.employees import router as employees_router
 from app.api.v1.routers.media import router as media_router
+from app.api.v1.routers.notifications import router as notifications_router
 from app.api.v1.routers.orders import router as orders_router
 from app.api.v1.routers.products import router as products_router
 from app.api.v1.routers.retail_points import router as retail_points_router
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(media_router)
     app.include_router(visits_router)
     app.include_router(visit_plans_router)
+    app.include_router(notifications_router)
     app.include_router(dashboard_router)
 
     return app

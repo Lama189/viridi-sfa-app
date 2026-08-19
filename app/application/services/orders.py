@@ -1,6 +1,10 @@
 from uuid import UUID
 
-from app.application.dto.orders import OrderCreateDTO, OrderItemCreateDTO
+from app.application.dto.orders import (
+    AcceptDeliveryDTO,
+    OrderCreateDTO,
+    OrderItemCreateDTO,
+)
 from app.application.dto.stocks import (
     StockBatchItemDTO,
     StockBatchOperationDTO,
@@ -374,6 +378,24 @@ class OrdersService:
         )
 
         await self._uow.outbox.add(event)
+        await self._uow.commit()
+
+        return order
+
+    async def accept_delivery(
+        self,
+        dto: AcceptDeliveryDTO,
+    ) -> Order:
+        order = await self._uow.orders.get_by_id(dto.order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {dto.order_id} not found")
+
+        if order.status != OrderStatus.ASSEMBLED:
+            raise ValueError(f"Cannot accept delivery for order in status '{order.status}'")
+
+        order.visit_id = dto.visit_id
+
+        await self._uow.orders.update(order)
         await self._uow.commit()
 
         return order

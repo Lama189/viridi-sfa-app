@@ -295,7 +295,7 @@ class TestOrdersServiceCreate:
 
 class TestOrdersServiceConfirm:
     @pytest.mark.asyncio
-    async def test_confirm_success(self, service, mock_uow, mock_stocks):
+    async def test_confirm_success(self, service, mock_uow):
         oid = uuid4()
         pid = uuid4()
         order = _pending_order_with_item(oid, pid)
@@ -303,7 +303,6 @@ class TestOrdersServiceConfirm:
 
         result = await service.confirm(oid)
         assert result.status == OrderStatus.CONFIRMED
-        mock_stocks.confirm_sales_batch.assert_awaited_once()
         mock_uow.orders.update.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
 
@@ -415,6 +414,35 @@ class TestOrdersServiceStartAssembly:
         mock_uow.orders.get_by_id.return_value = None
         with pytest.raises(ValueError, match="not found"):
             await service.start_assembly(uuid4())
+
+
+# ---------------------------------------------------------------------------
+# deliver
+# ---------------------------------------------------------------------------
+
+
+class TestOrdersServiceDeliver:
+    @pytest.mark.asyncio
+    async def test_deliver_success(self, service, mock_uow, mock_stocks):
+        oid = uuid4()
+        pid = uuid4()
+        emp_id = uuid4()
+        order = _pending_order_with_item(oid, pid)
+        order.status = OrderStatus.SHIPPED
+        mock_uow.orders.get_by_id.return_value = order
+
+        result = await service.deliver(oid, employee_id=emp_id)
+        assert result.status == OrderStatus.DELIVERED
+        mock_stocks.confirm_sales_batch.assert_awaited_once()
+        mock_uow.orders.update.assert_awaited_once_with(order)
+        mock_uow.outbox.add.assert_awaited_once()
+        mock_uow.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_deliver_not_found(self, service, mock_uow):
+        mock_uow.orders.get_by_id.return_value = None
+        with pytest.raises(ValueError, match="not found"):
+            await service.deliver(uuid4())
 
 
 # ---------------------------------------------------------------------------

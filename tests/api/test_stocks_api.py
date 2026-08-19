@@ -127,6 +127,56 @@ async def test_add_stock(client, mock_stocks_service, mock_admin_employee):
 
 
 @pytest.mark.asyncio
+async def test_write_off_stock_admin(client, mock_stocks_service, mock_admin_employee):
+    wh_id = uuid4()
+    p_id = uuid4()
+    stock = Stock(warehouse_id=wh_id, product_id=p_id, quantity=80, reserved_quantity=0)
+    mock_stocks_service.write_off.return_value = stock
+
+    resp = await client.post(
+        "/api/v1/stocks/write-off",
+        json={
+            "warehouse_id": str(wh_id),
+            "product_id": str(p_id),
+            "quantity": 20,
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["quantity"] == 80
+    mock_stocks_service.write_off.assert_called_once()
+    dto = mock_stocks_service.write_off.call_args[0][0]
+    assert dto.warehouse_id == wh_id
+    assert dto.product_id == p_id
+    assert dto.quantity == 20
+    assert dto.created_by_id == mock_admin_employee.id
+
+
+@pytest.mark.asyncio
+async def test_write_off_stock_forbidden_for_agent(client, mock_stocks_service):
+    app.dependency_overrides[get_current_user] = lambda: AuthenticatedEmployee(
+        id=uuid4(),
+        phone="+998901234567",
+        role=EmployeeRole.AGENT,
+        full_name="Agent",
+        is_active=True,
+    )
+    wh_id = uuid4()
+    p_id = uuid4()
+
+    resp = await client.post(
+        "/api/v1/stocks/write-off",
+        json={
+            "warehouse_id": str(wh_id),
+            "product_id": str(p_id),
+            "quantity": 20,
+        },
+    )
+    assert resp.status_code == 403
+    mock_stocks_service.write_off.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_list_warehouse_stocks(client, mock_stocks_service):
     wh_id = uuid4()
     mock_stocks_service.get_warehouse_inventory.return_value = []

@@ -227,25 +227,6 @@ class OrdersService:
         if order.status != OrderStatus.PENDING:
             raise ValueError(f"Cannot confirm order with ID {order_id}")
 
-        batch_items = [
-            StockBatchItemDTO(
-                product_id=order_item.product_id,
-                quantity=order_item.quantity,
-            )
-            for order_item in order.items
-        ]
-
-        await self._stocks.confirm_sales_batch(
-            StockBatchOperationDTO(
-                warehouse_id=order.warehouse_id,
-                items=batch_items,
-                actor_type=TransactionActorType.CLIENT,
-                created_by_id=order.created_by_id,
-                reference_type=StockReferenceType.ORDER,
-                reference_id=order.id,
-            )
-        )
-
         order.confirm()
 
         await self._uow.orders.update(order)
@@ -405,6 +386,27 @@ class OrdersService:
         order = await self._uow.orders.get_by_id(order_id)
         if order is None:
             raise ValueError(f"Order with ID {order_id} not found")
+
+        batch_items = [
+            StockBatchItemDTO(
+                product_id=order_item.product_id,
+                quantity=order_item.quantity,
+            )
+            for order_item in order.items
+        ]
+
+        await self._stocks.confirm_sales_batch(
+            StockBatchOperationDTO(
+                warehouse_id=order.warehouse_id,
+                items=batch_items,
+                actor_type=TransactionActorType.EMPLOYEE
+                if employee_id
+                else TransactionActorType.CLIENT,
+                created_by_id=employee_id or order.created_by_id,
+                reference_type=StockReferenceType.ORDER,
+                reference_id=order.id,
+            )
+        )
 
         order.deliver()
 

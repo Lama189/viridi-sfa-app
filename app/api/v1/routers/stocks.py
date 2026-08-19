@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import allow_all_staff, get_stocks_service
+from app.api.dependencies import allow_all_staff, get_stocks_service, allow_admin
 from app.api.v1.schemas.inventory import ProductWithStockResponse
 from app.api.v1.schemas.stocks import (
     StockAdjustRequest,
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api/v1/stocks", tags=["Stocks"])
 )
 async def add_stock(
     dto: StockOperationRequest,
-    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_admin)],
     service: Annotated[IStockService, Depends(get_stocks_service)],
 ):
     try:
@@ -39,6 +39,34 @@ async def add_stock(
             created_by_id=dto.created_by_id or employee.id,
         )
         return await service.add_stock(operation_dto)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    "/write-off",
+    response_model=StockResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def write_off_stock(
+    dto: StockOperationRequest,
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_admin)],
+    service: Annotated[IStockService, Depends(get_stocks_service)],
+):
+    try:
+        operation_dto = StockOperationDTO(
+            warehouse_id=dto.warehouse_id,
+            product_id=dto.product_id,
+            quantity=dto.quantity,
+            actor_type=dto.actor_type,
+            reference_type=dto.reference_type,
+            reference_id=dto.reference_id,
+            created_by_id=dto.created_by_id or employee.id,
+        )
+        return await service.write_off(operation_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

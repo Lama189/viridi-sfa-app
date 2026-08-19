@@ -147,7 +147,7 @@ class Order:
         self._touch()
 
     def deliver(self) -> None:
-        if self.status not in (OrderStatus.CONFIRMED, OrderStatus.ASSEMBLY_STARTED, OrderStatus.ASSEMBLED, OrderStatus.SHIPPED):
+        if self.status not in (OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.ASSEMBLY_STARTED, OrderStatus.ASSEMBLED, OrderStatus.SHIPPED):
             raise ValueError(f"Cannot deliver order in status '{self.status}'")
 
         self.status = OrderStatus.DELIVERED

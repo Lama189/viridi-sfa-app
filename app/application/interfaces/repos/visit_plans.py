@@ -27,5 +27,14 @@ class IVisitPlanRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def find_next_plan_for_retail_point(
+        self,
+        employee_id: UUID,
+        retail_point_id: UUID,
+        from_date: date,
+    ) -> VisitPlan | None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete_all(self) -> None:
         raise NotImplementedError

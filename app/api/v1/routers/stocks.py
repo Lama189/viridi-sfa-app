@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import allow_all_staff, get_stocks_service, allow_admin
+from app.api.dependencies import allow_admin, allow_all_staff, get_stocks_service
 from app.api.v1.schemas.inventory import ProductWithStockResponse
 from app.api.v1.schemas.stocks import (
     StockAdjustRequest,

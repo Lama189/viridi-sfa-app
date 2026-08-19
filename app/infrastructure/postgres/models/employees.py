@@ -92,7 +92,7 @@ class Employee(BaseModel):
         back_populates="employee",
     )
 
-    notifications: Mapped[list["Notification"]] = relationship(
+    notifications: Mapped[list[Notification]] = relationship(
         back_populates="employee",
         cascade="all, delete-orphan",
     )

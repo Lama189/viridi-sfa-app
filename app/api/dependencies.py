@@ -25,6 +25,7 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.application.services.categories import CategoriesService
 from app.application.services.clients import ClientsAuthService, ClientsService
 from app.application.services.dashboard import DashboardService
+from app.application.services.delivery_proposals import DeliveryProposalService
 from app.application.services.employees import EmployeesAuthService, EmployeesService
 from app.application.services.invite_codes import ClientInviteCodesService
 from app.application.services.media import MediaService
@@ -244,6 +245,15 @@ async def get_notifications_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
 ) -> NotificationsService:
     return NotificationsService(uow)
+
+
+async def get_delivery_proposal_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    notifications_service: Annotated[
+        NotificationsService, Depends(get_notifications_service)
+    ],
+) -> DeliveryProposalService:
+    return DeliveryProposalService(uow, notifications_service)
 
 
 def get_territory_clustering_service() -> ITerritoryClusteringService:

@@ -2,7 +2,10 @@ from collections.abc import AsyncGenerator
 
 from redis.asyncio import Redis
 
-from app.application.interfaces.cache.rate_limiter import IRateLimiter
+from app.application.interfaces.services.delivery_proposals import (
+    IDeliveryProposalService,
+)
+from app.application.interfaces.services.notifications import INotificationsService
 from app.application.interfaces.services.retail_point_assignments import (
     IRetailPointAssignmentService,
 )
@@ -10,6 +13,8 @@ from app.application.interfaces.services.routes_generator import IRouteGeneratio
 from app.application.interfaces.services.territories import ITerritoryClusteringService
 from app.application.interfaces.services.visit_plans import IVisitPlanService
 from app.application.interfaces.uow import IUnitOfWork
+from app.application.services.delivery_proposals import DeliveryProposalService
+from app.application.services.notifications import NotificationsService
 from app.application.services.retail_point_assignments import (
     RetailPointAssignmentService,
 )
@@ -65,6 +70,15 @@ class Container:
             clustering_service=self.territory_clustering_service(),
             assignments_service=self.retail_point_assignment_service(uow),
             visit_plans_service=self.visit_plan_service(uow)
+        )
+
+    def notifications_service(self, uow: IUnitOfWork) -> INotificationsService:
+        return NotificationsService(uow)
+
+    def delivery_proposal_service(self, uow: IUnitOfWork) -> IDeliveryProposalService:
+        return DeliveryProposalService(
+            uow=uow,
+            notifications_service=self.notifications_service(uow),
         )
 
     def redis_client(self) -> AsyncGenerator[Redis]:

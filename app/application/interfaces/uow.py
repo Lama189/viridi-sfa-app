@@ -7,6 +7,7 @@ from app.application.interfaces.repos.clients import IClientRepository
 from app.application.interfaces.repos.employees import IEmployeeRepository
 from app.application.interfaces.repos.invite_codes import IInviteCodeRepository
 from app.application.interfaces.repos.media_objects import IMediaObjectRepository
+from app.application.interfaces.repos.notifications import INotificationRepository
 from app.application.interfaces.repos.order_items import IOrderItemRepository
 from app.application.interfaces.repos.orders import IOrderRepository
 from app.application.interfaces.repos.outbox import IOutboxRepository
@@ -56,6 +57,7 @@ class IUnitOfWork(ABC):
     visit_plans: IVisitPlanRepository
     visit_plan_items: IVisitPlanItemRepository
     visit_schedule_rules: IVisitScheduleRuleRepository
+    notifications: INotificationRepository
     outbox: IOutboxRepository
 
     @abstractmethod

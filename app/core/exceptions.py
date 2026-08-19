@@ -164,3 +164,8 @@ class NoActiveRetailPointsError(DomainError):
 
 class TerritoryClustersNotBuiltError(DomainError):
     pass
+
+
+# Notification Exceptions
+class NotificationNotFoundError(DomainError):
+    pass

@@ -29,6 +29,7 @@ from app.application.services.employees import EmployeesAuthService, EmployeesSe
 from app.application.services.invite_codes import ClientInviteCodesService
 from app.application.services.media import MediaService
 from app.application.services.members import RetailPointMembersService
+from app.application.services.notifications import NotificationsService
 from app.application.services.orders import OrdersService
 from app.application.services.products import ProductsService
 from app.application.services.retail_point_assignments import (
@@ -237,6 +238,12 @@ async def get_dashboard_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
 ) -> DashboardService:
     return DashboardService(uow)
+
+
+async def get_notifications_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> NotificationsService:
+    return NotificationsService(uow)
 
 
 def get_territory_clustering_service() -> ITerritoryClusteringService:

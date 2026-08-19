@@ -12,6 +12,9 @@ from app.infrastructure.postgres.repos.invite_codes import PostgresInviteCodeRep
 from app.infrastructure.postgres.repos.media_objects import (
     PostgresMediaObjectRepository,
 )
+from app.infrastructure.postgres.repos.notifications import (
+    PostgresNotificationRepository,
+)
 from app.infrastructure.postgres.repos.order_items import PostgresOrderItemRepository
 from app.infrastructure.postgres.repos.orders import PostgresOrderRepository
 from app.infrastructure.postgres.repos.outbox import PostgresOutboxRepository
@@ -82,6 +85,7 @@ class PostgresUnitOfWork(IUnitOfWork):
         self.visit_plans = PostgresVisitPlanRepository(self._session)
         self.visit_plan_items = PostgresVisitPlanItemRepository(self._session)
         self.visit_schedule_rules = PostgresVisitScheduleRuleRepository(self._session)
+        self.notifications = PostgresNotificationRepository(self._session)
         self.outbox = PostgresOutboxRepository(self._session)
 
         return self

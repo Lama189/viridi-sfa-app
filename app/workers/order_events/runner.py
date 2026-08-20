@@ -9,11 +9,11 @@ from app.workers.order_events.worker import OrderEventsWorker
 async def run() -> None:
     uow = container.uow()
     channel = await container.rabbitmq.get_channel()
-    proposal_service = container.delivery_proposal_service(uow)
+    assignment_service = container.delivery_assignment_service(uow)
 
     worker = OrderEventsWorker(
         channel=channel,
-        proposal_service=proposal_service,
+        delivery_assignment_service=assignment_service,
     )
     await worker.start()
 

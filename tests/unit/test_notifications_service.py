@@ -29,7 +29,7 @@ async def test_create_notification(service, mock_uow):
         employee_id=emp_id,
         title="Новый заказ",
         body="Заказ собран",
-        notification_type="order_delivery_proposal",
+        notification_type="order_assigned_to_visit",
         payload={"order_id": "123"},
     )
     result = await service.create(dto)
@@ -37,7 +37,7 @@ async def test_create_notification(service, mock_uow):
     assert result.employee_id == emp_id
     assert result.title == "Новый заказ"
     assert result.body == "Заказ собран"
-    assert result.notification_type == "order_delivery_proposal"
+    assert result.notification_type == "order_assigned_to_visit"
     assert result.payload == {"order_id": "123"}
     assert result.is_read is False
     mock_uow.notifications.add.assert_awaited_once()

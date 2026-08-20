@@ -9,6 +9,9 @@ from app.application.dto.stocks import (
     StockBatchItemDTO,
     StockBatchOperationDTO,
 )
+from app.application.interfaces.services.delivery_assignments import (
+    IDeliveryAssignmentService,
+)
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.exceptions import UserNotActiveError, UserNotFoundError
@@ -32,9 +35,15 @@ from app.domain.enums import (
 
 
 class OrdersService:
-    def __init__(self, uow: IUnitOfWork, stocks: IStockService) -> None:
+    def __init__(
+        self,
+        uow: IUnitOfWork,
+        stocks: IStockService,
+        delivery_assignment_service: IDeliveryAssignmentService | None = None,
+    ) -> None:
         self._uow = uow
         self._stocks = stocks
+        self._delivery_assignment_service = delivery_assignment_service
 
     async def _validate(
         self,
@@ -243,17 +252,8 @@ class OrdersService:
 
         order.confirm()
 
-        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(
-            order.retail_point_id
-        )
-        if assignment and assignment.employee_id:
-            next_plan = await self._uow.visit_plans.find_next_plan_for_retail_point(
-                employee_id=assignment.employee_id,
-                retail_point_id=order.retail_point_id,
-                from_date=date.today(),
-            )
-            if next_plan:
-                order.planned_visit_id = next_plan.id
+        if self._delivery_assignment_service:
+            await self._delivery_assignment_service.assign_order_to_next_visit(order)
 
         await self._uow.orders.update(order)
 
@@ -273,22 +273,6 @@ class OrdersService:
             },
         )
         await self._uow.outbox.add(event)
-
-        if order.planned_visit_id:
-            planned_event = OutboxMessage.create(
-                event_type=OrderEventType.PLANNED,
-                aggregate_type=AggregateType.ORDER,
-                aggregate_id=order.id,
-                payload={
-                    "event_type": OrderEventType.PLANNED,
-                    "order_id": str(order.id),
-                    "warehouse_id": str(order.warehouse_id),
-                    "retail_point_id": str(order.retail_point_id),
-                    "created_by_id": str(order.created_by_id),
-                    "planned_visit_id": str(order.planned_visit_id),
-                },
-            )
-            await self._uow.outbox.add(planned_event)
 
         await self._uow.commit()
 

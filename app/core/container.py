@@ -3,12 +3,10 @@ from collections.abc import AsyncGenerator
 from redis.asyncio import Redis
 
 from app.application.interfaces.cache.rate_limiter import IRateLimiter
-from app.application.interfaces.services.delivery_proposals import (
-    IDeliveryProposalService,
+from app.application.interfaces.services.delivery_assignments import (
+    IDeliveryAssignmentService,
 )
-from app.application.interfaces.services.employee_devices import (
-    IEmployeeDeviceService,
-)
+from app.application.interfaces.services.employee_devices import IEmployeeDeviceService
 from app.application.interfaces.services.notifications import INotificationsService
 from app.application.interfaces.services.push_notifications import (
     IPushNotificationService,
@@ -20,7 +18,7 @@ from app.application.interfaces.services.routes_generator import IRouteGeneratio
 from app.application.interfaces.services.territories import ITerritoryClusteringService
 from app.application.interfaces.services.visit_plans import IVisitPlanService
 from app.application.interfaces.uow import IUnitOfWork
-from app.application.services.delivery_proposals import DeliveryProposalService
+from app.application.services.delivery_assignments import DeliveryAssignmentService
 from app.application.services.employee_devices import EmployeeDeviceService
 from app.application.services.notifications import NotificationsService
 from app.application.services.retail_point_assignments import (
@@ -91,10 +89,11 @@ class Container:
     def push_notification_service(self, uow: IUnitOfWork) -> IPushNotificationService:
         return FirebasePushNotificationService(uow)
 
-    def delivery_proposal_service(self, uow: IUnitOfWork) -> IDeliveryProposalService:
-        return DeliveryProposalService(
+    def delivery_assignment_service(
+        self, uow: IUnitOfWork
+    ) -> IDeliveryAssignmentService:
+        return DeliveryAssignmentService(
             uow=uow,
-            notifications_service=self.notifications_service(uow),
             push_service=self.push_notification_service(uow),
         )
 

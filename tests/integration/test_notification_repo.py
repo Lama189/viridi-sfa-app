@@ -18,7 +18,7 @@ async def test_notification_repo_crud_operations(session: AsyncSession):
         employee_id=employee_id,
         title="Новый заказ",
         body="Заказ готов к доставке",
-        notification_type="order_delivery_proposal",
+        notification_type="order_assigned_to_visit",
         payload={"order_id": str(uuid4())},
     )
     await repo.add(notification)
@@ -30,7 +30,7 @@ async def test_notification_repo_crud_operations(session: AsyncSession):
     assert found.employee_id == employee_id
     assert found.title == "Новый заказ"
     assert found.body == "Заказ готов к доставке"
-    assert found.notification_type == "order_delivery_proposal"
+    assert found.notification_type == "order_assigned_to_visit"
     assert found.is_read is False
 
     # list_by_employee

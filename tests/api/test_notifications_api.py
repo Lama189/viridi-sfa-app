@@ -58,7 +58,7 @@ async def test_list_notifications(
         employee_id=mock_agent_employee.id,
         title="Новый заказ",
         body="Собран заказ",
-        notification_type="order_delivery_proposal",
+        notification_type="order_assigned_to_visit",
         payload={"order_id": "123"},
     )
     mock_notifications_service.list_by_employee.return_value = [notif]

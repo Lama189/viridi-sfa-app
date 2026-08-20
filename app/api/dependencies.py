@@ -25,7 +25,9 @@ from app.application.interfaces.uow import IUnitOfWork
 from app.application.services.categories import CategoriesService
 from app.application.services.clients import ClientsAuthService, ClientsService
 from app.application.services.dashboard import DashboardService
-from app.application.services.delivery_proposals import DeliveryProposalService
+from app.application.services.delivery_assignments import (
+    DeliveryAssignmentService,
+)
 from app.application.services.employee_devices import EmployeeDeviceService
 from app.application.services.employees import EmployeesAuthService, EmployeesService
 from app.application.services.invite_codes import ClientInviteCodesService
@@ -167,11 +169,33 @@ async def get_stocks_service(
     return StockService(uow)
 
 
+async def get_push_notification_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+) -> FirebasePushNotificationService:
+    return FirebasePushNotificationService(uow)
+
+
+async def get_delivery_assignment_service(
+    uow: Annotated[IUnitOfWork, Depends(get_uow)],
+    push_service: Annotated[
+        FirebasePushNotificationService, Depends(get_push_notification_service)
+    ],
+) -> DeliveryAssignmentService:
+    return DeliveryAssignmentService(uow=uow, push_service=push_service)
+
+
 async def get_orders_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
     stocks: Annotated[IStockService, Depends(get_stocks_service)],
+    delivery_assignment_service: Annotated[
+        DeliveryAssignmentService, Depends(get_delivery_assignment_service)
+    ],
 ) -> OrdersService:
-    return OrdersService(uow, stocks)
+    return OrdersService(
+        uow=uow,
+        stocks=stocks,
+        delivery_assignment_service=delivery_assignment_service,
+    )
 
 
 async def get_clients_service(
@@ -249,24 +273,6 @@ async def get_notifications_service(
     uow: Annotated[IUnitOfWork, Depends(get_uow)],
 ) -> NotificationsService:
     return NotificationsService(uow)
-
-
-async def get_push_notification_service(
-    uow: Annotated[IUnitOfWork, Depends(get_uow)],
-) -> FirebasePushNotificationService:
-    return FirebasePushNotificationService(uow)
-
-
-async def get_delivery_proposal_service(
-    uow: Annotated[IUnitOfWork, Depends(get_uow)],
-    notifications_service: Annotated[
-        NotificationsService, Depends(get_notifications_service)
-    ],
-    push_service: Annotated[
-        FirebasePushNotificationService, Depends(get_push_notification_service)
-    ],
-) -> DeliveryProposalService:
-    return DeliveryProposalService(uow, notifications_service, push_service)
 
 
 async def get_employee_device_service(

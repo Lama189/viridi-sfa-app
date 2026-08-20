@@ -16,11 +16,11 @@ async def test_order_events_worker_start_and_stop():
     mock_channel.declare_queue.return_value = mock_queue
     mock_queue.consume.return_value = "consumer_tag_123"
 
-    mock_proposal_service = AsyncMock()
+    mock_assignment_service = AsyncMock()
 
     worker = OrderEventsWorker(
         channel=mock_channel,
-        proposal_service=mock_proposal_service,
+        delivery_assignment_service=mock_assignment_service,
     )
 
     await worker.start()
@@ -38,11 +38,11 @@ async def test_order_events_worker_start_and_stop():
 @pytest.mark.asyncio
 async def test_order_events_worker_handle_message_success():
     mock_channel = AsyncMock()
-    mock_proposal_service = AsyncMock()
+    mock_assignment_service = AsyncMock()
 
     worker = OrderEventsWorker(
         channel=mock_channel,
-        proposal_service=mock_proposal_service,
+        delivery_assignment_service=mock_assignment_service,
     )
 
     order_id = uuid4()
@@ -55,17 +55,17 @@ async def test_order_events_worker_handle_message_success():
 
     await worker._handle_message(mock_message)
 
-    mock_proposal_service.notify_order_assigned.assert_awaited_once_with(order_id)
+    mock_assignment_service.assign_order_by_id.assert_awaited_once_with(order_id)
 
 
 @pytest.mark.asyncio
 async def test_order_events_worker_handle_message_from_headers():
     mock_channel = AsyncMock()
-    mock_proposal_service = AsyncMock()
+    mock_assignment_service = AsyncMock()
 
     worker = OrderEventsWorker(
         channel=mock_channel,
-        proposal_service=mock_proposal_service,
+        delivery_assignment_service=mock_assignment_service,
     )
 
     order_id = uuid4()
@@ -78,17 +78,17 @@ async def test_order_events_worker_handle_message_from_headers():
 
     await worker._handle_message(mock_message)
 
-    mock_proposal_service.notify_order_assigned.assert_awaited_once_with(order_id)
+    mock_assignment_service.assign_order_by_id.assert_awaited_once_with(order_id)
 
 
 @pytest.mark.asyncio
 async def test_order_events_worker_handle_message_no_order_id():
     mock_channel = AsyncMock()
-    mock_proposal_service = AsyncMock()
+    mock_assignment_service = AsyncMock()
 
     worker = OrderEventsWorker(
         channel=mock_channel,
-        proposal_service=mock_proposal_service,
+        delivery_assignment_service=mock_assignment_service,
     )
 
     mock_message = AsyncMock()
@@ -100,4 +100,4 @@ async def test_order_events_worker_handle_message_no_order_id():
 
     await worker._handle_message(mock_message)
 
-    mock_proposal_service.notify_order_assigned.assert_not_awaited()
+    mock_assignment_service.assign_order_by_id.assert_not_awaited()

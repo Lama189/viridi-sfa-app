@@ -4,8 +4,8 @@ from uuid import UUID
 from aio_pika import ExchangeType
 from aio_pika.abc import AbstractChannel, AbstractIncomingMessage, AbstractQueue
 
-from app.application.interfaces.services.delivery_proposals import (
-    IDeliveryProposalService,
+from app.application.interfaces.services.delivery_assignments import (
+    IDeliveryAssignmentService,
 )
 from app.core.observability.logging import logger
 
@@ -14,12 +14,12 @@ class OrderEventsWorker:
     def __init__(
         self,
         channel: AbstractChannel,
-        proposal_service: IDeliveryProposalService,
-        queue_name: str = "delivery_proposals_order_events",
+        delivery_assignment_service: IDeliveryAssignmentService,
+        queue_name: str = "delivery_assignments_order_events",
         exchange_name: str = "orders",
     ) -> None:
         self._channel = channel
-        self._proposal_service = proposal_service
+        self._delivery_assignment_service = delivery_assignment_service
         self._queue_name: str = queue_name
         self._exchange_name: str = exchange_name
         self._queue: AbstractQueue | None = None
@@ -68,7 +68,7 @@ class OrderEventsWorker:
             order_id = UUID(str(order_id_str))
             logger.info("Processing order.planned event", order_id=str(order_id))
 
-            await self._proposal_service.notify_order_assigned(order_id)
+            await self._delivery_assignment_service.assign_order_by_id(order_id)
 
         except Exception as exc:
             logger.exception("Failed to handle order.planned message", error=str(exc))

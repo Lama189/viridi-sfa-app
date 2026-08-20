@@ -36,8 +36,17 @@ def mock_stocks():
 
 
 @pytest.fixture
-def service(mock_uow, mock_stocks):
-    return OrdersService(mock_uow, mock_stocks)
+def mock_delivery_assignment_service():
+    return AsyncMock()
+
+
+@pytest.fixture
+def service(mock_uow, mock_stocks, mock_delivery_assignment_service):
+    return OrdersService(
+        uow=mock_uow,
+        stocks=mock_stocks,
+        delivery_assignment_service=mock_delivery_assignment_service,
+    )
 
 
 def _warehouse(uid=None, is_active=True):
@@ -312,7 +321,9 @@ class TestOrdersServiceCreate:
 
 class TestOrdersServiceConfirm:
     @pytest.mark.asyncio
-    async def test_confirm_success(self, service, mock_uow):
+    async def test_confirm_success(
+        self, service, mock_uow, mock_delivery_assignment_service
+    ):
         oid = uuid4()
         pid = uuid4()
         order = _pending_order_with_item(oid, pid)
@@ -320,6 +331,9 @@ class TestOrdersServiceConfirm:
 
         result = await service.confirm(oid)
         assert result.status == OrderStatus.CONFIRMED
+        mock_delivery_assignment_service.assign_order_to_next_visit.assert_awaited_once_with(
+            order
+        )
         mock_uow.orders.update.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
 

@@ -77,12 +77,11 @@ def test_container_redis_and_rate_limiter(
 
 @patch("app.core.container.create_session_factory")
 @patch("app.core.container.RabbitMQConnectionManager")
-def test_container_delivery_proposal_service(mock_rabbitmq_cls, mock_session_factory):
+def test_container_delivery_assignment_service(mock_rabbitmq_cls, mock_session_factory):
     cont = Container()
     mock_uow = MagicMock()
 
-    service = cont.delivery_proposal_service(mock_uow)
+    service = cont.delivery_assignment_service(mock_uow)
     assert service is not None
     assert service._uow == mock_uow
-    assert service._notifications_service is not None
     assert service._push_service is not None

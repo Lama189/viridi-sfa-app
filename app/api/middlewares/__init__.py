@@ -11,5 +11,5 @@ __all__ = [
     "RateLimitMiddleware",
     "RequestMiddleware",
     "SecurityHeadersMiddleWare",
-    "TimingMiddleWare"
+    "TimingMiddleWare",
 ]

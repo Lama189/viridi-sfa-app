@@ -66,7 +66,7 @@ async def test_dashboard_repos_aggregations(session: AsyncSession):
         warehouse_id=warehouse_id,
         created_by_id=client_id,
         retail_point_id=rp_id1,
-        visit_id=visit1.id,
+        actual_visit_id=visit1.id,
         total_amount=Decimal("50000.00"),
     )
     await order_repo.add(order1)

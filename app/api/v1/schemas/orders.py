@@ -29,14 +29,14 @@ class OrderItemCreateRequest(BaseModel):
 class CreateOrderRequest(BaseModel):
     warehouse_id: UUID | None = None
     retail_point_id: UUID | None = None
-    visit_id: UUID | None = None
+    planned_visit_id: UUID | None = None
     items: list[OrderItemCreateRequest]
 
 
 class OrderItemResponse(BaseModel):
     id: UUID
     order_id: UUID
-    product: ProductShortResponse 
+    product: ProductShortResponse
     quantity: int
     price_at_order: Decimal
     total_volume: Decimal
@@ -52,14 +52,15 @@ class OrderResponse(BaseModel):
     retail_point: RetailPointShortResponse
     warehouse: WarehouseShortResponse
     created_by: UserShortResponse
-    created_at: datetime | None = None 
+    created_at: datetime | None = None
     updated_at: datetime | None = None
-    visit_id: UUID | None = None
+    planned_visit_id: UUID | None = None
+    actual_visit_id: UUID | None = None
 
     items: list[OrderItemResponse] = []
 
     model_config = {"from_attributes": True}
 
 
-class AcceptDeliveryRequest(BaseModel):
-    visit_id: UUID
+class DeliverOrderRequest(BaseModel):
+    visit_id: UUID | None = None

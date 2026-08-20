@@ -50,7 +50,9 @@ def mock_agent_employee():
 @pytest.fixture(autouse=True)
 def override_deps(mock_visit_plans_service, mock_routes_generator_service):
     app.dependency_overrides[get_visit_plans_service] = lambda: mock_visit_plans_service
-    app.dependency_overrides[get_routes_generator_service] = lambda: mock_routes_generator_service
+    app.dependency_overrides[get_routes_generator_service] = lambda: (
+        mock_routes_generator_service
+    )
     yield
     app.dependency_overrides.clear()
 

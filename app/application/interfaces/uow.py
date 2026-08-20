@@ -78,7 +78,7 @@ class IUnitOfWork(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def commit(self) -> None: 
+    async def commit(self) -> None:
         raise NotImplementedError
 
     @abstractmethod

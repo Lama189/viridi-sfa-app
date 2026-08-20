@@ -70,7 +70,10 @@ def deserialize_event(body: bytes, target_type: type[Any] | None = None) -> Any:
 
     event_type = data.get("event_type")
 
-    if target_type is OrderAssemblyStartedEvent or event_type == "order.assembly_started":
+    if (
+        target_type is OrderAssemblyStartedEvent
+        or event_type == "order.assembly_started"
+    ):
         return OrderAssemblyStartedEvent(
             order_id=UUID(data["order_id"])
             if isinstance(data["order_id"], str)
@@ -84,9 +87,7 @@ def deserialize_event(body: bytes, target_type: type[Any] | None = None) -> Any:
             warehouse_id=UUID(data["warehouse_id"])
             if data.get("warehouse_id")
             else None,
-            employee_id=UUID(data["employee_id"])
-            if data.get("employee_id")
-            else None,
+            employee_id=UUID(data["employee_id"]) if data.get("employee_id") else None,
             event_type="order.assembly_started",
         )
 
@@ -104,9 +105,7 @@ def deserialize_event(body: bytes, target_type: type[Any] | None = None) -> Any:
             warehouse_id=UUID(data["warehouse_id"])
             if data.get("warehouse_id")
             else None,
-            employee_id=UUID(data["employee_id"])
-            if data.get("employee_id")
-            else None,
+            employee_id=UUID(data["employee_id"]) if data.get("employee_id") else None,
             event_type="order.assembled",
         )
 
@@ -124,9 +123,7 @@ def deserialize_event(body: bytes, target_type: type[Any] | None = None) -> Any:
             warehouse_id=UUID(data["warehouse_id"])
             if data.get("warehouse_id")
             else None,
-            employee_id=UUID(data["employee_id"])
-            if data.get("employee_id")
-            else None,
+            employee_id=UUID(data["employee_id"]) if data.get("employee_id") else None,
             event_type="order.taken_by_agent",
         )
 
@@ -144,9 +141,7 @@ def deserialize_event(body: bytes, target_type: type[Any] | None = None) -> Any:
             warehouse_id=UUID(data["warehouse_id"])
             if data.get("warehouse_id")
             else None,
-            employee_id=UUID(data["employee_id"])
-            if data.get("employee_id")
-            else None,
+            employee_id=UUID(data["employee_id"]) if data.get("employee_id") else None,
             event_type="order.delivered",
         )
 
@@ -189,4 +184,3 @@ def deserialize_event(body: bytes, target_type: type[Any] | None = None) -> Any:
         )
 
     return data
-

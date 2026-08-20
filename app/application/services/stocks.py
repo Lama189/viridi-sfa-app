@@ -170,7 +170,7 @@ class StockService(IStockService):
             )
             stock_operations_total.labels(operation="create_stock").inc()
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to create stock",
@@ -218,7 +218,7 @@ class StockService(IStockService):
             stock_operations_total.labels(operation="add_stock").inc()
             stock_operation_units_total.labels(operation="add_stock").inc(dto.quantity)
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to add stock",
@@ -263,7 +263,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to reserve stock",
@@ -330,7 +330,7 @@ class StockService(IStockService):
                     operation="reserve_stocks_batch"
                 ).inc(units)
             return updated_stocks
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to reserve stocks batch",
@@ -374,7 +374,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to release stock reservation",
@@ -446,7 +446,7 @@ class StockService(IStockService):
                     operation="release_reservations_batch"
                 ).inc(units)
             return updated_stocks
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to release stock reservations batch",
@@ -491,7 +491,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to confirm sale",
@@ -558,7 +558,7 @@ class StockService(IStockService):
                     units
                 )
             return updated_stocks
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to confirm sales batch",
@@ -600,7 +600,7 @@ class StockService(IStockService):
             stock_operations_total.labels(operation="write_off").inc()
             stock_operation_units_total.labels(operation="write_off").inc(dto.quantity)
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to write off stock",
@@ -644,7 +644,7 @@ class StockService(IStockService):
                 dto.quantity
             )
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to return stock",
@@ -705,7 +705,7 @@ class StockService(IStockService):
             )
             stock_operations_total.labels(operation="adjust_stock").inc()
             return stock
-        
+
         except Exception as exc:
             logger.error(
                 "Failed to adjust stock",

@@ -42,7 +42,9 @@ class PostgresOrderItemRepository(IOrderItemRepository):
             quantity=model.quantity,
             price_at_order=model.price_at_order,
             total_volume=model.total_volume,
-            product_name=model.product.name if getattr(model, "product", None) is not None else None,
+            product_name=model.product.name
+            if getattr(model, "product", None) is not None
+            else None,
         )
 
     def _to_model(self, item: OrderItem) -> OrderItemModel:

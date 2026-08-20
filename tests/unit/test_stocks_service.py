@@ -430,4 +430,3 @@ class TestStockServiceAdjustAndList:
         assert item.stock.quantity == 100
         assert item.stock.reserved_quantity == 20
         assert item.stock.available_quantity == 80
-

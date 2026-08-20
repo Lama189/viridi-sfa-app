@@ -109,7 +109,8 @@ class TestOrderDefaults:
             warehouse_id=uuid4(), created_by_id=uuid4(), retail_point_id=uuid4()
         )
         assert isinstance(order.id, type(uuid4()))
-        assert order.visit_id is None
+        assert order.planned_visit_id is None
+        assert order.actual_visit_id is None
         assert order.status == OrderStatus.PENDING
         assert order.total_amount == Decimal("0.00")
         assert order.total_volume == Decimal("0.000")
@@ -117,19 +118,22 @@ class TestOrderDefaults:
 
     def test_custom_values(self):
         order_id = uuid4()
-        visit_id = uuid4()
+        planned_visit_id = uuid4()
+        actual_visit_id = uuid4()
         order = Order(
             warehouse_id=uuid4(),
             created_by_id=uuid4(),
             retail_point_id=uuid4(),
             id=order_id,
-            visit_id=visit_id,
+            planned_visit_id=planned_visit_id,
+            actual_visit_id=actual_visit_id,
             status=OrderStatus.CONFIRMED,
             total_amount=Decimal("150000.00"),
             total_volume=Decimal("0.500"),
         )
         assert order.id == order_id
-        assert order.visit_id == visit_id
+        assert order.planned_visit_id == planned_visit_id
+        assert order.actual_visit_id == actual_visit_id
         assert order.status == OrderStatus.CONFIRMED
         assert order.total_amount == Decimal("150000.00")
         assert order.total_volume == Decimal("0.500")
@@ -339,6 +343,43 @@ class TestOrderLifecycle:
         order.start_assembly()
         order.complete_assembly()
         assert order.status == OrderStatus.ASSEMBLED
+
+    def test_load_assembled(self):
+        order = self._make_order_with_item()
+        order.start_assembly()
+        order.complete_assembly()
+        order.load()
+        assert order.status == OrderStatus.LOADED
+
+    def test_load_invalid_status_raises(self):
+        order = self._make_order_with_item()
+        with pytest.raises(ValueError, match="Cannot load order"):
+            order.load()
+
+    def test_ship_loaded(self):
+        order = self._make_order_with_item()
+        order.start_assembly()
+        order.complete_assembly()
+        order.load()
+        order.ship()
+        assert order.status == OrderStatus.SHIPPED
+
+    def test_deliver_loaded(self):
+        order = self._make_order_with_item()
+        order.start_assembly()
+        order.complete_assembly()
+        order.load()
+        visit_id = uuid4()
+        order.deliver(actual_visit_id=visit_id)
+        assert order.status == OrderStatus.DELIVERED
+        assert order.actual_visit_id == visit_id
+
+    def test_plan_delivery(self):
+        order = self._make_order_with_item()
+        order.confirm()
+        plan_id = uuid4()
+        order.plan_delivery(plan_id)
+        assert order.planned_visit_id == plan_id
 
     def test_deliver_shipped(self):
         order = self._make_order_with_item()

@@ -127,6 +127,23 @@ class PostgresOrderRepository(IOrderRepository):
 
         return [self._to_domain(m) for m in result.unique().scalars().all()]
 
+    async def list_by_planned_visit(
+        self,
+        planned_visit_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        stmt = (
+            select(OrderModel)
+            .options(*self._hydrated_options())
+            .where(OrderModel.planned_visit_id == planned_visit_id)
+        )
+        if statuses:
+            stmt = stmt.where(OrderModel.status.in_(statuses))
+
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(m) for m in result.unique().scalars().all()]
+
     async def update(self, order: Order) -> None:
         await self._session.execute(
             update(OrderModel)
@@ -135,7 +152,8 @@ class PostgresOrderRepository(IOrderRepository):
                 status=order.status,
                 total_amount=order.total_amount,
                 total_volume=order.total_volume,
-                visit_id=order.visit_id,
+                planned_visit_id=order.planned_visit_id,
+                actual_visit_id=order.actual_visit_id,
             )
         )
         await self._session.flush()
@@ -157,7 +175,7 @@ class PostgresOrderRepository(IOrderRepository):
                 func.coalesce(func.sum(OrderModel.total_amount), Decimal("0.00")),
             )
             .select_from(OrderModel)
-            .join(VisitModel, OrderModel.visit_id == VisitModel.id)
+            .join(VisitModel, OrderModel.actual_visit_id == VisitModel.id)
             .where(
                 VisitModel.employee_id == employee_id,
                 func.date(VisitModel.started_at) == target_date,
@@ -248,7 +266,8 @@ class PostgresOrderRepository(IOrderRepository):
             created_by_id=model.created_by_id,
             retail_point_id=model.retail_point_id,
             id=model.id,
-            visit_id=model.visit_id,
+            planned_visit_id=model.planned_visit_id,
+            actual_visit_id=model.actual_visit_id,
             status=model.status,
             total_amount=model.total_amount,
             total_volume=model.total_volume,
@@ -266,7 +285,8 @@ class PostgresOrderRepository(IOrderRepository):
             warehouse_id=order.warehouse_id,
             created_by_id=order.created_by_id,
             retail_point_id=order.retail_point_id,
-            visit_id=order.visit_id,
+            planned_visit_id=order.planned_visit_id,
+            actual_visit_id=order.actual_visit_id,
             status=order.status,
             total_amount=order.total_amount,
             total_volume=order.total_volume,

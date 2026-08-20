@@ -27,7 +27,9 @@ class CategoriesService:
     async def get_all_categories(self, only_active: bool = True) -> list[Category]:
         return await self._uow.categories.list_all(only_active)
 
-    async def update_category(self, category_id: UUID, dto: CategoryUpdateDTO) -> Category:
+    async def update_category(
+        self, category_id: UUID, dto: CategoryUpdateDTO
+    ) -> Category:
         category = await self._uow.categories.get_by_id(category_id)
         if not category:
             raise ValueError(f"Category {category_id} not found")

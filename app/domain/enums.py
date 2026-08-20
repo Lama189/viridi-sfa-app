@@ -27,10 +27,10 @@ class OrderStatus(StrEnum):
     CONFIRMED = "confirmed"
     ASSEMBLY_STARTED = "assembly_started"
     ASSEMBLED = "assembled"
+    LOADED = "loaded"
     SHIPPED = "shipped"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
-
 
 
 class StockTransactionType(StrEnum):
@@ -85,8 +85,11 @@ class MediaBucket(StrEnum):
 
 class OrderEventType(StrEnum):
     CREATED = "order.created"
+    CONFIRMED = "order.confirmed"
+    PLANNED = "order.planned"
     ASSEMBLY_STARTED = "order.assembly_started"
     ASSEMBLED = "order.assembled"
+    LOADED = "order.loaded"
     TAKEN_BY_AGENT = "order.taken_by_agent"
     DELIVERED = "order.delivered"
     CANCELLED = "order.cancelled"

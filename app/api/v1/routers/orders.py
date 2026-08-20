@@ -10,12 +10,11 @@ from app.api.dependencies import (
     get_orders_service,
 )
 from app.api.v1.schemas.orders import (
-    AcceptDeliveryRequest,
     CreateOrderRequest,
+    DeliverOrderRequest,
     OrderResponse,
 )
 from app.application.dto.orders import (
-    AcceptDeliveryDTO,
     OrderCreateDTO,
     OrderItemCreateDTO,
 )
@@ -42,7 +41,9 @@ async def create_order(
         retail_point_id = dto.retail_point_id
 
         if retail_point_id is None and client.telegram_chat_id:
-            member = await service._uow.retail_point_members.get_by_telegram_id(client.telegram_chat_id)
+            member = await service._uow.retail_point_members.get_by_telegram_id(
+                client.telegram_chat_id
+            )
             if member:
                 retail_point_id = member.retail_point_id
 
@@ -65,6 +66,7 @@ async def create_order(
         app_dto = OrderCreateDTO(
             warehouse_id=warehouse_id,
             retail_point_id=retail_point_id,
+            planned_visit_id=dto.planned_visit_id,
             items=[
                 OrderItemCreateDTO(
                     product_id=item.product_id,
@@ -131,7 +133,9 @@ async def get_orders_counters(
 )
 async def get_order(
     order_id: UUID,
-    user: Annotated[AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)],
+    user: Annotated[
+        AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+    ],
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:
@@ -143,8 +147,7 @@ async def get_order(
             )
             if not is_member:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not your order"
+                    status_code=status.HTTP_403_FORBIDDEN, detail="Not your order"
                 )
 
         return order
@@ -250,7 +253,7 @@ async def ship_order(
 async def start_order_assembly(
     order_id: UUID,
     service: Annotated[OrdersService, Depends(get_orders_service)],
-    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
 ):
     try:
         return await service.start_assembly(order_id, employee.id)
@@ -268,11 +271,51 @@ async def start_order_assembly(
 async def assemble_order(
     order_id: UUID,
     service: Annotated[OrdersService, Depends(get_orders_service)],
-    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)]
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
 ):
     try:
         return await service.complete_assembly(order_id, employee.id)
     except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    path="/load-today",
+    response_model=list[OrderResponse],
+)
+async def load_today_orders(
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+):
+    try:
+        return await service.load_today_orders(employee.id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post(
+    path="/{order_id}/load",
+    response_model=OrderResponse,
+)
+async def load_order(
+    order_id: UUID,
+    service: Annotated[OrdersService, Depends(get_orders_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+):
+    try:
+        return await service.load_order(order_id, employee.id)
+    except ValueError as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
@@ -289,6 +332,7 @@ async def deliver_order(
         AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
     ],
     service: Annotated[OrdersService, Depends(get_orders_service)],
+    body: DeliverOrderRequest | None = None,
 ):
     try:
         order = await service.get_by_id(order_id)
@@ -302,7 +346,10 @@ async def deliver_order(
                     detail="Not your order",
                 )
         employee_id = user.id if isinstance(user, AuthenticatedEmployee) else None
-        return await service.deliver(order_id, employee_id=employee_id)
+        visit_id = body.visit_id if body else None
+        return await service.deliver(
+            order_id, employee_id=employee_id, visit_id=visit_id
+        )
     except ValueError as e:
         if "not found" in str(e).lower():
             raise HTTPException(
@@ -313,34 +360,3 @@ async def deliver_order(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
-
-
-@router.post(
-    path="/{order_id}/accept-delivery",
-    response_model=OrderResponse,
-    status_code=status.HTTP_200_OK,
-)
-async def accept_order_delivery(
-    order_id: UUID,
-    body: AcceptDeliveryRequest,
-    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
-    service: Annotated[OrdersService, Depends(get_orders_service)],
-):
-    try:
-        dto = AcceptDeliveryDTO(
-            order_id=order_id,
-            employee_id=employee.id,
-            visit_id=body.visit_id,
-        )
-        return await service.accept_delivery(dto)
-    except ValueError as e:
-        if "not found" in str(e).lower():
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=str(e),
-            )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
-

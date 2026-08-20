@@ -71,5 +71,6 @@ class Visit(BaseModel):
     )
 
     orders: Mapped[list[Order]] = relationship(
-        back_populates="visit",
+        back_populates="actual_visit",
+        foreign_keys="Order.actual_visit_id",
     )

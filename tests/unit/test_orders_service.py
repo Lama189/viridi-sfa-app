@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.api.v1.schemas.orders import CreateOrderRequest, OrderItemCreateRequest
+from app.application.dto.orders import OrderCreateDTO, OrderItemCreateDTO
 from app.application.services.orders import OrdersService
 from app.core.exceptions import UserNotActiveError, UserNotFoundError
 from app.domain.entities.clients import Client
@@ -22,6 +22,10 @@ def mock_uow():
     uow.products = AsyncMock()
     uow.orders = AsyncMock()
     uow.order_items = AsyncMock()
+    uow.outbox = AsyncMock()
+    uow.retail_point_assignments = AsyncMock()
+    uow.visit_plans = AsyncMock()
+    uow.visits = AsyncMock()
     uow.commit = AsyncMock()
     return uow
 
@@ -73,10 +77,10 @@ def _product(
 
 
 def _create_dto(warehouse_id, retail_point_id, items):
-    return CreateOrderRequest(
+    return OrderCreateDTO(
         warehouse_id=warehouse_id,
         retail_point_id=retail_point_id,
-        items=[OrderItemCreateRequest(product_id=pid, quantity=q) for pid, q in items],
+        items=[OrderItemCreateDTO(product_id=pid, quantity=q) for pid, q in items],
     )
 
 
@@ -107,9 +111,13 @@ class TestOrdersServiceRead:
         orders = [_pending_order_with_item()]
         mock_uow.orders.list.return_value = orders
 
-        res = await service.list_orders(statuses=[OrderStatus.PENDING], limit=10, offset=0)
+        res = await service.list_orders(
+            statuses=[OrderStatus.PENDING], limit=10, offset=0
+        )
         assert res == orders
-        mock_uow.orders.list.assert_awaited_once_with(statuses=[OrderStatus.PENDING], limit=10, offset=0)
+        mock_uow.orders.list.assert_awaited_once_with(
+            statuses=[OrderStatus.PENDING], limit=10, offset=0
+        )
 
     @pytest.mark.asyncio
     async def test_list_by_client(self, service, mock_uow):
@@ -119,7 +127,9 @@ class TestOrdersServiceRead:
 
         res = await service.list_by_client(cid, statuses=[OrderStatus.PENDING])
         assert res == orders
-        mock_uow.orders.list_by_client.assert_awaited_once_with(cid, statuses=[OrderStatus.PENDING])
+        mock_uow.orders.list_by_client.assert_awaited_once_with(
+            cid, statuses=[OrderStatus.PENDING]
+        )
 
     @pytest.mark.asyncio
     async def test_list_by_retail_point(self, service, mock_uow):
@@ -129,23 +139,30 @@ class TestOrdersServiceRead:
 
         res = await service.list_by_retail_point(rpid)
         assert res == orders
-        mock_uow.orders.list_by_retail_point.assert_awaited_once_with(rpid, statuses=None)
+        mock_uow.orders.list_by_retail_point.assert_awaited_once_with(
+            rpid, statuses=None
+        )
 
     @pytest.mark.asyncio
     async def test_list_by_client_retail_point(self, service, mock_uow):
         cid = uuid4()
         rpid = uuid4()
         from app.domain.entities.retail_point_members import RetailPointMember
+
         mock_uow.retail_point_members.get_by_client_id.return_value = [
             RetailPointMember(retail_point_id=rpid, client_id=cid)
         ]
         orders = [_pending_order_with_item()]
         mock_uow.orders.list_by_retail_points.return_value = orders
 
-        res = await service.list_by_client_retail_point(cid, statuses=[OrderStatus.PENDING])
+        res = await service.list_by_client_retail_point(
+            cid, statuses=[OrderStatus.PENDING]
+        )
         assert res == orders
         mock_uow.retail_point_members.get_by_client_id.assert_awaited_once_with(cid)
-        mock_uow.orders.list_by_retail_points.assert_awaited_once_with([rpid], statuses=[OrderStatus.PENDING])
+        mock_uow.orders.list_by_retail_points.assert_awaited_once_with(
+            [rpid], statuses=[OrderStatus.PENDING]
+        )
 
     @pytest.mark.asyncio
     async def test_get_counts_by_status(self, service, mock_uow):
@@ -446,50 +463,66 @@ class TestOrdersServiceDeliver:
 
 
 # ---------------------------------------------------------------------------
-# accept_delivery
+# load_order & load_today_orders
 # ---------------------------------------------------------------------------
 
 
-class TestOrdersServiceAcceptDelivery:
+class TestOrdersServiceLoad:
     @pytest.mark.asyncio
-    async def test_accept_delivery_success(self, service, mock_uow):
-        from app.application.dto.orders import AcceptDeliveryDTO
-
+    async def test_load_order_success(self, service, mock_uow):
         oid = uuid4()
         emp_id = uuid4()
-        visit_id = uuid4()
         order = _pending_order_with_item(oid)
         order.status = OrderStatus.ASSEMBLED
         mock_uow.orders.get_by_id.return_value = order
 
-        dto = AcceptDeliveryDTO(order_id=oid, employee_id=emp_id, visit_id=visit_id)
-        result = await service.accept_delivery(dto)
-        assert result.status == OrderStatus.ASSEMBLED
-        assert result.visit_id == visit_id
+        result = await service.load_order(oid, employee_id=emp_id)
+        assert result.status == OrderStatus.LOADED
         mock_uow.orders.update.assert_awaited_once_with(order)
+        mock_uow.outbox.add.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_accept_delivery_not_found(self, service, mock_uow):
-        from app.application.dto.orders import AcceptDeliveryDTO
-
+    async def test_load_order_not_found(self, service, mock_uow):
         mock_uow.orders.get_by_id.return_value = None
-        dto = AcceptDeliveryDTO(order_id=uuid4(), employee_id=uuid4(), visit_id=uuid4())
         with pytest.raises(ValueError, match="not found"):
-            await service.accept_delivery(dto)
+            await service.load_order(uuid4(), employee_id=uuid4())
 
     @pytest.mark.asyncio
-    async def test_accept_delivery_invalid_status(self, service, mock_uow):
-        from app.application.dto.orders import AcceptDeliveryDTO
-
+    async def test_load_order_invalid_status(self, service, mock_uow):
         oid = uuid4()
         order = _pending_order_with_item(oid)
         order.status = OrderStatus.PENDING
         mock_uow.orders.get_by_id.return_value = order
 
-        dto = AcceptDeliveryDTO(order_id=oid, employee_id=uuid4(), visit_id=uuid4())
-        with pytest.raises(ValueError, match="Cannot accept delivery"):
-            await service.accept_delivery(dto)
+        with pytest.raises(ValueError, match="Cannot load order"):
+            await service.load_order(oid, employee_id=uuid4())
+
+    @pytest.mark.asyncio
+    async def test_load_today_orders_success(self, service, mock_uow):
+        from datetime import date
+
+        from app.domain.entities.visit_plans import VisitPlan
+        from app.domain.enums import VisitPlanStatus
+
+        emp_id = uuid4()
+        plan = VisitPlan(
+            id=uuid4(),
+            employee_id=emp_id,
+            plan_date=date.today(),
+            status=VisitPlanStatus.PLANNED,
+        )
+        mock_uow.visit_plans.get_by_employee_and_date.return_value = plan
+
+        order1 = _pending_order_with_item()
+        order1.status = OrderStatus.ASSEMBLED
+        mock_uow.orders.list_by_planned_visit.return_value = [order1]
+
+        result = await service.load_today_orders(emp_id)
+        assert len(result) == 1
+        assert result[0].status == OrderStatus.LOADED
+        mock_uow.orders.update.assert_awaited_once_with(order1)
+        mock_uow.commit.assert_awaited_once()
 
 
 # ---------------------------------------------------------------------------

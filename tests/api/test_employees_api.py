@@ -46,7 +46,9 @@ def mock_admin_employee():
 
 
 @pytest.fixture(autouse=True)
-def override_deps(mock_service, mock_auth_service, mock_device_service, mock_admin_employee):
+def override_deps(
+    mock_service, mock_auth_service, mock_device_service, mock_admin_employee
+):
     app.dependency_overrides[get_employees_service] = lambda: mock_service
     app.dependency_overrides[get_employees_auth_service] = lambda: mock_auth_service
     app.dependency_overrides[get_employee_device_service] = lambda: mock_device_service

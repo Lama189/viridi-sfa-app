@@ -70,7 +70,9 @@ def _order_response(order_id=None, client_id=None, status=OrderStatus.PENDING):
         total_volume=Decimal("0.500"),
         created_at=now,
         updated_at=now,
-        retail_point=RetailPointShort(id=rpid, name="Test Point", address="Test Address"),
+        retail_point=RetailPointShort(
+            id=rpid, name="Test Point", address="Test Address"
+        ),
         warehouse=WarehouseShort(id=wid, name="Test Warehouse"),
         created_by=UserShort(id=cid, full_name="Test Client"),
     )
@@ -93,7 +95,9 @@ def _order_with_item(order_id=None, client_id=None, status=OrderStatus.PENDING):
         total_volume=Decimal("0.500"),
         created_at=now,
         updated_at=now,
-        retail_point=RetailPointShort(id=rpid, name="Test Point", address="Test Address"),
+        retail_point=RetailPointShort(
+            id=rpid, name="Test Point", address="Test Address"
+        ),
         warehouse=WarehouseShort(id=wid, name="Test Warehouse"),
         created_by=UserShort(id=cid, full_name="Test Client"),
     )
@@ -250,14 +254,18 @@ class TestOrdersClientEndpoints:
     async def test_deliver_order_by_client_success(
         self, client, mock_service, mock_client_entity
     ):
-        order = _order_response(client_id=mock_client_entity.id, status=OrderStatus.DELIVERED)
+        order = _order_response(
+            client_id=mock_client_entity.id, status=OrderStatus.DELIVERED
+        )
         mock_service.get_by_id = AsyncMock(return_value=order)
         mock_service.deliver = AsyncMock(return_value=order)
 
         resp = await client.post(f"/api/v1/orders/{order.id}/deliver")
         assert resp.status_code == 200
         assert resp.json()["status"] == OrderStatus.DELIVERED.value
-        mock_service.deliver.assert_awaited_once_with(order.id, employee_id=None)
+        mock_service.deliver.assert_awaited_once_with(
+            order.id, employee_id=None, visit_id=None
+        )
 
     @pytest.mark.asyncio
     async def test_deliver_order_by_client_forbidden(self, client, mock_service):
@@ -273,7 +281,6 @@ class TestOrdersClientEndpoints:
 
         resp = await client.post(f"/api/v1/orders/{uuid4()}/deliver")
         assert resp.status_code == 404
-
 
 
 # ---------------------------------------------------------------------------
@@ -306,7 +313,9 @@ class TestOrdersStaffEndpoints:
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) == 1
-        mock_service.list_orders.assert_awaited_once_with(statuses=None, limit=50, offset=0)
+        mock_service.list_orders.assert_awaited_once_with(
+            statuses=None, limit=50, offset=0
+        )
 
     @pytest.mark.asyncio
     async def test_list_orders_with_valid_statuses_filter(self, client, mock_service):
@@ -331,7 +340,9 @@ class TestOrdersStaffEndpoints:
         assert resp.json()["detail"] == "Invalid order status"
 
     @pytest.mark.asyncio
-    async def test_get_orders_counters_success(self, client, mock_service, mock_admin_employee):
+    async def test_get_orders_counters_success(
+        self, client, mock_service, mock_admin_employee
+    ):
         expected_counters = {
             OrderStatus.PENDING: 3,
             OrderStatus.CONFIRMED: 2,
@@ -437,30 +448,34 @@ class TestOrdersStaffEndpoints:
         resp = await client.post(f"/api/v1/orders/{uuid4()}/start-assembly")
         assert resp.status_code == 400
 
-    # --- POST /api/v1/orders/{order_id}/accept-delivery ---
+    # --- POST /api/v1/orders/{order_id}/load ---
 
     @pytest.mark.asyncio
-    async def test_accept_delivery_success(self, client, mock_service):
-        visit_id = uuid4()
-        order = _order_with_item(status=OrderStatus.ASSEMBLED)
-        order.visit_id = visit_id
-        mock_service.accept_delivery.return_value = order
+    async def test_load_order_success(self, client, mock_service):
+        order = _order_with_item(status=OrderStatus.LOADED)
+        mock_service.load_order.return_value = order
 
-        resp = await client.post(
-            f"/api/v1/orders/{order.id}/accept-delivery",
-            json={"visit_id": str(visit_id)},
-        )
+        resp = await client.post(f"/api/v1/orders/{order.id}/load")
         assert resp.status_code == 200
-        assert resp.json()["status"] == OrderStatus.ASSEMBLED.value
-        assert resp.json()["visit_id"] == str(visit_id)
-        mock_service.accept_delivery.assert_awaited_once()
+        assert resp.json()["status"] == OrderStatus.LOADED.value
+        mock_service.load_order.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_accept_delivery_not_found(self, client, mock_service):
-        mock_service.accept_delivery.side_effect = ValueError("not found")
+    async def test_load_order_not_found(self, client, mock_service):
+        mock_service.load_order.side_effect = ValueError("not found")
 
-        resp = await client.post(
-            f"/api/v1/orders/{uuid4()}/accept-delivery",
-            json={"visit_id": str(uuid4())},
-        )
+        resp = await client.post(f"/api/v1/orders/{uuid4()}/load")
         assert resp.status_code == 404
+
+    # --- POST /api/v1/orders/load-today ---
+
+    @pytest.mark.asyncio
+    async def test_load_today_orders_success(self, client, mock_service):
+        order = _order_with_item(status=OrderStatus.LOADED)
+        mock_service.load_today_orders.return_value = [order]
+
+        resp = await client.post("/api/v1/orders/load-today")
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+        assert resp.json()[0]["status"] == OrderStatus.LOADED.value
+        mock_service.load_today_orders.assert_awaited_once()

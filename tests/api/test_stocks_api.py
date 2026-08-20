@@ -104,7 +104,9 @@ async def test_adjust_stock(client, mock_stocks_service, mock_admin_employee):
 async def test_add_stock(client, mock_stocks_service, mock_admin_employee):
     wh_id = uuid4()
     p_id = uuid4()
-    stock = Stock(warehouse_id=wh_id, product_id=p_id, quantity=100, reserved_quantity=0)
+    stock = Stock(
+        warehouse_id=wh_id, product_id=p_id, quantity=100, reserved_quantity=0
+    )
     mock_stocks_service.add_stock.return_value = stock
 
     resp = await client.post(

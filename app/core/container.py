@@ -69,7 +69,9 @@ class Container:
     def territory_clustering_service(self) -> ITerritoryClusteringService:
         return TerritoryClusteringService()
 
-    def retail_point_assignment_service(self, uow: IUnitOfWork) -> IRetailPointAssignmentService:
+    def retail_point_assignment_service(
+        self, uow: IUnitOfWork
+    ) -> IRetailPointAssignmentService:
         return RetailPointAssignmentService(uow)
 
     def visit_plan_service(self, uow: IUnitOfWork) -> IVisitPlanService:
@@ -80,7 +82,7 @@ class Container:
             uow=uow,
             clustering_service=self.territory_clustering_service(),
             assignments_service=self.retail_point_assignment_service(uow),
-            visit_plans_service=self.visit_plan_service(uow)
+            visit_plans_service=self.visit_plan_service(uow),
         )
 
     def notifications_service(self, uow: IUnitOfWork) -> INotificationsService:

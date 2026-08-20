@@ -27,7 +27,7 @@ async def test_order_events_worker_start_and_stop():
     mock_channel.declare_exchange.assert_awaited_once()
     mock_channel.declare_queue.assert_awaited_once()
     mock_queue.bind.assert_awaited_once_with(
-        exchange=mock_exchange, routing_key="order.assembled"
+        exchange=mock_exchange, routing_key="order.planned"
     )
     mock_queue.consume.assert_awaited_once_with(worker._handle_message)
 
@@ -55,7 +55,7 @@ async def test_order_events_worker_handle_message_success():
 
     await worker._handle_message(mock_message)
 
-    mock_proposal_service.process_assembled_order.assert_awaited_once_with(order_id)
+    mock_proposal_service.notify_order_assigned.assert_awaited_once_with(order_id)
 
 
 @pytest.mark.asyncio
@@ -78,7 +78,7 @@ async def test_order_events_worker_handle_message_from_headers():
 
     await worker._handle_message(mock_message)
 
-    mock_proposal_service.process_assembled_order.assert_awaited_once_with(order_id)
+    mock_proposal_service.notify_order_assigned.assert_awaited_once_with(order_id)
 
 
 @pytest.mark.asyncio
@@ -100,4 +100,4 @@ async def test_order_events_worker_handle_message_no_order_id():
 
     await worker._handle_message(mock_message)
 
-    mock_proposal_service.process_assembled_order.assert_not_awaited()
+    mock_proposal_service.notify_order_assigned.assert_not_awaited()

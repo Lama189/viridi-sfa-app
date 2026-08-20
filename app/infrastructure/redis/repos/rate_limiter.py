@@ -13,7 +13,6 @@ _SLIDING_WINDOW_LUA_SCRIPT = _LUA_SCRIPT_PATH.read_text(encoding="utf-8")
 
 
 class RedisRateLimiter(IRateLimiter):
-
     def __init__(self, client: Redis) -> None:
         self._client = client
         self._script = self._client.register_script(_SLIDING_WINDOW_LUA_SCRIPT)
@@ -30,8 +29,7 @@ class RedisRateLimiter(IRateLimiter):
 
         try:
             result = await self._script(
-                keys=[f"rate_limit:{key}"],
-                args=[now, window, limit, request_id]
+                keys=[f"rate_limit:{key}"], args=[now, window, limit, request_id]
             )
             return bool(result == 1)
         except RedisError as e:
@@ -39,6 +37,4 @@ class RedisRateLimiter(IRateLimiter):
             return True
 
 
-# Backward-compatibility alias
 RadisRateLimiter = RedisRateLimiter
-    

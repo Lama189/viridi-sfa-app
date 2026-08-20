@@ -74,7 +74,9 @@ async def test_list_by_employee(service, mock_uow):
     emp_id = uuid4()
     mock_uow.notifications.list_by_employee.return_value = []
 
-    result = await service.list_by_employee(emp_id, only_unread=True, limit=10, offset=0)
+    result = await service.list_by_employee(
+        emp_id, only_unread=True, limit=10, offset=0
+    )
     assert result == []
     mock_uow.notifications.list_by_employee.assert_awaited_once_with(
         employee_id=emp_id,

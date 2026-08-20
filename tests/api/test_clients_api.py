@@ -70,8 +70,8 @@ def override_deps(
     app.dependency_overrides[get_clients_service] = lambda: mock_service
     app.dependency_overrides[get_clients_auth_service] = lambda: mock_auth_service
     app.dependency_overrides[get_orders_service] = lambda: mock_orders_service
-    app.dependency_overrides[get_retail_point_members_service] = (
-        lambda: mock_members_service
+    app.dependency_overrides[get_retail_point_members_service] = lambda: (
+        mock_members_service
     )
     app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
     yield

@@ -163,7 +163,9 @@ async def test_order_events_consumer_handle_order_assembly_started():
     consumer = OrderEventsConsumer(notification_service=mock_notifications)
 
     order_id = uuid4()
-    body = f'{{"order_id": "{order_id}", "event_type": "order.assembly_started"}}'.encode()
+    body = (
+        f'{{"order_id": "{order_id}", "event_type": "order.assembly_started"}}'.encode()
+    )
 
     mock_message = MagicMock()
     mock_message.body = body
@@ -321,7 +323,9 @@ async def test_order_events_consumer_handle_order_taken_by_agent():
     consumer = OrderEventsConsumer(notification_service=mock_notifications)
 
     order_id = uuid4()
-    body = f'{{"order_id": "{order_id}", "event_type": "order.taken_by_agent"}}'.encode()
+    body = (
+        f'{{"order_id": "{order_id}", "event_type": "order.taken_by_agent"}}'.encode()
+    )
 
     mock_message = MagicMock()
     mock_message.body = body

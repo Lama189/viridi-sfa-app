@@ -1,7 +1,7 @@
+from datetime import date
 from uuid import UUID
 
 from app.application.dto.orders import (
-    AcceptDeliveryDTO,
     OrderCreateDTO,
     OrderItemCreateDTO,
 )
@@ -94,7 +94,9 @@ class OrdersService:
         limit: int = 50,
         offset: int = 0,
     ) -> list[Order]:
-        return await self._uow.orders.list(statuses=statuses, limit=limit, offset=offset)
+        return await self._uow.orders.list(
+            statuses=statuses, limit=limit, offset=offset
+        )
 
     async def list_by_client(
         self,
@@ -144,19 +146,27 @@ class OrdersService:
             warehouse_id=dto.warehouse_id,
             created_by_id=client_id,
             retail_point_id=dto.retail_point_id,
+            planned_visit_id=dto.planned_visit_id,
+            actual_visit_id=dto.actual_visit_id,
             retail_point=RetailPointShort(
                 id=retail_point.id,
                 name=retail_point.name,
                 address=retail_point.address,
-            ) if retail_point else None,
+            )
+            if retail_point
+            else None,
             warehouse=WarehouseShort(
                 id=warehouse.id,
                 name=warehouse.name,
-            ) if warehouse else None,
+            )
+            if warehouse
+            else None,
             created_by=UserShort(
                 id=client.id,
                 full_name=client.full_name,
-            ) if client else None,
+            )
+            if client
+            else None,
         )
 
         order_items: list[OrderItem] = []
@@ -233,7 +243,53 @@ class OrdersService:
 
         order.confirm()
 
+        assignment = await self._uow.retail_point_assignments.get_by_retail_point_id(
+            order.retail_point_id
+        )
+        if assignment and assignment.employee_id:
+            next_plan = await self._uow.visit_plans.find_next_plan_for_retail_point(
+                employee_id=assignment.employee_id,
+                retail_point_id=order.retail_point_id,
+                from_date=date.today(),
+            )
+            if next_plan:
+                order.planned_visit_id = next_plan.id
+
         await self._uow.orders.update(order)
+
+        event = OutboxMessage.create(
+            event_type=OrderEventType.CONFIRMED,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "event_type": OrderEventType.CONFIRMED,
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(order.created_by_id),
+                "planned_visit_id": str(order.planned_visit_id)
+                if order.planned_visit_id
+                else None,
+            },
+        )
+        await self._uow.outbox.add(event)
+
+        if order.planned_visit_id:
+            planned_event = OutboxMessage.create(
+                event_type=OrderEventType.PLANNED,
+                aggregate_type=AggregateType.ORDER,
+                aggregate_id=order.id,
+                payload={
+                    "event_type": OrderEventType.PLANNED,
+                    "order_id": str(order.id),
+                    "warehouse_id": str(order.warehouse_id),
+                    "retail_point_id": str(order.retail_point_id),
+                    "created_by_id": str(order.created_by_id),
+                    "planned_visit_id": str(order.planned_visit_id),
+                },
+            )
+            await self._uow.outbox.add(planned_event)
+
         await self._uow.commit()
 
         return order
@@ -350,6 +406,81 @@ class OrdersService:
 
         return order
 
+    async def load_order(
+        self,
+        order_id: UUID,
+        employee_id: UUID | None = None,
+    ) -> Order:
+        order = await self._uow.orders.get_by_id(order_id)
+        if order is None:
+            raise ValueError(f"Order with ID {order_id} not found")
+
+        order.load()
+
+        await self._uow.orders.update(order)
+
+        event = OutboxMessage.create(
+            event_type=OrderEventType.LOADED,
+            aggregate_type=AggregateType.ORDER,
+            aggregate_id=order.id,
+            payload={
+                "event_type": OrderEventType.LOADED,
+                "order_id": str(order.id),
+                "warehouse_id": str(order.warehouse_id),
+                "retail_point_id": str(order.retail_point_id),
+                "created_by_id": str(order.created_by_id),
+                "employee_id": str(employee_id) if employee_id is not None else None,
+                "planned_visit_id": str(order.planned_visit_id)
+                if order.planned_visit_id
+                else None,
+            },
+        )
+
+        await self._uow.outbox.add(event)
+        await self._uow.commit()
+
+        return order
+
+    async def load_today_orders(
+        self,
+        employee_id: UUID,
+    ) -> list[Order]:
+        today_plan = await self._uow.visit_plans.get_by_employee_and_date(
+            employee_id, date.today()
+        )
+        if not today_plan:
+            return []
+
+        orders = await self._uow.orders.list_by_planned_visit(
+            planned_visit_id=today_plan.id,
+            statuses=[OrderStatus.ASSEMBLED],
+        )
+
+        for order in orders:
+            order.load()
+            await self._uow.orders.update(order)
+
+            event = OutboxMessage.create(
+                event_type=OrderEventType.LOADED,
+                aggregate_type=AggregateType.ORDER,
+                aggregate_id=order.id,
+                payload={
+                    "event_type": OrderEventType.LOADED,
+                    "order_id": str(order.id),
+                    "warehouse_id": str(order.warehouse_id),
+                    "retail_point_id": str(order.retail_point_id),
+                    "created_by_id": str(order.created_by_id),
+                    "employee_id": str(employee_id),
+                    "planned_visit_id": str(order.planned_visit_id)
+                    if order.planned_visit_id
+                    else None,
+                },
+            )
+            await self._uow.outbox.add(event)
+
+        await self._uow.commit()
+        return orders
+
     async def ship(
         self,
         order_id: UUID,
@@ -382,32 +513,25 @@ class OrdersService:
 
         return order
 
-    async def accept_delivery(
-        self,
-        dto: AcceptDeliveryDTO,
-    ) -> Order:
-        order = await self._uow.orders.get_by_id(dto.order_id)
-        if order is None:
-            raise ValueError(f"Order with ID {dto.order_id} not found")
-
-        if order.status != OrderStatus.ASSEMBLED:
-            raise ValueError(f"Cannot accept delivery for order in status '{order.status}'")
-
-        order.visit_id = dto.visit_id
-
-        await self._uow.orders.update(order)
-        await self._uow.commit()
-
-        return order
-
     async def deliver(
         self,
         order_id: UUID,
         employee_id: UUID | None = None,
+        visit_id: UUID | None = None,
     ) -> Order:
         order = await self._uow.orders.get_by_id(order_id)
         if order is None:
             raise ValueError(f"Order with ID {order_id} not found")
+
+        if visit_id is None and employee_id is not None:
+            active_visits = await self._uow.visits.list_by_employee(
+                employee_id, active=True, limit=1
+            )
+            if (
+                active_visits
+                and active_visits[0].retail_point_id == order.retail_point_id
+            ):
+                visit_id = active_visits[0].id
 
         batch_items = [
             StockBatchItemDTO(
@@ -430,7 +554,7 @@ class OrdersService:
             )
         )
 
-        order.deliver()
+        order.deliver(actual_visit_id=visit_id)
 
         await self._uow.orders.update(order)
 
@@ -445,6 +569,12 @@ class OrdersService:
                 "retail_point_id": str(order.retail_point_id),
                 "created_by_id": str(order.created_by_id),
                 "employee_id": str(employee_id) if employee_id is not None else None,
+                "actual_visit_id": str(order.actual_visit_id)
+                if order.actual_visit_id
+                else None,
+                "planned_visit_id": str(order.planned_visit_id)
+                if order.planned_visit_id
+                else None,
             },
         )
 

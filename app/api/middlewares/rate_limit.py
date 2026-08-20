@@ -13,25 +13,26 @@ from app.core.observability.logging import logger
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-
     def __init__(
         self,
         app: Callable,
         rate_limiter: IRateLimiter,
         default_limit: int = 100,
         default_window: int = 60,
-        custom_rules: Sequence[tuple[str, int, int]] | None = None
+        custom_rules: Sequence[tuple[str, int, int]] | None = None,
     ) -> None:
         super().__init__(app)
         self._rate_limiter = rate_limiter
         self._default_limit = default_limit
         self._default_window = default_window
-        self._custom_rules = sorted(custom_rules or [], key=lambda r: len(r[0]), reverse=True)
+        self._custom_rules = sorted(
+            custom_rules or [], key=lambda r: len(r[0]), reverse=True
+        )
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         if (
-            "pytest" in sys.modules 
-            or os.getenv("TESTING") == "1" 
+            "pytest" in sys.modules
+            or os.getenv("TESTING") == "1"
             or request.url.path in ("/health", "/docs", "/openapi.json", "/redoc")
         ):
             return await call_next(request)
@@ -42,9 +43,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         try:
             allowed = await self._rate_limiter.allow(
-                redis_key, 
-                limit=limit,
-                window=window
+                redis_key, limit=limit, window=window
             )
         except RedisError as e:
             logger.warning(
@@ -53,7 +52,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 path=request.url.path,
             )
             allowed = True
-            
+
         if not allowed:
             logger.warning(
                 "Rate limit exceeded",
@@ -66,7 +65,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={
                     "error": "Too Many Requests",
-                    "message": f"Rate limit exceeded. Maximum {limit} requests per {window} seconds."
+                    "message": f"Rate limit exceeded. Maximum {limit} requests per {window} seconds.",
                 },
                 headers={
                     "Retry-After": str(window),
@@ -76,7 +75,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
     def _resolve_client_identifier(self, request: Request) -> str:
-        forwarded_for = request.headers.get("X-Forwarded-For") or request.headers.get("X-Forwarder-For")
+        forwarded_for = request.headers.get("X-Forwarded-For") or request.headers.get(
+            "X-Forwarder-For"
+        )
         if forwarded_for:
             return forwarded_for.split(",")[0].strip()
 

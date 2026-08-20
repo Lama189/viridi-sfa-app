@@ -60,7 +60,7 @@ def market_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
 def extract_error(response_text: str) -> str:
     try:
         detail = json.loads(response_text).get("detail")
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         detail = None
 
     if isinstance(detail, str):

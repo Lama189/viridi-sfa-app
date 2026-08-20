@@ -27,8 +27,10 @@ class NotificationsService(INotificationsService):
     async def get_by_id(self, notification_id: UUID) -> Notification:
         notification = await self._uow.notifications.get_by_id(notification_id)
         if not notification:
-            raise NotificationNotFoundError(f"Notification with id {notification_id} not found")
-        
+            raise NotificationNotFoundError(
+                f"Notification with id {notification_id} not found"
+            )
+
         return notification
 
     async def list_by_employee(
@@ -53,7 +55,7 @@ class NotificationsService(INotificationsService):
         notification.mark_as_read()
 
         await self._uow.notifications.update(notification)
-        
+
         await self._uow.commit()
 
         return notification

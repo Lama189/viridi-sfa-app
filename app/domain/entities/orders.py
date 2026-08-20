@@ -65,7 +65,8 @@ class Order:
     created_by_id: UUID
     retail_point_id: UUID
     id: UUID = field(default_factory=uuid4)
-    visit_id: UUID | None = None
+    planned_visit_id: UUID | None = None
+    actual_visit_id: UUID | None = None
     status: OrderStatus = OrderStatus.PENDING
     total_amount: Decimal = field(default=Decimal("0.00"))
     total_volume: Decimal = field(default=Decimal("0.000"))
@@ -112,7 +113,7 @@ class Order:
         self.total_volume = Decimal("0.000")
         self._touch()
 
-    def confirm(self) -> None:
+    def confirm(self, planned_visit_id: UUID | None = None) -> None:
         if self.status != OrderStatus.PENDING:
             raise ValueError("Only pending orders can be confirmed")
 
@@ -120,11 +121,29 @@ class Order:
             raise ValueError("Order must contain at least one item")
 
         self.status = OrderStatus.CONFIRMED
+        if planned_visit_id is not None:
+            self.planned_visit_id = planned_visit_id
+        self._touch()
+
+    def plan_delivery(self, planned_visit_id: UUID) -> None:
+        if self.status in (
+            OrderStatus.LOADED,
+            OrderStatus.SHIPPED,
+            OrderStatus.DELIVERED,
+            OrderStatus.CANCELLED,
+        ):
+            raise ValueError(
+                f"Cannot plan delivery for order in status '{self.status}'"
+            )
+
+        self.planned_visit_id = planned_visit_id
         self._touch()
 
     def start_assembly(self) -> None:
         if self.status not in (OrderStatus.PENDING, OrderStatus.CONFIRMED):
-            raise ValueError(f"Cannot start assembly for order in status '{self.status}'")
+            raise ValueError(
+                f"Cannot start assembly for order in status '{self.status}'"
+            )
 
         if not self.items:
             raise ValueError("Order must contain at least one item")
@@ -134,22 +153,45 @@ class Order:
 
     def complete_assembly(self) -> None:
         if self.status != OrderStatus.ASSEMBLY_STARTED:
-            raise ValueError(f"Cannot complete assembly for order in status '{self.status}'")
+            raise ValueError(
+                f"Cannot complete assembly for order in status '{self.status}'"
+            )
 
         self.status = OrderStatus.ASSEMBLED
         self._touch()
 
+    def load(self) -> None:
+        if self.status != OrderStatus.ASSEMBLED:
+            raise ValueError(f"Cannot load order in status '{self.status}'")
+
+        self.status = OrderStatus.LOADED
+        self._touch()
+
     def ship(self) -> None:
-        if self.status not in (OrderStatus.CONFIRMED, OrderStatus.ASSEMBLY_STARTED, OrderStatus.ASSEMBLED):
+        if self.status not in (
+            OrderStatus.CONFIRMED,
+            OrderStatus.ASSEMBLY_STARTED,
+            OrderStatus.ASSEMBLED,
+            OrderStatus.LOADED,
+        ):
             raise ValueError(f"Cannot ship order in status '{self.status}'")
 
         self.status = OrderStatus.SHIPPED
         self._touch()
 
-    def deliver(self) -> None:
-        if self.status not in (OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.ASSEMBLY_STARTED, OrderStatus.ASSEMBLED, OrderStatus.SHIPPED):
+    def deliver(self, actual_visit_id: UUID | None = None) -> None:
+        if self.status not in (
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.ASSEMBLY_STARTED,
+            OrderStatus.ASSEMBLED,
+            OrderStatus.LOADED,
+            OrderStatus.SHIPPED,
+        ):
             raise ValueError(f"Cannot deliver order in status '{self.status}'")
 
+        if actual_visit_id is not None:
+            self.actual_visit_id = actual_visit_id
         self.status = OrderStatus.DELIVERED
         self._touch()
 

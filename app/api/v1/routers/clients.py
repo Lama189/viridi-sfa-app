@@ -42,7 +42,9 @@ from app.domain.enums import OrderStatus
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
 
 
-async def _send_telegram_notification(chat_id: int | None, text: str, token: str) -> None:
+async def _send_telegram_notification(
+    chat_id: int | None, text: str, token: str
+) -> None:
     if not token or not chat_id or not isinstance(chat_id, int):
         return
     try:

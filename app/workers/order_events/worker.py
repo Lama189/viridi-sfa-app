@@ -37,11 +37,11 @@ class OrderEventsWorker:
             durable=True,
         )
 
-        await queue.bind(exchange=exchange, routing_key="order.assembled")
+        await queue.bind(exchange=exchange, routing_key="order.planned")
         self._consumer_tag = await queue.consume(self._handle_message)
         self._queue = queue
         logger.info(
-            "OrderEventsWorker started, subscribed to order.assembled",
+            "OrderEventsWorker started, subscribed to order.planned",
             queue=self._queue_name,
         )
 
@@ -62,14 +62,14 @@ class OrderEventsWorker:
                 order_id_str = message.headers.get("aggregate_id")
 
             if not order_id_str:
-                logger.warning("No order_id found in order.assembled message")
+                logger.warning("No order_id found in order.planned message")
                 return
 
             order_id = UUID(str(order_id_str))
-            logger.info("Processing order.assembled event", order_id=str(order_id))
+            logger.info("Processing order.planned event", order_id=str(order_id))
 
-            await self._proposal_service.process_assembled_order(order_id)
+            await self._proposal_service.notify_order_assigned(order_id)
 
         except Exception as exc:
-            logger.exception("Failed to handle order.assembled message", error=str(exc))
+            logger.exception("Failed to handle order.planned message", error=str(exc))
             raise

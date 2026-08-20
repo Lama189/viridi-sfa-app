@@ -91,7 +91,7 @@ async def test_get_agent_daily_report_with_data(session: AsyncSession):
         warehouse_id=wh_id,
         created_by_id=client_id,
         retail_point_id=rp1_id,
-        visit_id=visit1.id,
+        actual_visit_id=visit1.id,
         status=OrderStatus.CONFIRMED,
         total_amount=Decimal("500.00"),
     )
@@ -100,7 +100,7 @@ async def test_get_agent_daily_report_with_data(session: AsyncSession):
         warehouse_id=wh_id,
         created_by_id=client_id,
         retail_point_id=rp2_id,
-        visit_id=visit2.id,
+        actual_visit_id=visit2.id,
         status=OrderStatus.SHIPPED,
         total_amount=Decimal("200.00"),
     )
@@ -196,7 +196,7 @@ async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_d
         warehouse_id=wh_id,
         created_by_id=client_id,
         retail_point_id=rp_id,
-        visit_id=visit_unconfirmed.id,
+        actual_visit_id=visit_unconfirmed.id,
         status=OrderStatus.PENDING,
     )
     item_unconfirmed = OrderItem(
@@ -221,7 +221,7 @@ async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_d
         warehouse_id=wh_id,
         created_by_id=client_id,
         retail_point_id=rp_id,
-        visit_id=visit_old.id,
+        actual_visit_id=visit_old.id,
         status=OrderStatus.CONFIRMED,
     )
     item_old = OrderItem(
@@ -243,7 +243,7 @@ async def test_get_agent_daily_report_filters_unconfirmed_other_agents_outside_d
         warehouse_id=wh_id,
         created_by_id=client_id,
         retail_point_id=rp_id,
-        visit_id=visit_other_agent.id,
+        actual_visit_id=visit_other_agent.id,
         status=OrderStatus.CONFIRMED,
     )
     item_other_agent = OrderItem(

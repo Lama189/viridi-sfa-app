@@ -21,4 +21,3 @@ async def get_redis_client() -> AsyncGenerator[Redis]:
         yield client
     finally:
         await client.aclose()
-

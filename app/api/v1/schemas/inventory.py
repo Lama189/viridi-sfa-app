@@ -97,7 +97,9 @@ class StockSummaryResponse(BaseModel):
     warehouse: WarehouseShortResponse
     quantity: int = Field(description="Физический остаток")
     reserved_quantity: int = Field(description="Зарезервировано в заказах")
-    available_quantity: int = Field(description="Доступно к продаже (quantity - reserved)")
+    available_quantity: int = Field(
+        description="Доступно к продаже (quantity - reserved)"
+    )
     updated_at: datetime | None = None
 
     model_config = {"from_attributes": True}

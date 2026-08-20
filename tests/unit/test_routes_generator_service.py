@@ -21,6 +21,9 @@ def mock_uow():
     uow.employees = AsyncMock()
     uow.retail_points = AsyncMock()
     uow.visit_plans = AsyncMock()
+    uow.orders = AsyncMock()
+    uow.orders.list = AsyncMock(return_value=[])
+    uow.retail_point_assignments = AsyncMock()
     uow.commit = AsyncMock()
     return uow
 

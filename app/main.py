@@ -58,7 +58,7 @@ def create_app() -> FastAPI:
         rate_limiter=redis_rate_limiter,
         default_limit=100,
         default_window=60,
-        custom_rules=custum_rules
+        custom_rules=custum_rules,
     )
 
     app.add_middleware(SecurityHeadersMiddleWare)
@@ -76,7 +76,6 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
 
-
     @app.get("/")
     async def root():
         return {
@@ -84,11 +83,9 @@ def create_app() -> FastAPI:
             "message": "Welcome to Viridi SFA API! Database and migrations are ready.",
         }
 
-
     @app.get("/health")
     async def health_check():
         return {"status": "healthy"}
-
 
     app.include_router(categories_router)
     app.include_router(clients_router)

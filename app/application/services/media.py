@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import ClassVar
 from uuid import UUID, uuid4
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 
 from app.application.interfaces.object_storage import IObjectStorage
@@ -127,7 +127,7 @@ class MediaService:
 
         try:
             image = Image.open(BytesIO(data))
-        except Exception as exc:
+        except (UnidentifiedImageError, OSError, ValueError) as exc:
             raise ValueError("Invalid image.") from exc
 
         image = self._normalize_image(image)
@@ -153,7 +153,7 @@ class MediaService:
     def _create_thumbnail(self, data: bytes) -> bytes:
         try:
             image = Image.open(BytesIO(data))
-        except Exception as exc:
+        except (UnidentifiedImageError, OSError, ValueError) as exc:
             raise ValueError("Invalid image.") from exc
 
         image = self._normalize_image(image)

@@ -26,7 +26,9 @@ router = APIRouter(prefix="/api/v1/notifications", tags=["Notifications"])
 async def list_notifications(
     employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
     service: Annotated[NotificationsService, Depends(get_notifications_service)],
-    only_unread: bool = Query(default=False, description="Filter only unread notifications"),
+    only_unread: bool = Query(
+        default=False, description="Filter only unread notifications"
+    ),
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ):

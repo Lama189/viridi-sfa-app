@@ -14,7 +14,7 @@ from app.core.exceptions import (
 )
 from app.domain.entities.employees import Employee
 from app.domain.entities.territories import TerritoryCluster
-from app.domain.enums import EmployeeRole
+from app.domain.enums import EmployeeRole, OrderStatus
 
 
 class RouteGenerationService(IRouteGenerationService):
@@ -63,6 +63,8 @@ class RouteGenerationService(IRouteGenerationService):
             assigned_agents,
         )
 
+        await self._replan_unloaded_orders()
+
         await self._uow.commit()
 
     async def clear_all(self) -> None:
@@ -73,6 +75,19 @@ class RouteGenerationService(IRouteGenerationService):
             )
 
         await self._uow.visit_plans.delete_all()
+
+        unloaded_statuses = [
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.ASSEMBLY_STARTED,
+            OrderStatus.ASSEMBLED,
+        ]
+        orders = await self._uow.orders.list(statuses=unloaded_statuses, limit=1000)
+        for order in orders:
+            if order.planned_visit_id is not None:
+                order.planned_visit_id = None
+                await self._uow.orders.update(order)
+
         await self._uow.commit()
 
     async def _assign_clusters(
@@ -105,6 +120,35 @@ class RouteGenerationService(IRouteGenerationService):
                     employee_id=agent.id,
                     plan_date=plan_date,
                 )
+
+    async def _replan_unloaded_orders(self) -> None:
+        unloaded_statuses = [
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.ASSEMBLY_STARTED,
+            OrderStatus.ASSEMBLED,
+        ]
+        orders = await self._uow.orders.list(statuses=unloaded_statuses, limit=1000)
+
+        for order in orders:
+            assignment = (
+                await self._uow.retail_point_assignments.get_by_retail_point_id(
+                    order.retail_point_id
+                )
+            )
+            new_planned_visit_id = None
+            if assignment and assignment.employee_id:
+                next_plan = await self._uow.visit_plans.find_next_plan_for_retail_point(
+                    employee_id=assignment.employee_id,
+                    retail_point_id=order.retail_point_id,
+                    from_date=date.today(),
+                )
+                if next_plan:
+                    new_planned_visit_id = next_plan.id
+
+            if order.planned_visit_id != new_planned_visit_id:
+                order.planned_visit_id = new_planned_visit_id
+                await self._uow.orders.update(order)
 
     def _get_next_week_dates(self) -> list[date]:
         today = date.today()

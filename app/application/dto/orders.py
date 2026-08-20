@@ -18,7 +18,8 @@ class OrderCreateDTO:
     warehouse_id: UUID
     retail_point_id: UUID
     items: list[OrderItemCreateDTO]
-    visit_id: UUID | None = None
+    planned_visit_id: UUID | None = None
+    actual_visit_id: UUID | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -62,12 +63,6 @@ class OrderDTO:
     created_by_name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
-    visit_id: UUID | None = None
+    planned_visit_id: UUID | None = None
+    actual_visit_id: UUID | None = None
     items: list[OrderItemDTO] = field(default_factory=list)
-
-
-@dataclass(slots=True, frozen=True)
-class AcceptDeliveryDTO:
-    order_id: UUID
-    employee_id: UUID
-    visit_id: UUID

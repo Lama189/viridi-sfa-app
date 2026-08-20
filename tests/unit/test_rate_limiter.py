@@ -101,15 +101,18 @@ async def test_rate_limit_middleware_allows_request():
     async def send(msg):
         sent_messages.append(msg)
 
-    with patch("app.api.middlewares.rate_limit.sys.modules", {}), patch.dict(
-        "os.environ", {"TESTING": "0"}
+    with (
+        patch("app.api.middlewares.rate_limit.sys.modules", {}),
+        patch.dict("os.environ", {"TESTING": "0"}),
     ):
         await middleware(scope, receive, send)
 
     mock_limiter.allow.assert_called_once_with(
         "127.0.0.1:/api/v1/some-resource", limit=10, window=60
     )
-    start_message = next(msg for msg in sent_messages if msg["type"] == "http.response.start")
+    start_message = next(
+        msg for msg in sent_messages if msg["type"] == "http.response.start"
+    )
     assert start_message["status"] == 200
 
 
@@ -149,13 +152,16 @@ async def test_rate_limit_middleware_blocks_when_rate_limited():
     async def send(msg):
         sent_messages.append(msg)
 
-    with patch("app.api.middlewares.rate_limit.sys.modules", {}), patch.dict(
-        "os.environ", {"TESTING": "0"}
+    with (
+        patch("app.api.middlewares.rate_limit.sys.modules", {}),
+        patch.dict("os.environ", {"TESTING": "0"}),
     ):
         await middleware(scope, receive, send)
 
     mock_limiter.allow.assert_called_once_with(
         "203.0.113.195:/api/v1/auth/login", limit=2, window=10
     )
-    start_message = next(msg for msg in sent_messages if msg["type"] == "http.response.start")
+    start_message = next(
+        msg for msg in sent_messages if msg["type"] == "http.response.start"
+    )
     assert start_message["status"] == 429

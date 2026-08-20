@@ -11,6 +11,7 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.employees import Employee
+    from app.infrastructure.postgres.models.orders import Order
     from app.infrastructure.postgres.models.visit_plan_items import VisitPlanItem
 
 
@@ -53,4 +54,9 @@ class VisitPlan(BaseModel):
     items: Mapped[list[VisitPlanItem]] = relationship(
         back_populates="visit_plan",
         cascade="all, delete-orphan",
+    )
+
+    orders: Mapped[list[Order]] = relationship(
+        back_populates="planned_visit",
+        foreign_keys="Order.planned_visit_id",
     )

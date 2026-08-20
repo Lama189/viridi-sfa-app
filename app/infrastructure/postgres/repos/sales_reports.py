@@ -49,7 +49,7 @@ class SalesReportRepository(ISalesReportRepository):
             .join(Product, OrderItem.product_id == Product.id)
             .join(Category, Product.category_id == Category.id)
             .join(Order, OrderItem.order_id == Order.id)
-            .join(Visit, Order.visit_id == Visit.id)
+            .join(Visit, Order.actual_visit_id == Visit.id)
             .where(*filters)
             .group_by(Category.id, Category.name)
             .order_by(total_amount.desc())
@@ -75,7 +75,7 @@ class SalesReportRepository(ISalesReportRepository):
             .select_from(OrderItem)
             .join(Product, OrderItem.product_id == Product.id)
             .join(Order, OrderItem.order_id == Order.id)
-            .join(Visit, Order.visit_id == Visit.id)
+            .join(Visit, Order.actual_visit_id == Visit.id)
             .where(*filters)
         )
 

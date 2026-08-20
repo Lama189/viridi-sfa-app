@@ -33,9 +33,7 @@ def init_firebase() -> None:
         logger.info("Firebase Admin SDK launched successfully.")
 
     except (json.JSONDecodeError, ValueError) as e:
-        logger.error(
-            f"Invalid Firebase credentials file format ({cred_path}): {e}"
-        )
+        logger.error(f"Invalid Firebase credentials file format ({cred_path}): {e}")
         _firebase_app = None
 
     except exceptions.FirebaseError as e:

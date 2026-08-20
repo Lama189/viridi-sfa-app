@@ -35,7 +35,7 @@ class SecurityUtils:
             hashed_bytes = hashed_password.encode("utf-8")
 
             return bcrypt.checkpw(password_bytes, hashed_bytes)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             return False
 
     @staticmethod

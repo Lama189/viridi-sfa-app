@@ -12,7 +12,6 @@ from app.infrastructure.firebase.client import get_messaging
 
 
 class FirebasePushNotificationService(IPushNotificationService):
-
     def __init__(self, uow: IUnitOfWork) -> None:
         self._uow = uow
 
@@ -32,9 +31,7 @@ class FirebasePushNotificationService(IPushNotificationService):
             return 0
 
         tokens_map = {
-            device.fcm_token: device
-            for device in devices
-            if device.fcm_token
+            device.fcm_token: device for device in devices if device.fcm_token
         }
         tokens = list(tokens_map.keys())
 
@@ -52,7 +49,7 @@ class FirebasePushNotificationService(IPushNotificationService):
             )
             return len(tokens)
 
-        payload_data = ({k: str(v) for k, v in data.items()} if data else {})
+        payload_data = {k: str(v) for k, v in data.items()} if data else {}
 
         message = fb_messaging.MulticastMessage(
             notification=fb_messaging.Notification(
@@ -64,7 +61,9 @@ class FirebasePushNotificationService(IPushNotificationService):
         )
 
         try:
-            response: messaging.BatchResponse = (fb_messaging.send_each_for_multicast(message))
+            response: messaging.BatchResponse = fb_messaging.send_each_for_multicast(
+                message
+            )
 
             logger.info(
                 "Multicast push notification executed",
@@ -89,14 +88,11 @@ class FirebasePushNotificationService(IPushNotificationService):
             )
             return 0
 
-
     async def _handle_failed_tokens(
-        self,
-        tokens: list[str],
-        responses: list[messaging.SendResponse]
+        self, tokens: list[str], responses: list[messaging.SendResponse]
     ) -> None:
         invalid_tokens: list[str] = []
-        
+
         for token, resp in zip(tokens, responses, strict=True):
             if not resp.success and resp.exception:
                 error_code = resp.exception.code
@@ -110,7 +106,5 @@ class FirebasePushNotificationService(IPushNotificationService):
                 count=len(invalid_tokens),
             )
             async with self._uow:
-                await self._uow.employee_devices.delete_by_tokens(
-                    invalid_tokens
-                )
+                await self._uow.employee_devices.delete_by_tokens(invalid_tokens)
                 await self._uow.commit()

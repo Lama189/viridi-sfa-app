@@ -52,7 +52,7 @@ async def test_container_rabbitmq_publisher_and_close(
 def test_container_route_generator_service(mock_rabbitmq_cls, mock_session_factory):
     cont = Container()
     mock_uow = MagicMock()
-    
+
     service = cont.route_generator_service(mock_uow)
     assert service is not None
     assert service._uow == mock_uow
@@ -61,14 +61,28 @@ def test_container_route_generator_service(mock_rabbitmq_cls, mock_session_facto
 @patch("app.core.container.create_session_factory")
 @patch("app.core.container.RabbitMQConnectionManager")
 @patch("app.core.container.get_redis_client")
-def test_container_redis_and_rate_limiter(mock_get_redis_client, mock_rabbitmq_cls, mock_session_factory):
+def test_container_redis_and_rate_limiter(
+    mock_get_redis_client, mock_rabbitmq_cls, mock_session_factory
+):
     cont = Container()
-    
+
     redis_gen = cont.redis_client()
     assert redis_gen is not None
-    
+
     mock_redis = MagicMock()
     rate_limiter = cont.rate_limiter(mock_redis)
     assert rate_limiter is not None
     assert rate_limiter._client == mock_redis
 
+
+@patch("app.core.container.create_session_factory")
+@patch("app.core.container.RabbitMQConnectionManager")
+def test_container_delivery_proposal_service(mock_rabbitmq_cls, mock_session_factory):
+    cont = Container()
+    mock_uow = MagicMock()
+
+    service = cont.delivery_proposal_service(mock_uow)
+    assert service is not None
+    assert service._uow == mock_uow
+    assert service._notifications_service is not None
+    assert service._push_service is not None

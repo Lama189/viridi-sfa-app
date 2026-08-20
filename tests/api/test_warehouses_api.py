@@ -21,7 +21,11 @@ def mock_service():
 def override_deps(mock_service):
     app.dependency_overrides[get_warehouses_service] = lambda: mock_service
     app.dependency_overrides[allow_all_staff] = lambda: AuthenticatedEmployee(
-        id=uuid4(), phone="+998900000000", role=EmployeeRole.ADMIN, full_name="Admin", is_active=True
+        id=uuid4(),
+        phone="+998900000000",
+        role=EmployeeRole.ADMIN,
+        full_name="Admin",
+        is_active=True,
     )
     yield
     app.dependency_overrides.clear()

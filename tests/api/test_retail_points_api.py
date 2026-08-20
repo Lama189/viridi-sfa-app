@@ -238,7 +238,9 @@ async def test_list_retail_point_debts(client):
 
     mock_debt_service = AsyncMock()
     point_id = uuid4()
-    debt = VisitDebt(visit_id=uuid4(), amount=Decimal("150000.00"), comment="Unpaid invoice")
+    debt = VisitDebt(
+        visit_id=uuid4(), amount=Decimal("150000.00"), comment="Unpaid invoice"
+    )
     mock_debt_service.list_by_retail_point.return_value = [debt]
 
     app.dependency_overrides[get_visit_debts_service] = lambda: mock_debt_service
@@ -259,10 +261,14 @@ async def test_assign_agent_to_retail_point(client):
     mock_assign_service = AsyncMock()
     point_id = uuid4()
     agent_id = uuid4()
-    assignment = RetailPointAssignment(id=uuid4(), retail_point_id=point_id, employee_id=agent_id)
+    assignment = RetailPointAssignment(
+        id=uuid4(), retail_point_id=point_id, employee_id=agent_id
+    )
     mock_assign_service.assign_employee.return_value = assignment
 
-    app.dependency_overrides[get_retail_point_assignment_service] = lambda: mock_assign_service
+    app.dependency_overrides[get_retail_point_assignment_service] = lambda: (
+        mock_assign_service
+    )
 
     resp = await client.post(
         f"/api/v1/retail_points/{point_id}/assign-agent",

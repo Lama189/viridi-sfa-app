@@ -34,7 +34,9 @@ def mock_agent_employee():
 
 @pytest.fixture(autouse=True)
 def override_deps(mock_notifications_service, mock_agent_employee):
-    app.dependency_overrides[get_notifications_service] = lambda: mock_notifications_service
+    app.dependency_overrides[get_notifications_service] = lambda: (
+        mock_notifications_service
+    )
     app.dependency_overrides[get_current_employee] = lambda: mock_agent_employee
     yield
     app.dependency_overrides.clear()
@@ -48,7 +50,9 @@ async def client():
 
 
 @pytest.mark.asyncio
-async def test_list_notifications(client, mock_notifications_service, mock_agent_employee):
+async def test_list_notifications(
+    client, mock_notifications_service, mock_agent_employee
+):
     notif = Notification(
         id=uuid4(),
         employee_id=mock_agent_employee.id,
@@ -75,7 +79,9 @@ async def test_list_notifications(client, mock_notifications_service, mock_agent
 
 
 @pytest.mark.asyncio
-async def test_get_unread_count(client, mock_notifications_service, mock_agent_employee):
+async def test_get_unread_count(
+    client, mock_notifications_service, mock_agent_employee
+):
     mock_notifications_service.count_unread_by_employee.return_value = 3
 
     resp = await client.get("/api/v1/notifications/unread-count")
@@ -131,7 +137,9 @@ async def test_mark_notification_as_read_not_found(client, mock_notifications_se
 
 
 @pytest.mark.asyncio
-async def test_mark_all_as_read(client, mock_notifications_service, mock_agent_employee):
+async def test_mark_all_as_read(
+    client, mock_notifications_service, mock_agent_employee
+):
     resp = await client.post("/api/v1/notifications/read-all")
     assert resp.status_code == 204
     mock_notifications_service.mark_all_as_read.assert_awaited_once_with(

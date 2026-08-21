@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 9a5757f76907
+Revision ID: e4a317e84b6e
 Revises: 
-Create Date: 2026-08-08 05:27:36.035205
+Create Date: 2026-08-20 09:28:25.201637
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '9a5757f76907'
+revision: str = 'e4a317e84b6e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -44,7 +44,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('phone', sa.String(length=20), nullable=False),
     sa.Column('password_hash', sa.String(length=255), nullable=False),
-    sa.Column('role', sa.Enum('ADMIN', 'AGENT', name='employee_role'), nullable=False),
+    sa.Column('role', sa.Enum('ADMIN', 'AGENT', 'WAREHOUSE_WORKER', name='employee_role'), nullable=False),
     sa.Column('full_name', sa.String(length=100), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -70,6 +70,18 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
+    op.create_table('employee_devices',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('employee_id', sa.UUID(), nullable=False),
+    sa.Column('fcm_token', sa.String(length=512), nullable=False),
+    sa.Column('device_type', sa.String(length=50), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_employee_devices_employee_id'), 'employee_devices', ['employee_id'], unique=False)
+    op.create_index(op.f('ix_employee_devices_fcm_token'), 'employee_devices', ['fcm_token'], unique=True)
     op.create_table('media_objects',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('bucket', sa.String(length=255), nullable=False),
@@ -83,6 +95,21 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['uploaded_by'], ['employees.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('notifications',
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('employee_id', sa.UUID(), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=False),
+    sa.Column('body', sa.Text(), nullable=False),
+    sa.Column('notification_type', sa.String(length=100), nullable=False),
+    sa.Column('payload', postgresql.JSONB(astext_type=sa.Text()).with_variant(sa.JSON(), 'sqlite'), nullable=False),
+    sa.Column('is_read', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('read_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['employee_id'], ['employees.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('idx_notifications_employee_id', 'notifications', ['employee_id'], unique=False)
+    op.create_index('idx_notifications_is_read', 'notifications', ['is_read'], unique=False)
     op.create_table('products',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('category_id', sa.UUID(), nullable=False),
@@ -231,13 +258,15 @@ def upgrade() -> None:
     sa.Column('warehouse_id', sa.UUID(), nullable=False),
     sa.Column('created_by_id', sa.UUID(), nullable=False),
     sa.Column('retail_point_id', sa.UUID(), nullable=False),
-    sa.Column('visit_id', sa.UUID(), nullable=True),
-    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'ASSEMBLY_STARTED', 'ASSEMBLED', 'SHIPPED', 'DELIVERED', 'CANCELLED', name='order_status'), nullable=False),
+    sa.Column('planned_visit_id', sa.UUID(), nullable=True),
+    sa.Column('actual_visit_id', sa.UUID(), nullable=True),
+    sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'ASSEMBLY_STARTED', 'ASSEMBLED', 'LOADED', 'SHIPPED', 'DELIVERED', 'CANCELLED', name='order_status'), nullable=False),
     sa.Column('total_amount', sa.Numeric(precision=15, scale=2), nullable=False),
     sa.Column('total_volume', sa.Numeric(precision=10, scale=3), nullable=False),
+    sa.ForeignKeyConstraint(['actual_visit_id'], ['visits.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['created_by_id'], ['clients.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['planned_visit_id'], ['visit_plans.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='RESTRICT'),
-    sa.ForeignKeyConstraint(['visit_id'], ['visits.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -295,7 +324,13 @@ def downgrade() -> None:
     op.drop_table('retail_points')
     op.drop_table('visit_plans')
     op.drop_table('products')
+    op.drop_index('idx_notifications_is_read', table_name='notifications')
+    op.drop_index('idx_notifications_employee_id', table_name='notifications')
+    op.drop_table('notifications')
     op.drop_table('media_objects')
+    op.drop_index(op.f('ix_employee_devices_fcm_token'), table_name='employee_devices')
+    op.drop_index(op.f('ix_employee_devices_employee_id'), table_name='employee_devices')
+    op.drop_table('employee_devices')
     op.drop_table('warehouses')
     op.drop_table('outbox_messages')
     op.drop_index(op.f('ix_employees_phone'), table_name='employees')

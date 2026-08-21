@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies import (
     allow_admin,
@@ -19,6 +19,7 @@ from app.application.interfaces.services.routes_generator import IRouteGeneratio
 from app.application.services.visit_plans import VisitPlanService
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.visit_plans import VisitPlan
+from app.domain.enums import RouteGenerationStart
 
 router = APIRouter(prefix="/api/v1/visit-plans", tags=["Visit Plans"])
 
@@ -96,8 +97,22 @@ async def generate_visit_plan(
 )
 async def generate_routes(
     service: Annotated[IRouteGenerationService, Depends(get_routes_generator_service)],
+    from_date: Annotated[
+        RouteGenerationStart | None,
+        Query(
+            alias="from",
+            description="Start boundary for route generation: today, tomorrow, or next_week (default: next_week)",
+        ),
+    ] = None,
+    start: Annotated[
+        RouteGenerationStart | None,
+        Query(
+            description="Alias for 'from' parameter: today, tomorrow, or next_week",
+        ),
+    ] = None,
 ) -> None:
-    await service.generate()
+    generation_start = from_date or start or RouteGenerationStart.NEXT_WEEK
+    await service.generate(start=generation_start)
 
 
 @router.post(

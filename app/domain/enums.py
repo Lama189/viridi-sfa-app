@@ -103,3 +103,9 @@ class AggregateType(StrEnum):
     STOCK = "stock"
     CLIENT = "client"
     RETAIL_POINT = "retail_point"
+
+
+class RouteGenerationStart(StrEnum):
+    TODAY = "today"
+    TOMORROW = "tomorrow"
+    NEXT_WEEK = "next_week"

@@ -11,12 +11,13 @@ from app.api.dependencies import (
     get_visit_plans_service,
 )
 from app.domain.entities.auth import AuthenticatedEmployee
-from app.domain.enums import EmployeeRole
+from app.domain.enums import EmployeeRole, RouteGenerationStart
 from app.main import app
 
 
 @pytest.fixture
 def mock_visit_plans_service():
+
     return AsyncMock()
 
 
@@ -93,7 +94,7 @@ async def test_clear_routes_forbidden_for_agent(
 
 
 @pytest.mark.asyncio
-async def test_generate_routes_admin_success(
+async def test_generate_routes_admin_default(
     client,
     mock_routes_generator_service,
     mock_admin_employee,
@@ -103,4 +104,38 @@ async def test_generate_routes_admin_success(
     response = await client.post("/api/v1/visit-plans/generate-routes")
 
     assert response.status_code == 204
-    mock_routes_generator_service.generate.assert_awaited_once()
+    mock_routes_generator_service.generate.assert_awaited_once_with(
+        start=RouteGenerationStart.NEXT_WEEK
+    )
+
+
+@pytest.mark.asyncio
+async def test_generate_routes_admin_from_today(
+    client,
+    mock_routes_generator_service,
+    mock_admin_employee,
+):
+    app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
+
+    response = await client.post("/api/v1/visit-plans/generate-routes?from=today")
+
+    assert response.status_code == 204
+    mock_routes_generator_service.generate.assert_awaited_once_with(
+        start=RouteGenerationStart.TODAY
+    )
+
+
+@pytest.mark.asyncio
+async def test_generate_routes_admin_start_tomorrow(
+    client,
+    mock_routes_generator_service,
+    mock_admin_employee,
+):
+    app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
+
+    response = await client.post("/api/v1/visit-plans/generate-routes?start=tomorrow")
+
+    assert response.status_code == 204
+    mock_routes_generator_service.generate.assert_awaited_once_with(
+        start=RouteGenerationStart.TOMORROW
+    )

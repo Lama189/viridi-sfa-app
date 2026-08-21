@@ -14,7 +14,7 @@ from app.core.exceptions import (
 )
 from app.domain.entities.employees import Employee
 from app.domain.entities.territories import TerritoryCluster
-from app.domain.enums import EmployeeRole, OrderStatus
+from app.domain.enums import EmployeeRole, OrderStatus, RouteGenerationStart
 
 
 class RouteGenerationService(IRouteGenerationService):
@@ -30,7 +30,9 @@ class RouteGenerationService(IRouteGenerationService):
         self._assignments_service = assignments_service
         self._visit_plans_service = visit_plans_service
 
-    async def generate(self) -> None:
+    async def generate(
+        self, start: RouteGenerationStart = RouteGenerationStart.NEXT_WEEK
+    ) -> None:
         agents = await self._uow.employees.list_by(
             role=EmployeeRole.AGENT,
             is_active=True,
@@ -61,6 +63,7 @@ class RouteGenerationService(IRouteGenerationService):
 
         await self._generate_visit_plans(
             assigned_agents,
+            start=start,
         )
 
         await self._replan_unloaded_orders()
@@ -111,8 +114,9 @@ class RouteGenerationService(IRouteGenerationService):
     async def _generate_visit_plans(
         self,
         agents: list[Employee],
+        start: RouteGenerationStart = RouteGenerationStart.NEXT_WEEK,
     ) -> None:
-        week_dates = self._get_next_week_dates()
+        week_dates = self._get_dates_range(start)
 
         for agent in agents:
             for plan_date in week_dates:
@@ -150,11 +154,20 @@ class RouteGenerationService(IRouteGenerationService):
                 order.planned_visit_id = new_planned_visit_id
                 await self._uow.orders.update(order)
 
-    def _get_next_week_dates(self) -> list[date]:
+    def _get_dates_range(self, start: RouteGenerationStart) -> list[date]:
         today = date.today()
 
+        if start == RouteGenerationStart.TODAY:
+            days_until_sunday = 6 - today.weekday()
+            return [today + timedelta(days=i) for i in range(days_until_sunday + 1)]
+
+        if start == RouteGenerationStart.TOMORROW:
+            days_until_sunday = 6 - today.weekday()
+            if days_until_sunday < 1:
+                return []
+            tomorrow = today + timedelta(days=1)
+            return [tomorrow + timedelta(days=i) for i in range(days_until_sunday)]
+
         days_until_next_monday = 7 - today.weekday()
-
         next_monday = today + timedelta(days=days_until_next_monday)
-
         return [next_monday + timedelta(days=i) for i in range(7)]

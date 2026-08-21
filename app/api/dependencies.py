@@ -181,7 +181,11 @@ async def get_delivery_assignment_service(
         FirebasePushNotificationService, Depends(get_push_notification_service)
     ],
 ) -> DeliveryAssignmentService:
-    return DeliveryAssignmentService(uow=uow, push_service=push_service)
+    return DeliveryAssignmentService(
+        uow=uow,
+        push_service=push_service,
+        min_delivery_days_offset=settings.min_delivery_days_offset,
+    )
 
 
 async def get_orders_service(
@@ -300,6 +304,7 @@ async def get_routes_generator_service(
         clustering_service=clustering_service,
         assignments_service=assignments_service,
         visit_plans_service=visit_plans_service,
+        min_delivery_days_offset=settings.min_delivery_days_offset,
     )
 
 

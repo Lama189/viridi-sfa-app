@@ -38,6 +38,8 @@ from app.infrastructure.rabbitmq.publisher import RabbitMQPublisher
 from app.infrastructure.redis.client import get_redis_client
 from app.infrastructure.redis.repos.rate_limiter import RedisRateLimiter
 
+settings = get_settings()
+
 
 class Container:
     def __init__(self) -> None:
@@ -81,6 +83,7 @@ class Container:
             clustering_service=self.territory_clustering_service(),
             assignments_service=self.retail_point_assignment_service(uow),
             visit_plans_service=self.visit_plan_service(uow),
+            min_delivery_days_offset=settings.min_delivery_days_offset,
         )
 
     def notifications_service(self, uow: IUnitOfWork) -> INotificationsService:
@@ -95,6 +98,7 @@ class Container:
         return DeliveryAssignmentService(
             uow=uow,
             push_service=self.push_notification_service(uow),
+            min_delivery_days_offset=settings.min_delivery_days_offset,
         )
 
     def employee_device_service(self, uow: IUnitOfWork) -> IEmployeeDeviceService:

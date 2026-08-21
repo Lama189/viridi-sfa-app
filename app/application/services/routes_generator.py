@@ -24,11 +24,13 @@ class RouteGenerationService(IRouteGenerationService):
         clustering_service: ITerritoryClusteringService,
         assignments_service: IRetailPointAssignmentService,
         visit_plans_service: IVisitPlanService,
+        min_delivery_days_offset: int = 1,
     ) -> None:
         self._uow = uow
         self._clustering_service = clustering_service
         self._assignments_service = assignments_service
         self._visit_plans_service = visit_plans_service
+        self._min_delivery_days_offset = min_delivery_days_offset
 
     async def generate(
         self, start: RouteGenerationStart = RouteGenerationStart.NEXT_WEEK
@@ -142,10 +144,13 @@ class RouteGenerationService(IRouteGenerationService):
             )
             new_planned_visit_id = None
             if assignment and assignment.employee_id:
+                from_date = date.today() + timedelta(
+                    days=self._min_delivery_days_offset
+                )
                 next_plan = await self._uow.visit_plans.find_next_plan_for_retail_point(
                     employee_id=assignment.employee_id,
                     retail_point_id=order.retail_point_id,
-                    from_date=date.today(),
+                    from_date=from_date,
                 )
                 if next_plan:
                     new_planned_visit_id = next_plan.id

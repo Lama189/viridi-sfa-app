@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 
 from firebase_admin.exceptions import FirebaseError
@@ -24,10 +24,12 @@ class DeliveryAssignmentService(IDeliveryAssignmentService):
         uow: IUnitOfWork,
         push_service: IPushNotificationService | None = None,
         notifications_service: object | None = None,
+        min_delivery_days_offset: int = 1,
     ) -> None:
         self._uow = uow
         self._push_service = push_service
         self._notifications_service = notifications_service
+        self._min_delivery_days_offset = min_delivery_days_offset
 
     async def assign_order_to_next_visit(self, order: Order) -> VisitPlan | None:
         if order.status in (
@@ -54,10 +56,11 @@ class DeliveryAssignmentService(IDeliveryAssignmentService):
             )
             return None
 
+        from_date = date.today() + timedelta(days=self._min_delivery_days_offset)
         next_plan = await self._uow.visit_plans.find_next_plan_for_retail_point(
             employee_id=assignment.employee_id,
             retail_point_id=order.retail_point_id,
-            from_date=date.today(),
+            from_date=from_date,
         )
         if not next_plan:
             logger.warning(

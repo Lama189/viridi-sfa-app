@@ -85,6 +85,11 @@ async def test_assign_order_to_next_visit_success(service, mock_uow, mock_push_s
 
     assert result == visit_plan
     assert order.planned_visit_id == plan_id
+    mock_uow.visit_plans.find_next_plan_for_retail_point.assert_awaited_once_with(
+        employee_id=employee_id,
+        retail_point_id=retail_point_id,
+        from_date=date.today() + timedelta(days=1),
+    )
 
     # Check outbox PLANNED event was added
     mock_uow.outbox.add.assert_awaited_once()
@@ -251,3 +256,33 @@ async def test_assign_order_by_id_not_found(service, mock_uow):
     mock_uow.orders.get_by_id.return_value = None
     result = await service.assign_order_by_id(uuid4())
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_assign_order_custom_offset(mock_uow, mock_push_service):
+    custom_service = DeliveryAssignmentService(
+        uow=mock_uow,
+        push_service=mock_push_service,
+        min_delivery_days_offset=2,
+    )
+    order = Order(
+        id=uuid4(),
+        warehouse_id=uuid4(),
+        created_by_id=uuid4(),
+        retail_point_id=uuid4(),
+        status=OrderStatus.CONFIRMED,
+    )
+    assignment = RetailPointAssignment(
+        retail_point_id=order.retail_point_id,
+        employee_id=uuid4(),
+    )
+    mock_uow.retail_point_assignments.get_by_retail_point_id.return_value = assignment
+    mock_uow.visit_plans.find_next_plan_for_retail_point.return_value = None
+
+    await custom_service.assign_order_to_next_visit(order)
+
+    mock_uow.visit_plans.find_next_plan_for_retail_point.assert_awaited_once_with(
+        employee_id=assignment.employee_id,
+        retail_point_id=order.retail_point_id,
+        from_date=date.today() + timedelta(days=2),
+    )

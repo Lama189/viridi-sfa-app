@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     minio_secure: bool = False
 
     firebase_credentials_path: str | None = None
+    min_delivery_days_offset: int = 1
 
     model_config = SettingsConfigDict(
         env_file=".env",

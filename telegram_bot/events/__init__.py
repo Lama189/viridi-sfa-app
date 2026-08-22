@@ -4,6 +4,7 @@ from telegram_bot.events.order_events import (
     OrderCancelledEvent,
     OrderCreatedEvent,
     OrderDeliveredEvent,
+    OrderPlannedEvent,
     OrderTakenByAgentEvent,
     deserialize_event,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "OrderCancelledEvent",
     "OrderCreatedEvent",
     "OrderDeliveredEvent",
+    "OrderPlannedEvent",
     "OrderTakenByAgentEvent",
     "deserialize_event",
 ]

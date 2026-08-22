@@ -21,6 +21,9 @@ from app.infrastructure.postgres.models.order_items import (
     OrderItem as OrderItemModel,
 )
 from app.infrastructure.postgres.models.orders import Order as OrderModel
+from app.infrastructure.postgres.models.visit_plans import (
+    VisitPlan as VisitPlanModel,
+)
 from app.infrastructure.postgres.models.visits import Visit as VisitModel
 
 
@@ -33,6 +36,7 @@ class PostgresOrderRepository(IOrderRepository):
             joinedload(OrderModel.retail_point),
             joinedload(OrderModel.warehouse),
             joinedload(OrderModel.created_by),
+            joinedload(OrderModel.planned_visit).joinedload(VisitPlanModel.employee),
             selectinload(OrderModel.items).joinedload(OrderItemModel.product),
         )
 
@@ -261,12 +265,22 @@ class PostgresOrderRepository(IOrderRepository):
             else None
         )
 
+        pv = getattr(model, "planned_visit", None)
+        planned_delivery_date = pv.plan_date if pv is not None else None
+        delivery_agent_name = (
+            pv.employee.full_name
+            if pv is not None and getattr(pv, "employee", None) is not None
+            else None
+        )
+
         return Order(
             warehouse_id=model.warehouse_id,
             created_by_id=model.created_by_id,
             retail_point_id=model.retail_point_id,
             id=model.id,
             planned_visit_id=model.planned_visit_id,
+            planned_delivery_date=planned_delivery_date,
+            delivery_agent_name=delivery_agent_name,
             actual_visit_id=model.actual_visit_id,
             status=model.status,
             total_amount=model.total_amount,

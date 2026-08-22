@@ -98,14 +98,21 @@ async def generate_visit_plan(
 async def generate_routes(
     service: Annotated[IRouteGenerationService, Depends(get_routes_generator_service)],
     from_date: Annotated[
-        RouteGenerationStart,
+        RouteGenerationStart | None,
         Query(
             alias="from",
             description="Start boundary for route generation: today, tomorrow, or next_week",
         ),
-    ] = RouteGenerationStart.NEXT_WEEK,
+    ] = None,
+    start: Annotated[
+        RouteGenerationStart | None,
+        Query(
+            description="Alias for 'from' parameter: today, tomorrow, or next_week",
+        ),
+    ] = None,
 ) -> None:
-    await service.generate(start=from_date)
+    target_start = from_date or start or RouteGenerationStart.NEXT_WEEK
+    await service.generate(start=target_start)
 
 
 @router.post(

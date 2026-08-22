@@ -4,14 +4,16 @@ import {
   Loader2,
   Package,
   ShoppingBag,
+  Truck,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { OrderDetailSheet } from '../components/OrderDetailSheet'
 import { useClientOrders } from '../hooks/useClientOrders'
 import { formatPrice } from '../lib/format'
-import { formatOrderDate, getOrderStatusInfo } from '../lib/order-status'
+import { formatDeliveryDate, formatOrderDate, getOrderStatusInfo } from '../lib/order-status'
 import type { Client, OrderResponse } from '../types/api'
+
 
 interface ProfilePageProps {
   client: Client
@@ -167,11 +169,16 @@ export function ProfilePage({
                       <Calendar size={13} />
                       {formatOrderDate(order.created_at)}
                     </span>
+                    <span className="order-card__delivery-date">
+                      <Truck size={13} />
+                      Доставка: {formatDeliveryDate(order.planned_delivery_date)}
+                    </span>
                     <span className="order-card__items-count">
                       <Package size={13} />
                       {order.items.length} поз. · {itemsCount} шт.
                     </span>
                   </div>
+
 
                   <div className="order-card__footer">
                     <strong className="order-card__total">{formatPrice(order.total_amount)}</strong>

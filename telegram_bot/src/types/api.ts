@@ -78,8 +78,14 @@ export interface OrderResponse {
   total_volume: string
   created_at?: string | null
   updated_at?: string | null
+  planned_visit_id?: string | null
+  planned_delivery_date?: string | null
+  delivery_agent_name?: string | null
+  actual_visit_id?: string | null
   retail_point?: RetailPointShort | null
   warehouse?: WarehouseShort | null
   created_by?: UserShort | null
   items: OrderItemResponse[]
 }
+
+

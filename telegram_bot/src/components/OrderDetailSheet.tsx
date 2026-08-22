@@ -7,6 +7,7 @@ import {
   MapPin,
   Package,
   PackageCheck,
+  Truck,
   UserRound,
   X,
   XCircle,
@@ -18,8 +19,9 @@ import { useCancelOrder } from '../hooks/useCancelOrder'
 import { useDeliverOrder } from '../hooks/useDeliverOrder'
 import { useOrderDetails } from '../hooks/useOrderDetails'
 import { formatPrice, formatVolume } from '../lib/format'
-import { formatOrderFullDate, getOrderStatusInfo } from '../lib/order-status'
+import { formatDeliveryDate, formatOrderFullDate, getOrderStatusInfo } from '../lib/order-status'
 import type { OrderResponse } from '../types/api'
+
 
 interface OrderDetailSheetProps {
   initialOrder: OrderResponse
@@ -126,33 +128,46 @@ export function OrderDetailSheet({ initialOrder, onClose }: OrderDetailSheetProp
         </div>
 
         <div className="order-detail-sheet__body">
-          {(order.retail_point || order.created_by) && (
-            <div className="order-detail-meta-card">
-              {order.retail_point && (
-                <div className="order-detail-meta-item">
-                  <span className="order-detail-meta-icon" aria-hidden="true">
-                    <MapPin size={18} />
-                  </span>
-                  <div className="order-detail-meta-text">
-                    <strong>{order.retail_point.name}</strong>
-                    <span>{order.retail_point.address}</span>
-                  </div>
+          <div className="order-detail-meta-card">
+            {order.retail_point && (
+              <div className="order-detail-meta-item">
+                <span className="order-detail-meta-icon" aria-hidden="true">
+                  <MapPin size={18} />
+                </span>
+                <div className="order-detail-meta-text">
+                  <strong>{order.retail_point.name}</strong>
+                  <span>{order.retail_point.address}</span>
                 </div>
-              )}
+              </div>
+            )}
 
-              {order.created_by && (
-                <div className="order-detail-meta-item">
-                  <span className="order-detail-meta-icon" aria-hidden="true">
-                    <UserRound size={18} />
-                  </span>
-                  <div className="order-detail-meta-text">
-                    <strong>Создал заказ</strong>
-                    <span>{order.created_by.full_name}</span>
-                  </div>
-                </div>
-              )}
+            <div className="order-detail-meta-item">
+              <span className="order-detail-meta-icon" aria-hidden="true">
+                <Truck size={18} />
+              </span>
+              <div className="order-detail-meta-text">
+                <strong>Дата доставки</strong>
+                <span>
+                  {formatDeliveryDate(order.planned_delivery_date)}
+                  {order.delivery_agent_name ? ` · ${order.delivery_agent_name}` : ''}
+                </span>
+              </div>
             </div>
-          )}
+
+
+            {order.created_by && (
+              <div className="order-detail-meta-item">
+                <span className="order-detail-meta-icon" aria-hidden="true">
+                  <UserRound size={18} />
+                </span>
+                <div className="order-detail-meta-text">
+                  <strong>Создал заказ</strong>
+                  <span>{order.created_by.full_name}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
 
           <div className="order-detail-section">
             <div className="order-detail-section__title">

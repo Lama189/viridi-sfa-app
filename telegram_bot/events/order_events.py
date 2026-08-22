@@ -54,6 +54,17 @@ class OrderDeliveredEvent:
 
 
 @dataclass(slots=True)
+class OrderPlannedEvent:
+    order_id: UUID
+    retail_point_id: UUID | None = None
+    created_by_id: UUID | None = None
+    warehouse_id: UUID | None = None
+    planned_visit_id: UUID | None = None
+    plan_date: str | None = None
+    event_type: str = "order.planned"
+
+
+@dataclass(slots=True)
 class OrderCancelledEvent:
     order_id: UUID
     retail_point_id: UUID | None = None
@@ -69,6 +80,27 @@ def deserialize_event(body: bytes, target_type: type[Any] | None = None) -> Any:
         return data
 
     event_type = data.get("event_type")
+
+    if target_type is OrderPlannedEvent or event_type == "order.planned":
+        return OrderPlannedEvent(
+            order_id=UUID(data["order_id"])
+            if isinstance(data["order_id"], str)
+            else data["order_id"],
+            retail_point_id=UUID(data["retail_point_id"])
+            if data.get("retail_point_id")
+            else None,
+            created_by_id=UUID(data["created_by_id"])
+            if data.get("created_by_id")
+            else None,
+            warehouse_id=UUID(data["warehouse_id"])
+            if data.get("warehouse_id")
+            else None,
+            planned_visit_id=UUID(data["planned_visit_id"])
+            if data.get("planned_visit_id")
+            else None,
+            plan_date=str(data["plan_date"]) if data.get("plan_date") else None,
+            event_type="order.planned",
+        )
 
     if (
         target_type is OrderAssemblyStartedEvent

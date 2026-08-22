@@ -6,6 +6,7 @@ from telegram_bot.events.order_events import (
     OrderCancelledEvent,
     OrderCreatedEvent,
     OrderDeliveredEvent,
+    OrderPlannedEvent,
     OrderTakenByAgentEvent,
     deserialize_event,
 )
@@ -39,6 +40,8 @@ class OrderEventsConsumer:
                 await self._notifications.order_assembly_started(event)
             elif event_type == "order.created" or isinstance(event, OrderCreatedEvent):
                 await self._notifications.order_created(event)
+            elif event_type == "order.planned" or isinstance(event, OrderPlannedEvent):
+                await self._notifications.order_planned(event)
             elif event_type == "order.assembled" or isinstance(
                 event, OrderAssembledEvent
             ):

@@ -65,3 +65,36 @@ export function formatOrderFullDate(dateString?: string | null): string {
     return '—'
   }
 }
+
+export function formatDeliveryDate(dateString?: string | null): string {
+  if (!dateString) return '—'
+  try {
+    const cleanDateStr = dateString.split('T')[0]
+    const parts = cleanDateStr.split('-')
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10)
+      const month = parseInt(parts[1], 10) - 1
+      const day = parseInt(parts[2], 10)
+      const date = new Date(year, month, day)
+      if (!isNaN(date.getTime())) {
+        return new Intl.DateTimeFormat('ru-RU', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }).format(date)
+      }
+    }
+
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return '—'
+
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(date)
+  } catch {
+    return '—'
+  }
+}
+

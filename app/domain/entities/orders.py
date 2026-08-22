@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
@@ -66,8 +66,11 @@ class Order:
     retail_point_id: UUID
     id: UUID = field(default_factory=uuid4)
     planned_visit_id: UUID | None = None
+    planned_delivery_date: date | None = None
+    delivery_agent_name: str | None = None
     actual_visit_id: UUID | None = None
     status: OrderStatus = OrderStatus.PENDING
+
     total_amount: Decimal = field(default=Decimal("0.00"))
     total_volume: Decimal = field(default=Decimal("0.000"))
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))

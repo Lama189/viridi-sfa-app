@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -64,5 +64,7 @@ class OrderDTO:
     created_at: datetime | None = None
     updated_at: datetime | None = None
     planned_visit_id: UUID | None = None
+    planned_delivery_date: date | None = None
+    delivery_agent_name: str | None = None
     actual_visit_id: UUID | None = None
     items: list[OrderItemDTO] = field(default_factory=list)

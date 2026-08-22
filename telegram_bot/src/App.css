@@ -1559,11 +1559,13 @@
 }
 
 .order-card__date,
-.order-card__items-count {
+.order-card__items-count,
+.order-card__delivery-date {
   display: flex;
   align-items: center;
   gap: 6px;
 }
+
 
 .order-card__footer {
   display: flex;

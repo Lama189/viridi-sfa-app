@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -188,14 +188,19 @@ class TestOrdersClientEndpoints:
     @pytest.mark.asyncio
     async def test_get_order_success(self, client, mock_service, mock_client_entity):
         order = _order_response(client_id=mock_client_entity.id)
+        order.planned_delivery_date = date(2026, 8, 26)
+        order.delivery_agent_name = "Жасур Каримов"
         mock_service.get_by_id = AsyncMock(return_value=order)
 
         resp = await client.get(f"/api/v1/orders/{order.id}")
         assert resp.status_code == 200
         assert resp.json()["id"] == str(order.id)
+        assert resp.json()["planned_delivery_date"] == "2026-08-26"
+        assert resp.json()["delivery_agent_name"] == "Жасур Каримов"
 
     @pytest.mark.asyncio
     async def test_get_order_not_found(self, client, mock_service):
+
         mock_service.get_by_id = AsyncMock(side_effect=ValueError("Order not found"))
 
         resp = await client.get(f"/api/v1/orders/{uuid4()}")

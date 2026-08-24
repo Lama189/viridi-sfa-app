@@ -18,6 +18,8 @@ def mock_uow():
     uow = AsyncMock()
     uow.warehouses = AsyncMock()
     uow.clients = AsyncMock()
+    uow.employees = AsyncMock()
+    uow.employees.get_by_id.return_value = None
     uow.retail_points = AsyncMock()
     uow.products = AsyncMock()
     uow.orders = AsyncMock()
@@ -57,6 +59,20 @@ def _client(uid=None, is_active=True):
     return Client(
         phone="+998900000000",
         full_name="Test Client",
+        id=uid or uuid4(),
+        is_active=is_active,
+    )
+
+
+def _employee(uid=None, is_active=True):
+    from app.domain.entities.employees import Employee
+    from app.domain.enums import EmployeeRole
+
+    return Employee(
+        phone="+998901112233",
+        password_hash="hash",
+        full_name="Agent Tester",
+        role=EmployeeRole.AGENT,
         id=uid or uuid4(),
         is_active=is_active,
     )
@@ -215,6 +231,32 @@ class TestOrdersServiceCreate:
         mock_stocks.reserve_stocks_batch.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_create_by_employee_success(self, service, mock_uow, mock_stocks):
+        wid, eid, rpid = uuid4(), uuid4(), uuid4()
+        pid = uuid4()
+        product = _product(uid=pid)
+
+        mock_uow.warehouses.get_by_id.return_value = _warehouse(uid=wid)
+        mock_uow.clients.get_by_id.return_value = None
+        mock_uow.employees.get_by_id.return_value = _employee(uid=eid)
+        mock_uow.retail_points.get_by_id.return_value = _retail_point(uid=rpid)
+        mock_uow.products.list_by_ids.return_value = [product]
+
+        dto = _create_dto(wid, rpid, [(pid, 3)])
+        result = await service.create(eid, dto)
+
+        assert result.warehouse_id == wid
+        assert result.created_by_id == eid
+        assert result.retail_point_id == rpid
+        assert result.status == OrderStatus.PENDING
+        assert len(result.items) == 1
+        assert result.items[0].quantity == 3
+        mock_uow.orders.add.assert_awaited_once()
+        mock_uow.order_items.add.assert_awaited_once()
+        mock_uow.commit.assert_awaited_once()
+        mock_stocks.reserve_stocks_batch.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_create_warehouse_not_found(self, service, mock_uow, mock_stocks):
         mock_uow.warehouses.get_by_id.return_value = None
 
@@ -234,6 +276,7 @@ class TestOrdersServiceCreate:
     async def test_create_client_not_found(self, service, mock_uow, mock_stocks):
         mock_uow.warehouses.get_by_id.return_value = _warehouse()
         mock_uow.clients.get_by_id.return_value = None
+        mock_uow.employees.get_by_id.return_value = None
 
         dto = _create_dto(uuid4(), uuid4(), [(uuid4(), 1)])
         with pytest.raises(UserNotFoundError):
@@ -243,6 +286,16 @@ class TestOrdersServiceCreate:
     async def test_create_client_inactive(self, service, mock_uow, mock_stocks):
         mock_uow.warehouses.get_by_id.return_value = _warehouse()
         mock_uow.clients.get_by_id.return_value = _client(is_active=False)
+
+        dto = _create_dto(uuid4(), uuid4(), [(uuid4(), 1)])
+        with pytest.raises(UserNotActiveError):
+            await service.create(uuid4(), dto)
+
+    @pytest.mark.asyncio
+    async def test_create_employee_inactive(self, service, mock_uow, mock_stocks):
+        mock_uow.warehouses.get_by_id.return_value = _warehouse()
+        mock_uow.clients.get_by_id.return_value = None
+        mock_uow.employees.get_by_id.return_value = _employee(is_active=False)
 
         dto = _create_dto(uuid4(), uuid4(), [(uuid4(), 1)])
         with pytest.raises(UserNotActiveError):

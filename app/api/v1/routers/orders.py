@@ -23,6 +23,9 @@ from app.core.exceptions import InvalidOrderStatusError
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 from app.domain.enums import OrderStatus
 
+from app.domain.entities.clients import Client
+from app.domain.entities.retail_point_members import RetailPointMember
+
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 
 
@@ -33,19 +36,75 @@ router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 )
 async def create_order(
     dto: CreateOrderRequest,
-    client: Annotated[AuthenticatedClient, Depends(get_current_client)],
+    user: Annotated[
+        AuthenticatedEmployee | AuthenticatedClient, Depends(get_current_user)
+    ],
     service: Annotated[OrdersService, Depends(get_orders_service)],
 ):
     try:
         warehouse_id = dto.warehouse_id
         retail_point_id = dto.retail_point_id
 
-        if retail_point_id is None and client.telegram_chat_id:
-            member = await service._uow.retail_point_members.get_by_telegram_id(
-                client.telegram_chat_id
+        if isinstance(user, AuthenticatedClient):
+            if retail_point_id is None and user.telegram_chat_id:
+                member = await service._uow.retail_point_members.get_by_telegram_id(
+                    user.telegram_chat_id
+                )
+                if member:
+                    retail_point_id = member.retail_point_id
+
+            if retail_point_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Retail point ID is required",
+                )
+
+            is_member = await service._uow.retail_point_members.exists(
+                retail_point_id, user.id
             )
-            if member:
-                retail_point_id = member.retail_point_id
+            if not is_member:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not your retail point",
+                )
+            client_id = user.id
+        else:
+            if retail_point_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Retail point ID is required",
+                )
+
+            members = await service._uow.retail_point_members.get_by_retail_point(
+                retail_point_id
+            )
+            if members:
+                client_id = members[0].client_id
+            else:
+                rp = await service._uow.retail_points.get_by_id(retail_point_id)
+                if rp is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Retail point {retail_point_id} not found",
+                    )
+                client = None
+                if rp.phone_number:
+                    client = await service._uow.clients.get_by_phone(rp.phone_number)
+                if client is None:
+                    phone = rp.phone_number or f"+99899{str(retail_point_id.int)[:7]}"
+                    client = Client(
+                        phone=phone,
+                        full_name=rp.contact_person or rp.name,
+                        is_active=True,
+                    )
+                    await service._uow.clients.add(client)
+                await service._uow.retail_point_members.add(
+                    RetailPointMember(
+                        retail_point_id=retail_point_id,
+                        client_id=client.id,
+                    )
+                )
+                client_id = client.id
 
         if warehouse_id is None:
             active_warehouses = await service._uow.warehouses.list(is_active=True)
@@ -56,11 +115,6 @@ async def create_order(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No active warehouse found for the order",
-            )
-        if retail_point_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Retail point ID is required",
             )
 
         app_dto = OrderCreateDTO(
@@ -75,7 +129,7 @@ async def create_order(
                 for item in dto.items
             ],
         )
-        return await service.create(client.id, app_dto)
+        return await service.create(client_id, app_dto)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -59,10 +59,19 @@ class OrdersService:
             raise ValueError("Warehouse is inactive")
 
         client = await self._uow.clients.get_by_id(created_by_id)
-        if client is None:
+        employee = (
+            await self._uow.employees.get_by_id(created_by_id)
+            if client is None
+            else None
+        )
+
+        if client is None and employee is None:
             raise UserNotFoundError()
 
-        if not client.is_active:
+        if client and not client.is_active:
+            raise UserNotActiveError()
+
+        if employee and not employee.is_active:
             raise UserNotActiveError()
 
         retail_point = await self._uow.retail_points.get_by_id(retail_point_id)
@@ -143,17 +152,26 @@ class OrdersService:
     ) -> dict[OrderStatus, int]:
         return await self._uow.orders.get_counts_by_status(employee_id=employee_id)
 
-    async def create(self, client_id: UUID, dto: OrderCreateDTO) -> Order:
-        await self._validate(dto.warehouse_id, client_id, dto.retail_point_id)
+    async def create(self, creator_id: UUID, dto: OrderCreateDTO) -> Order:
+        await self._validate(dto.warehouse_id, creator_id, dto.retail_point_id)
 
         warehouse = await self._uow.warehouses.get_by_id(dto.warehouse_id)
-        client = await self._uow.clients.get_by_id(client_id)
+        client = await self._uow.clients.get_by_id(creator_id)
+        employee = (
+            await self._uow.employees.get_by_id(creator_id)
+            if client is None
+            else None
+        )
         retail_point = await self._uow.retail_points.get_by_id(dto.retail_point_id)
         products = await self._get_products(dto.items)
 
+        creator_name = (
+            client.full_name if client else (employee.full_name if employee else "")
+        )
+
         order = Order(
             warehouse_id=dto.warehouse_id,
-            created_by_id=client_id,
+            created_by_id=creator_id,
             retail_point_id=dto.retail_point_id,
             planned_visit_id=dto.planned_visit_id,
             actual_visit_id=dto.actual_visit_id,
@@ -171,11 +189,9 @@ class OrdersService:
             if warehouse
             else None,
             created_by=UserShort(
-                id=client.id,
-                full_name=client.full_name,
-            )
-            if client
-            else None,
+                id=creator_id,
+                full_name=creator_name,
+            ),
         )
 
         order_items: list[OrderItem] = []
@@ -212,8 +228,10 @@ class OrdersService:
             StockBatchOperationDTO(
                 warehouse_id=dto.warehouse_id,
                 items=batch_items,
-                actor_type=TransactionActorType.CLIENT,
-                created_by_id=client_id,
+                actor_type=TransactionActorType.CLIENT
+                if client
+                else TransactionActorType.EMPLOYEE,
+                created_by_id=creator_id,
                 reference_type=StockReferenceType.ORDER,
                 reference_id=order.id,
             )
@@ -232,7 +250,7 @@ class OrdersService:
                 "order_id": str(order.id),
                 "warehouse_id": str(order.warehouse_id),
                 "retail_point_id": str(order.retail_point_id),
-                "created_by_id": str(client_id),
+                "created_by_id": str(creator_id),
             },
         )
 

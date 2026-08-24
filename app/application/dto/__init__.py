@@ -16,6 +16,7 @@ from app.application.dto.dashboard import (
     CategoryReportDTO,
     DailyReportDTO,
     EmployeeDashboardDTO,
+    ProductReportDTO,
 )
 from app.application.dto.employees import (
     EmployeeCreateDTO,
@@ -123,6 +124,7 @@ __all__ = [
     "OrderShortDTO",
     "ProductCreateDTO",
     "ProductDTO",
+    "ProductReportDTO",
     "ProductShortDTO",
     "ProductUpdateDTO",
     "ProductWithCategoryDTO",

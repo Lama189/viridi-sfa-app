@@ -3,6 +3,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
+from uuid import UUID
+
 from app.api.dependencies import (
     allow_all_staff,
     get_current_employee,
@@ -11,6 +13,7 @@ from app.api.dependencies import (
 from app.api.v1.schemas.dashboard import DailyReportDTO, EmployeeDashboardResponse
 from app.application.services.dashboard import DashboardService
 from app.domain.entities.auth import AuthenticatedEmployee
+from app.domain.enums import EmployeeRole
 
 router = APIRouter(prefix="/api/v1/dashboard", tags=["Dashboard"])
 
@@ -44,9 +47,11 @@ async def get_daily_report(
     date_to: datetime,
     employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
     service: Annotated[DashboardService, Depends(get_dashboard_service)],
+    agent_id: UUID | None = None,
 ):
+    target_agent_id = employee.id if employee.role == EmployeeRole.AGENT else agent_id
     return await service.get_agent_daily_report(
-        employee.id,
+        target_agent_id,
         date_from,
         date_to,
     )

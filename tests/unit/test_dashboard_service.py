@@ -5,7 +5,11 @@ from uuid import uuid4
 
 import pytest
 
-from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
+from app.api.v1.schemas.dashboard import (
+    CategoryReportDTO,
+    DailyReportDTO,
+    ProductReportDTO,
+)
 from app.application.services.dashboard import DashboardService
 from app.core.exceptions import VisitPlanNotFoundError
 from app.domain.entities.visit_plans import VisitPlan
@@ -100,6 +104,7 @@ async def test_get_agent_daily_report_success(service, mock_uow):
     date_from = datetime(2026, 7, 31, 0, 0, tzinfo=UTC)
     date_to = datetime(2026, 7, 31, 23, 59, tzinfo=UTC)
     cat_id = uuid4()
+    prod_id = uuid4()
 
     expected_report = DailyReportDTO(
         total_amount=Decimal("250000.00"),
@@ -113,6 +118,15 @@ async def test_get_agent_daily_report_success(service, mock_uow):
                 quantity_pcs=50,
                 volume_boxes=Decimal("5.0"),
                 total_amount=Decimal("250000.00"),
+                products=[
+                    ProductReportDTO(
+                        product_id=prod_id,
+                        product_name="Apple Juice 1L",
+                        quantity_pcs=50,
+                        volume_boxes=Decimal("5.0"),
+                        total_amount=Decimal("250000.00"),
+                    )
+                ],
             )
         ],
     )

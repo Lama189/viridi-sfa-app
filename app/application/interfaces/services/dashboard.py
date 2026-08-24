@@ -17,7 +17,7 @@ class IDashboardService(ABC):
     @abstractmethod
     async def get_agent_daily_report(
         self,
-        agent_id: UUID,
+        agent_id: UUID | None,
         date_from: datetime,
         date_to: datetime,
     ) -> DailyReportDTO:

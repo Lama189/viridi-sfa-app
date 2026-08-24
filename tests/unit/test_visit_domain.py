@@ -44,7 +44,7 @@ def test_visit_cancel():
 def test_visit_is_active():
     v = Visit(employee_id=uuid4(), retail_point_id=uuid4())
     assert v.is_active is False
-    assert v.can_attach_media() is False
+    assert v.can_attach_media() is True
     assert v.can_add_debt() is False
 
     v.start()
@@ -54,7 +54,7 @@ def test_visit_is_active():
 
     v.finish()
     assert v.is_active is False
-    assert v.can_attach_media() is False
+    assert v.can_attach_media() is True
     assert v.can_add_debt() is False
 
 

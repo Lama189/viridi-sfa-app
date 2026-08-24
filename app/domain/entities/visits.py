@@ -57,7 +57,7 @@ class Visit:
         )
 
     def can_attach_media(self) -> bool:
-        return self.is_active
+        return True
 
     def can_add_debt(self) -> bool:
         return self.is_active

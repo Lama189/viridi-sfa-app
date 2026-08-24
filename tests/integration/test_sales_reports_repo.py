@@ -152,11 +152,21 @@ async def test_get_agent_daily_report_with_data(session: AsyncSession):
     assert report.categories[0].quantity_pcs == 50
     assert report.categories[0].volume_boxes == Decimal("5.0")
     assert report.categories[0].total_amount == Decimal("500.00")
+    assert len(report.categories[0].products) == 1
+    assert report.categories[0].products[0].product_name == "Soda 1L"
+    assert report.categories[0].products[0].quantity_pcs == 50
+    assert report.categories[0].products[0].volume_boxes == Decimal("5.0")
+    assert report.categories[0].products[0].total_amount == Decimal("500.00")
 
     assert report.categories[1].category_name == "Snacks"
     assert report.categories[1].quantity_pcs == 40
     assert report.categories[1].volume_boxes == Decimal("2.0")
     assert report.categories[1].total_amount == Decimal("200.00")
+    assert len(report.categories[1].products) == 1
+    assert report.categories[1].products[0].product_name == "Chips 100g"
+    assert report.categories[1].products[0].quantity_pcs == 40
+    assert report.categories[1].products[0].volume_boxes == Decimal("2.0")
+    assert report.categories[1].products[0].total_amount == Decimal("200.00")
 
 
 @pytest.mark.asyncio

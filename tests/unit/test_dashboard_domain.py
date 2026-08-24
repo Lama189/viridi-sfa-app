@@ -1,7 +1,29 @@
 from decimal import Decimal
 from uuid import uuid4
 
-from app.domain.entities.dashboard import CategoryReport, DailyReport, EmployeeDashboard
+from app.domain.entities.dashboard import (
+    CategoryReport,
+    DailyReport,
+    EmployeeDashboard,
+    ProductReport,
+)
+
+
+def test_product_report_creation():
+    prod_id = uuid4()
+    prod_report = ProductReport(
+        product_id=prod_id,
+        product_name="Product A",
+        quantity_pcs=50,
+        volume_boxes=Decimal("5.0"),
+        total_amount=Decimal("250000.00"),
+    )
+
+    assert prod_report.product_id == prod_id
+    assert prod_report.product_name == "Product A"
+    assert prod_report.quantity_pcs == 50
+    assert prod_report.volume_boxes == Decimal("5.0")
+    assert prod_report.total_amount == Decimal("250000.00")
 
 
 def test_employee_dashboard_creation():

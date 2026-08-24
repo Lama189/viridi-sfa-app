@@ -125,9 +125,6 @@ class VisitService:
         if not visit:
             raise VisitNotFoundError()
 
-        if not visit.can_attach_media():
-            raise VisitNotActiveError()
-
         media = await self._visit_media_service.attach(visit_id, media_id)
 
         await self._uow.commit()

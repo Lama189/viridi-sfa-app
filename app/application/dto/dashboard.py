@@ -4,12 +4,22 @@ from uuid import UUID
 
 
 @dataclass(slots=True, frozen=True)
+class ProductReportDTO:
+    product_id: UUID
+    product_name: str
+    quantity_pcs: int
+    volume_boxes: Decimal
+    total_amount: Decimal
+
+
+@dataclass(slots=True, frozen=True)
 class CategoryReportDTO:
     category_id: UUID
     category_name: str
     quantity_pcs: int
     volume_boxes: Decimal
     total_amount: Decimal
+    products: list[ProductReportDTO] = field(default_factory=list)
 
 
 @dataclass(slots=True, frozen=True)

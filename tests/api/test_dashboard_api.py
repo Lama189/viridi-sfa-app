@@ -12,7 +12,11 @@ from app.api.dependencies import (
     get_current_user,
     get_dashboard_service,
 )
-from app.api.v1.schemas.dashboard import CategoryReportDTO, DailyReportDTO
+from app.api.v1.schemas.dashboard import (
+    CategoryReportDTO,
+    DailyReportDTO,
+    ProductReportDTO,
+)
 from app.application.interfaces.services.dashboard import EmployeeDashboard
 from app.core.exceptions import VisitPlanNotFoundError
 from app.domain.entities.auth import AuthenticatedEmployee
@@ -105,6 +109,7 @@ async def test_get_daily_report_success(
     date_from = "2026-07-31T00:00:00Z"
     date_to = "2026-07-31T23:59:59Z"
     cat_id = uuid4()
+    prod_id = uuid4()
 
     mock_dashboard_service.get_agent_daily_report.return_value = DailyReportDTO(
         total_amount=Decimal("300000.00"),
@@ -118,6 +123,15 @@ async def test_get_daily_report_success(
                 quantity_pcs=100,
                 volume_boxes=Decimal("10.0"),
                 total_amount=Decimal("300000.00"),
+                products=[
+                    ProductReportDTO(
+                        product_id=prod_id,
+                        product_name="Cola 1.5L",
+                        quantity_pcs=100,
+                        volume_boxes=Decimal("10.0"),
+                        total_amount=Decimal("300000.00"),
+                    )
+                ],
             )
         ],
     )
@@ -135,9 +149,88 @@ async def test_get_daily_report_success(
     assert float(data["total_volume_boxes"]) == 10.0
     assert len(data["categories"]) == 1
     assert data["categories"][0]["category_name"] == "Beverages"
+    assert len(data["categories"][0]["products"]) == 1
+    assert data["categories"][0]["products"][0]["product_name"] == "Cola 1.5L"
+    assert data["categories"][0]["products"][0]["quantity_pcs"] == 100
 
     mock_dashboard_service.get_agent_daily_report.assert_awaited_once_with(
         mock_agent_employee.id,
         datetime(2026, 7, 31, 0, 0, tzinfo=UTC),
         datetime(2026, 7, 31, 23, 59, 59, tzinfo=UTC),
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_daily_report_admin_all_agents(
+    client, mock_dashboard_service
+):
+    admin_employee = AuthenticatedEmployee(
+        id=uuid4(),
+        phone="+998909999999",
+        role=EmployeeRole.ADMIN,
+        full_name="Admin Tester",
+        is_active=True,
+    )
+    app.dependency_overrides[allow_all_staff] = lambda: admin_employee
+
+    mock_dashboard_service.get_agent_daily_report.return_value = DailyReportDTO(
+        total_amount=Decimal("500000.00"),
+        acb_count=10,
+        total_quantity_pcs=200,
+        total_volume_boxes=Decimal("20.0"),
+        categories=[],
+    )
+
+    response = await client.get(
+        "/api/v1/dashboard/daily-report",
+        params={
+            "date_from": "2026-08-01T00:00:00Z",
+            "date_to": "2026-08-31T23:59:59Z",
+        },
+    )
+
+    assert response.status_code == 200
+    mock_dashboard_service.get_agent_daily_report.assert_awaited_once_with(
+        None,
+        datetime(2026, 8, 1, 0, 0, tzinfo=UTC),
+        datetime(2026, 8, 31, 23, 59, 59, tzinfo=UTC),
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_daily_report_admin_specific_agent(
+    client, mock_dashboard_service
+):
+    admin_employee = AuthenticatedEmployee(
+        id=uuid4(),
+        phone="+998909999999",
+        role=EmployeeRole.ADMIN,
+        full_name="Admin Tester",
+        is_active=True,
+    )
+    app.dependency_overrides[allow_all_staff] = lambda: admin_employee
+
+    mock_dashboard_service.get_agent_daily_report.return_value = DailyReportDTO(
+        total_amount=Decimal("100000.00"),
+        acb_count=2,
+        total_quantity_pcs=40,
+        total_volume_boxes=Decimal("4.0"),
+        categories=[],
+    )
+    selected_agent_id = uuid4()
+
+    response = await client.get(
+        "/api/v1/dashboard/daily-report",
+        params={
+            "date_from": "2026-08-01T00:00:00Z",
+            "date_to": "2026-08-31T23:59:59Z",
+            "agent_id": str(selected_agent_id),
+        },
+    )
+
+    assert response.status_code == 200
+    mock_dashboard_service.get_agent_daily_report.assert_awaited_once_with(
+        selected_agent_id,
+        datetime(2026, 8, 1, 0, 0, tzinfo=UTC),
+        datetime(2026, 8, 31, 23, 59, 59, tzinfo=UTC),
     )

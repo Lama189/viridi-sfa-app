@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 from uuid import UUID
 
@@ -17,12 +17,22 @@ class EmployeeDashboard:
 
 
 @dataclass
+class ProductReport:
+    product_id: UUID
+    product_name: str
+    quantity_pcs: int
+    volume_boxes: Decimal
+    total_amount: Decimal
+
+
+@dataclass
 class CategoryReport:
     category_id: UUID
     category_name: str
     quantity_pcs: int
     volume_boxes: Decimal
     total_amount: Decimal
+    products: list[ProductReport] = field(default_factory=list)
 
 
 @dataclass

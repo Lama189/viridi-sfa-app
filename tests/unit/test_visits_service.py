@@ -272,19 +272,10 @@ async def test_attach_media_visit_not_found(service, mock_uow):
 
 
 @pytest.mark.asyncio
-async def test_attach_media_visit_not_active(service, mock_uow):
-    mock_uow.media_objects.get_by_id.return_value = MagicMock()
-    mock_uow.visits.get_by_id.return_value = Visit(
-        employee_id=uuid4(),
-        retail_point_id=uuid4(),
-    )
+async def test_attach_media_visit_completed(service, mock_uow, mock_visit_media_service):
+    visit_id = uuid4()
+    media_id = uuid4()
 
-    with pytest.raises(VisitNotActiveError):
-        await service.attach_media(uuid4(), uuid4())
-
-
-@pytest.mark.asyncio
-async def test_attach_media_visit_completed(service, mock_uow):
     mock_uow.media_objects.get_by_id.return_value = MagicMock()
     visit = Visit(
         employee_id=uuid4(),
@@ -294,8 +285,13 @@ async def test_attach_media_visit_completed(service, mock_uow):
     visit.finish()
     mock_uow.visits.get_by_id.return_value = visit
 
-    with pytest.raises(VisitNotActiveError):
-        await service.attach_media(uuid4(), uuid4())
+    media = MagicMock()
+    mock_visit_media_service.attach.return_value = media
+
+    result = await service.attach_media(visit_id, media_id)
+
+    assert result == media
+    mock_uow.commit.assert_awaited_once()
 
 
 # --- detach_media ---

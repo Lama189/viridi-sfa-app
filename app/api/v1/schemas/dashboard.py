@@ -20,12 +20,29 @@ class EmployeeDashboardResponse(BaseModel):
     }
 
 
+class ProductReportDTO(BaseModel):
+    product_id: UUID
+    product_name: str
+    quantity_pcs: int
+    volume_boxes: Decimal
+    total_amount: Decimal
+
+    model_config = {
+        "from_attributes": True,
+    }
+
+
 class CategoryReportDTO(BaseModel):
     category_id: UUID
     category_name: str
     quantity_pcs: int
     volume_boxes: Decimal
     total_amount: Decimal
+    products: list[ProductReportDTO] = []
+
+    model_config = {
+        "from_attributes": True,
+    }
 
 
 class DailyReportDTO(BaseModel):

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import delete as sa_delete
@@ -29,6 +30,13 @@ from app.infrastructure.postgres.models.visits import Visit as VisitModel
 class PostgresRetailPointRepository(IRetailPointRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    def _with_debts(self, stmt):
+        if hasattr(RetailPointModel, "visits") and hasattr(VisitModel, "debts"):
+            return stmt.options(
+                joinedload(RetailPointModel.visits).joinedload(VisitModel.debts)
+            )
+        return stmt
 
     async def add(self, retail_point: RetailPoint) -> None:
         model = self._to_model(retail_point)
@@ -71,11 +79,12 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         return identity_map
 
     async def get_by_id(self, retail_point_id: UUID) -> RetailPoint | None:
-        result = await self._session.execute(
+        stmt = self._with_debts(
             select(RetailPointModel).where(RetailPointModel.id == retail_point_id)
         )
+        result = await self._session.execute(stmt)
 
-        model = result.scalar_one_or_none()
+        model = result.unique().scalar_one_or_none()
         if model is None:
             return None
 
@@ -85,14 +94,11 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         self,
         retail_point_id: UUID,
     ) -> RetailPointDetails | None:
-        result = await self._session.execute(
-            select(RetailPointModel)
-            .where(RetailPointModel.id == retail_point_id)
-            .options(
-                joinedload(RetailPointModel.orders),
-                joinedload(RetailPointModel.visits).joinedload(VisitModel.debts),
-            )
-        )
+        stmt = select(RetailPointModel).where(RetailPointModel.id == retail_point_id)
+        if hasattr(RetailPointModel, "orders"):
+            stmt = stmt.options(joinedload(RetailPointModel.orders))
+        stmt = self._with_debts(stmt)
+        result = await self._session.execute(stmt)
 
         model = result.unique().scalar_one_or_none()
         if model is None:
@@ -110,7 +116,7 @@ class PostgresRetailPointRepository(IRetailPointRepository):
                 total_amount=order.total_amount,
                 total_volume=order.total_volume,
             )
-            for order in model.orders
+            for order in (getattr(model, "orders", []) or [])
         ]
         debts = [
             VisitDebt(
@@ -120,8 +126,8 @@ class PostgresRetailPointRepository(IRetailPointRepository):
                 comment=debt.comment,
                 created_at=debt.created_at,
             )
-            for visit in model.visits
-            for debt in visit.debts
+            for visit in (getattr(model, "visits", []) or [])
+            for debt in (getattr(visit, "debts", []) or [])
         ]
 
         return RetailPointDetails(
@@ -136,18 +142,18 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         return bool(result.scalar())
 
     async def list_by(self, **kwargs) -> list[RetailPoint]:
-        stmt = select(RetailPointModel).filter_by(**kwargs)
+        stmt = self._with_debts(select(RetailPointModel).filter_by(**kwargs))
 
         result = await self._session.execute(stmt)
-        return [self._to_domain(m) for m in result.scalars().all()]
+        return [self._to_domain(m) for m in result.unique().scalars().all()]
 
     async def list_all(self, only_active: bool = True) -> list[RetailPoint]:
-        stmt = select(RetailPointModel)
+        stmt = self._with_debts(select(RetailPointModel))
         if only_active:
             stmt = stmt.where(RetailPointModel.is_active.is_(True))
 
         result = await self._session.execute(stmt)
-        return [self._to_domain(m) for m in result.scalars().all()]
+        return [self._to_domain(m) for m in result.unique().scalars().all()]
 
     async def update(self, retail_point: RetailPoint) -> None:
         await self._session.execute(
@@ -196,13 +202,14 @@ class PostgresRetailPointRepository(IRetailPointRepository):
                 RetailPointAssignmentModel.employee_id == employee_id,
             )
         )
+        stmt = self._with_debts(stmt)
 
         if only_active:
             stmt = stmt.where(RetailPointModel.is_active.is_(True))
 
         result = await self._session.execute(stmt)
 
-        return [self._to_domain(model) for model in result.scalars().all()]
+        return [self._to_domain(model) for model in result.unique().scalars().all()]
 
     async def list_by_employee_and_weekday(
         self,
@@ -227,13 +234,14 @@ class PostgresRetailPointRepository(IRetailPointRepository):
                 VisitScheduleRuleModel.is_active.is_(True),
             )
         )
+        stmt = self._with_debts(stmt)
 
         if only_active:
             stmt = stmt.where(RetailPointModel.is_active.is_(True))
 
         result = await self._session.execute(stmt)
 
-        return [self._to_domain(model) for model in result.scalars().all()]
+        return [self._to_domain(model) for model in result.unique().scalars().all()]
 
     async def list_paginated(
         self,
@@ -241,12 +249,19 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         limit: int,
         offset: int,
     ) -> list[RetailPoint]:
-        stmt = select(RetailPointModel).limit(limit).offset(offset)
+        stmt = self._with_debts(select(RetailPointModel)).limit(limit).offset(offset)
         result = await self._session.execute(stmt)
 
-        return [self._to_domain(model) for model in result.scalars().all()]
+        return [self._to_domain(model) for model in result.unique().scalars().all()]
 
     def _to_domain(self, model: RetailPointModel) -> RetailPoint:
+        total_debt = Decimal("0.00")
+        visits = getattr(model, "visits", []) or []
+        for visit in visits:
+            debts = getattr(visit, "debts", []) or []
+            for debt in debts:
+                total_debt += Decimal(str(debt.amount))
+
         return RetailPoint(
             id=model.id,
             name=model.name,
@@ -266,6 +281,7 @@ class PostgresRetailPointRepository(IRetailPointRepository):
             photo_id=model.photo_id,
             created_by_employee_id=model.created_by_employee_id,
             is_active=model.is_active,
+            total_debt=total_debt,
         )
 
     def _to_model(self, retail_point: RetailPoint) -> RetailPointModel:

@@ -64,6 +64,7 @@ class RetailPointDTO:
     client_type: ClientType
     address: str
     is_active: bool = True
+    total_debt: Decimal = Decimal("0.00")
     legal_name: str | None = None
     landmark: str | None = None
     contact_person: str | None = None

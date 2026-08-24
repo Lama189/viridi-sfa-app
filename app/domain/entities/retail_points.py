@@ -35,6 +35,7 @@ class RetailPoint:
     created_by_employee_id: UUID | None = None
 
     is_active: bool = True
+    total_debt: Decimal = Decimal("0.00")
 
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))

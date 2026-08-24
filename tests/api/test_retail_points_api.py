@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -227,6 +228,22 @@ async def test_list_retail_points_by_weekday(client, mock_service, mock_admin_em
         employee_id=mock_admin_employee.id,
         weekday=Weekday.MONDAY,
     )
+
+
+@pytest.mark.asyncio
+async def test_list_retail_points_returns_total_debt(
+    client, mock_service, mock_admin_employee
+):
+    point = _retail_point_response(name="Store with Debt")
+    point.total_debt = Decimal("250000.00")
+    mock_service.list_retail_points.return_value = [point]
+
+    resp = await client.get("/api/v1/retail_points")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "Store with Debt"
+    assert data[0]["total_debt"] == "250000.00"
 
 
 @pytest.mark.asyncio

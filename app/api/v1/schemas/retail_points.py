@@ -99,6 +99,7 @@ class RetailPointResponse(BaseModel):
     visits: VisitsDatesDTO = Field(default_factory=VisitsDatesDTO)
 
     is_active: bool
+    total_debt: Decimal = Field(default=Decimal("0.00"))
 
     model_config = {"from_attributes": True}
 

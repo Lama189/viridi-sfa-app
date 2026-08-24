@@ -62,6 +62,22 @@ class IOrderRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def list_by_source_visit(
+        self,
+        source_visit_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def list_by_actual_visit(
+        self,
+        actual_visit_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        raise NotImplementedError
+
+    @abstractmethod
     async def update(self, order: Order) -> None:
         raise NotImplementedError
 

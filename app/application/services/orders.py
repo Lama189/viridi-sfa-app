@@ -50,6 +50,8 @@ class OrdersService:
         warehouse_id: UUID,
         created_by_id: UUID,
         retail_point_id: UUID,
+        source_visit_id: UUID | None = None,
+        actual_visit_id: UUID | None = None,
     ) -> None:
         warehouse = await self._uow.warehouses.get_by_id(warehouse_id)
         if warehouse is None:
@@ -81,6 +83,20 @@ class OrdersService:
         if retail_point and not retail_point.is_active:
             raise ValueError("Retail Point is inactive")
 
+        if source_visit_id:
+            visit = await self._uow.visits.get_by_id(source_visit_id)
+            if visit is None:
+                raise ValueError(f"Visit with ID {source_visit_id} not found")
+            if visit.retail_point_id != retail_point_id:
+                raise ValueError("Visit does not match retail point")
+
+        if actual_visit_id:
+            visit = await self._uow.visits.get_by_id(actual_visit_id)
+            if visit is None:
+                raise ValueError(f"Visit with ID {actual_visit_id} not found")
+            if visit.retail_point_id != retail_point_id:
+                raise ValueError("Visit does not match retail point")
+
     async def _get_products(
         self,
         items: list[OrderItemCreateDTO],
@@ -90,13 +106,11 @@ class OrdersService:
         products = await self._uow.products.list_by_ids(product_ids)
 
         if len(products) != len(set(product_ids)):
-            found_ids = {product.id for product in products}
-            missing = set(product_ids) - found_ids
-            raise ValueError(f"Products not found: {missing}")
+            raise ValueError("Some products not found")
 
         for product in products:
             if not product.is_active:
-                raise ValueError(f"Product '{product.name}' is inactive")
+                raise ValueError(f"Product {product.name} is inactive")
 
         return {product.id: product for product in products}
 
@@ -153,14 +167,18 @@ class OrdersService:
         return await self._uow.orders.get_counts_by_status(employee_id=employee_id)
 
     async def create(self, creator_id: UUID, dto: OrderCreateDTO) -> Order:
-        await self._validate(dto.warehouse_id, creator_id, dto.retail_point_id)
+        await self._validate(
+            dto.warehouse_id,
+            creator_id,
+            dto.retail_point_id,
+            dto.source_visit_id,
+            dto.actual_visit_id,
+        )
 
         warehouse = await self._uow.warehouses.get_by_id(dto.warehouse_id)
         client = await self._uow.clients.get_by_id(creator_id)
         employee = (
-            await self._uow.employees.get_by_id(creator_id)
-            if client is None
-            else None
+            await self._uow.employees.get_by_id(creator_id) if client is None else None
         )
         retail_point = await self._uow.retail_points.get_by_id(dto.retail_point_id)
         products = await self._get_products(dto.items)
@@ -173,6 +191,7 @@ class OrdersService:
             warehouse_id=dto.warehouse_id,
             created_by_id=creator_id,
             retail_point_id=dto.retail_point_id,
+            source_visit_id=dto.source_visit_id,
             planned_visit_id=dto.planned_visit_id,
             actual_visit_id=dto.actual_visit_id,
             retail_point=RetailPointShort(
@@ -301,7 +320,7 @@ class OrdersService:
         if order is None:
             raise ValueError(f"Order with ID {order_id} not found")
 
-        if order.status in (OrderStatus.SHIPPED, OrderStatus.DELIVERED):
+        if order.status == OrderStatus.DELIVERED:
             raise ValueError(f"Cannot cancel order in status {order.status}")
 
         batch_items = [
@@ -324,6 +343,8 @@ class OrdersService:
         )
 
         order.cancel()
+        if order.planned_visit_id is not None:
+            order.planned_visit_id = None
 
         event = OutboxMessage.create(
             event_type=OrderEventType.CANCELLED,
@@ -557,6 +578,22 @@ class OrdersService:
         )
 
         order.deliver(actual_visit_id=visit_id)
+
+        if order.planned_visit_id:
+            plan = await self._uow.visit_plans.get_by_id(order.planned_visit_id)
+            if plan:
+                if visit_id:
+                    visit = await self._uow.visits.get_by_id(visit_id)
+                    if visit and (
+                        visit.employee_id != plan.employee_id
+                        or (
+                            visit.started_at
+                            and visit.started_at.date() != plan.plan_date
+                        )
+                    ):
+                        order.planned_visit_id = None
+                else:
+                    order.planned_visit_id = None
 
         await self._uow.orders.update(order)
 

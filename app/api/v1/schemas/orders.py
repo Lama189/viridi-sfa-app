@@ -29,7 +29,9 @@ class OrderItemCreateRequest(BaseModel):
 class CreateOrderRequest(BaseModel):
     warehouse_id: UUID | None = None
     retail_point_id: UUID | None = None
+    source_visit_id: UUID | None = None
     planned_visit_id: UUID | None = None
+    actual_visit_id: UUID | None = None
     items: list[OrderItemCreateRequest]
 
 
@@ -54,6 +56,7 @@ class OrderResponse(BaseModel):
     created_by: UserShortResponse
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    source_visit_id: UUID | None = None
     planned_visit_id: UUID | None = None
     planned_delivery_date: date | None = None
     delivery_agent_name: str | None = None

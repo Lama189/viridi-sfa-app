@@ -235,7 +235,7 @@ async def test_get_visit_not_found(client, mock_visits_service):
 async def test_get_visit_details_success(client, mock_visits_service):
     visit_id = uuid4()
     mock_details = type(
-        "MockVisitModel",
+        "MockVisitDetailsDTO",
         (),
         {
             "id": visit_id,
@@ -253,6 +253,9 @@ async def test_get_visit_details_success(client, mock_visits_service):
                     "longitude": 69.240562,
                 },
             )(),
+            "created_orders": [],
+            "delivery_orders": [],
+            "active_point_orders": [],
             "orders": [],
             "debts": [],
             "media": [],
@@ -267,6 +270,9 @@ async def test_get_visit_details_success(client, mock_visits_service):
     assert data["retail_point"]["name"] == "Магазин"
     assert float(data["retail_point"]["latitude"]) == 41.311081
     assert float(data["retail_point"]["longitude"]) == 69.240562
+    assert "created_orders" in data
+    assert "delivery_orders" in data
+    assert "active_point_orders" in data
 
 
 @pytest.mark.asyncio

@@ -70,7 +70,7 @@ class OrderShortResponse(BaseModel):
     status: OrderStatus
     total_amount: Decimal
     total_volume: Decimal
-    created_at: datetime
+    created_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -81,8 +81,11 @@ class VisitDetailsResponse(BaseModel):
     started_at: datetime | None = None
     finished_at: datetime | None = None
     retail_point: RetailPointShortResponse
-    orders: list[OrderShortResponse] = []
+    created_orders: list[OrderShortResponse] = []
+    delivery_orders: list[OrderShortResponse] = []
+    active_point_orders: list[OrderShortResponse] = []
     debts: list[VisitDebtResponse] = []
     media: list[VisitMediaResponse] = []
+    orders: list[OrderShortResponse] = []
 
     model_config = {"from_attributes": True}

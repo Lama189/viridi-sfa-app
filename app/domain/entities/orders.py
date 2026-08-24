@@ -65,6 +65,7 @@ class Order:
     created_by_id: UUID
     retail_point_id: UUID
     id: UUID = field(default_factory=uuid4)
+    source_visit_id: UUID | None = None
     planned_visit_id: UUID | None = None
     planned_delivery_date: date | None = None
     delivery_agent_name: str | None = None
@@ -199,7 +200,7 @@ class Order:
         self._touch()
 
     def cancel(self) -> None:
-        if self.status in (OrderStatus.SHIPPED, OrderStatus.DELIVERED):
+        if self.status == OrderStatus.DELIVERED:
             raise ValueError(f"Order in status '{self.status}' cannot be cancelled")
 
         if self.status == OrderStatus.CANCELLED:

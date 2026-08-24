@@ -18,6 +18,7 @@ class OrderCreateDTO:
     warehouse_id: UUID
     retail_point_id: UUID
     items: list[OrderItemCreateDTO]
+    source_visit_id: UUID | None = None
     planned_visit_id: UUID | None = None
     actual_visit_id: UUID | None = None
 
@@ -63,6 +64,7 @@ class OrderDTO:
     created_by_name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    source_visit_id: UUID | None = None
     planned_visit_id: UUID | None = None
     planned_delivery_date: date | None = None
     delivery_agent_name: str | None = None

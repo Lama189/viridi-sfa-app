@@ -21,10 +21,9 @@ from app.application.dto.orders import (
 from app.application.services.orders import OrdersService
 from app.core.exceptions import InvalidOrderStatusError
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
-from app.domain.enums import OrderStatus
-
 from app.domain.entities.clients import Client
 from app.domain.entities.retail_point_members import RetailPointMember
+from app.domain.enums import OrderStatus
 
 router = APIRouter(prefix="/api/v1/orders", tags=["Orders"])
 
@@ -53,6 +52,12 @@ async def create_order(
                 if member:
                     retail_point_id = member.retail_point_id
 
+            if dto.source_visit_id is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Clients cannot set source_visit_id",
+                )
+
             if retail_point_id is None:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -74,6 +79,24 @@ async def create_order(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Retail point ID is required",
                 )
+
+            if dto.source_visit_id:
+                source_visit = await service._uow.visits.get_by_id(dto.source_visit_id)
+                if source_visit is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Source visit {dto.source_visit_id} not found",
+                    )
+                if source_visit.employee_id != user.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Source visit does not belong to you",
+                    )
+                if source_visit.retail_point_id != retail_point_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Source visit does not match retail point",
+                    )
 
             members = await service._uow.retail_point_members.get_by_retail_point(
                 retail_point_id
@@ -120,7 +143,9 @@ async def create_order(
         app_dto = OrderCreateDTO(
             warehouse_id=warehouse_id,
             retail_point_id=retail_point_id,
+            source_visit_id=dto.source_visit_id,
             planned_visit_id=dto.planned_visit_id,
+            actual_visit_id=dto.actual_visit_id,
             items=[
                 OrderItemCreateDTO(
                     product_id=item.product_id,

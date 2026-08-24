@@ -101,11 +101,15 @@ def _product(
     )
 
 
-def _create_dto(warehouse_id, retail_point_id, items):
+def _create_dto(
+    warehouse_id, retail_point_id, items, source_visit_id=None, actual_visit_id=None
+):
     return OrderCreateDTO(
         warehouse_id=warehouse_id,
         retail_point_id=retail_point_id,
         items=[OrderItemCreateDTO(product_id=pid, quantity=q) for pid, q in items],
+        source_visit_id=source_visit_id,
+        actual_visit_id=actual_visit_id,
     )
 
 
@@ -255,6 +259,88 @@ class TestOrdersServiceCreate:
         mock_uow.order_items.add.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
         mock_stocks.reserve_stocks_batch.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_create_with_source_visit_success(
+        self, service, mock_uow, mock_stocks
+    ):
+        wid, cid, rpid, vid = uuid4(), uuid4(), uuid4(), uuid4()
+        pid = uuid4()
+        product = _product(uid=pid)
+
+        from app.domain.entities.visits import Visit
+
+        mock_uow.warehouses.get_by_id.return_value = _warehouse(uid=wid)
+        mock_uow.clients.get_by_id.return_value = _client(uid=cid)
+        mock_uow.retail_points.get_by_id.return_value = _retail_point(uid=rpid)
+        mock_uow.products.list_by_ids.return_value = [product]
+        mock_uow.visits.get_by_id.return_value = Visit(
+            id=vid, employee_id=uuid4(), retail_point_id=rpid
+        )
+
+        dto = _create_dto(wid, rpid, [(pid, 5)], source_visit_id=vid)
+        result = await service.create(cid, dto)
+
+        assert result.source_visit_id == vid
+
+    @pytest.mark.asyncio
+    async def test_create_with_source_visit_mismatch(
+        self, service, mock_uow, mock_stocks
+    ):
+        wid, cid, rpid, vid = uuid4(), uuid4(), uuid4(), uuid4()
+        from app.domain.entities.visits import Visit
+
+        mock_uow.warehouses.get_by_id.return_value = _warehouse(uid=wid)
+        mock_uow.clients.get_by_id.return_value = _client(uid=cid)
+        mock_uow.retail_points.get_by_id.return_value = _retail_point(uid=rpid)
+        mock_uow.visits.get_by_id.return_value = Visit(
+            id=vid, employee_id=uuid4(), retail_point_id=uuid4()
+        )
+
+        dto = _create_dto(wid, rpid, [(uuid4(), 5)], source_visit_id=vid)
+        with pytest.raises(ValueError, match="Visit does not match retail point"):
+            await service.create(cid, dto)
+
+    @pytest.mark.asyncio
+    async def test_create_with_actual_visit_success(
+        self, service, mock_uow, mock_stocks
+    ):
+        wid, cid, rpid, vid = uuid4(), uuid4(), uuid4(), uuid4()
+        pid = uuid4()
+        product = _product(uid=pid)
+
+        from app.domain.entities.visits import Visit
+
+        mock_uow.warehouses.get_by_id.return_value = _warehouse(uid=wid)
+        mock_uow.clients.get_by_id.return_value = _client(uid=cid)
+        mock_uow.retail_points.get_by_id.return_value = _retail_point(uid=rpid)
+        mock_uow.products.list_by_ids.return_value = [product]
+        mock_uow.visits.get_by_id.return_value = Visit(
+            id=vid, employee_id=uuid4(), retail_point_id=rpid
+        )
+
+        dto = _create_dto(wid, rpid, [(pid, 5)], actual_visit_id=vid)
+        result = await service.create(cid, dto)
+
+        assert result.actual_visit_id == vid
+
+    @pytest.mark.asyncio
+    async def test_create_with_actual_visit_mismatch(
+        self, service, mock_uow, mock_stocks
+    ):
+        wid, cid, rpid, vid = uuid4(), uuid4(), uuid4(), uuid4()
+        from app.domain.entities.visits import Visit
+
+        mock_uow.warehouses.get_by_id.return_value = _warehouse(uid=wid)
+        mock_uow.clients.get_by_id.return_value = _client(uid=cid)
+        mock_uow.retail_points.get_by_id.return_value = _retail_point(uid=rpid)
+        mock_uow.visits.get_by_id.return_value = Visit(
+            id=vid, employee_id=uuid4(), retail_point_id=uuid4()
+        )
+
+        dto = _create_dto(wid, rpid, [(uuid4(), 5)], actual_visit_id=vid)
+        with pytest.raises(ValueError, match="Visit does not match retail point"):
+            await service.create(cid, dto)
 
     @pytest.mark.asyncio
     async def test_create_warehouse_not_found(self, service, mock_uow, mock_stocks):
@@ -434,10 +520,26 @@ class TestOrdersServiceCancel:
     @pytest.mark.asyncio
     async def test_cancel_shipped(self, service, mock_uow, mock_stocks):
         oid = uuid4()
+        plan_id = uuid4()
         order = _pending_order_with_item(oid)
         order.status = OrderStatus.SHIPPED
+        order.planned_visit_id = plan_id
         mock_uow.orders.get_by_id.return_value = order
-        with pytest.raises(ValueError, match="Cannot cancel"):
+
+        result = await service.cancel(oid)
+        assert result.status == OrderStatus.CANCELLED
+        assert result.planned_visit_id is None
+        mock_stocks.release_reservations_batch.assert_awaited_once()
+        mock_uow.orders.update.assert_awaited_once()
+        mock_uow.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_cancel_delivered(self, service, mock_uow, mock_stocks):
+        oid = uuid4()
+        order = _pending_order_with_item(oid)
+        order.status = OrderStatus.DELIVERED
+        mock_uow.orders.get_by_id.return_value = order
+        with pytest.raises(ValueError, match="Cannot cancel order in status delivered"):
             await service.cancel(oid)
 
 
@@ -521,6 +623,80 @@ class TestOrdersServiceDeliver:
         mock_uow.orders.update.assert_awaited_once_with(order)
         mock_uow.outbox.add.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_deliver_clears_mismatched_planned_visit_id(
+        self, service, mock_uow, mock_stocks
+    ):
+        from datetime import UTC, date, datetime
+
+        from app.domain.entities.visit_plans import VisitPlan
+        from app.domain.entities.visits import Visit
+
+        oid = uuid4()
+        pid = uuid4()
+        emp_id = uuid4()
+        plan_id = uuid4()
+        visit_id = uuid4()
+
+        order = _pending_order_with_item(oid, pid)
+        order.status = OrderStatus.SHIPPED
+        order.planned_visit_id = plan_id
+        mock_uow.orders.get_by_id.return_value = order
+
+        # Future plan on 2026-08-30
+        mock_uow.visit_plans.get_by_id.return_value = VisitPlan(
+            id=plan_id, employee_id=emp_id, plan_date=date(2026, 8, 30)
+        )
+        # Delivered early in visit on 2026-08-24
+        mock_uow.visits.get_by_id.return_value = Visit(
+            id=visit_id,
+            employee_id=emp_id,
+            retail_point_id=order.retail_point_id,
+            started_at=datetime(2026, 8, 24, 10, 0, 0, tzinfo=UTC),
+        )
+
+        result = await service.deliver(oid, employee_id=emp_id, visit_id=visit_id)
+        assert result.status == OrderStatus.DELIVERED
+        assert result.actual_visit_id == visit_id
+        assert result.planned_visit_id is None
+
+    @pytest.mark.asyncio
+    async def test_deliver_preserves_matching_planned_visit_id(
+        self, service, mock_uow, mock_stocks
+    ):
+        from datetime import UTC, date, datetime
+
+        from app.domain.entities.visit_plans import VisitPlan
+        from app.domain.entities.visits import Visit
+
+        oid = uuid4()
+        pid = uuid4()
+        emp_id = uuid4()
+        plan_id = uuid4()
+        visit_id = uuid4()
+
+        order = _pending_order_with_item(oid, pid)
+        order.status = OrderStatus.SHIPPED
+        order.planned_visit_id = plan_id
+        mock_uow.orders.get_by_id.return_value = order
+
+        # Plan on 2026-08-24
+        mock_uow.visit_plans.get_by_id.return_value = VisitPlan(
+            id=plan_id, employee_id=emp_id, plan_date=date(2026, 8, 24)
+        )
+        # Delivered in matching visit on 2026-08-24
+        mock_uow.visits.get_by_id.return_value = Visit(
+            id=visit_id,
+            employee_id=emp_id,
+            retail_point_id=order.retail_point_id,
+            started_at=datetime(2026, 8, 24, 10, 0, 0, tzinfo=UTC),
+        )
+
+        result = await service.deliver(oid, employee_id=emp_id, visit_id=visit_id)
+        assert result.status == OrderStatus.DELIVERED
+        assert result.actual_visit_id == visit_id
+        assert result.planned_visit_id == plan_id
 
     @pytest.mark.asyncio
     async def test_deliver_not_found(self, service, mock_uow):

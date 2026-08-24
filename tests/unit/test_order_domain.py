@@ -374,6 +374,31 @@ class TestOrderLifecycle:
         assert order.status == OrderStatus.DELIVERED
         assert order.actual_visit_id == visit_id
 
+    def test_deliver_preserves_source_visit_id(self):
+        source_visit = uuid4()
+        order = self._make_order_with_item()
+        order.source_visit_id = source_visit
+        order.start_assembly()
+        order.complete_assembly()
+        order.load()
+        delivery_visit = uuid4()
+        order.deliver(actual_visit_id=delivery_visit)
+        assert order.status == OrderStatus.DELIVERED
+        assert order.source_visit_id == source_visit
+        assert order.actual_visit_id == delivery_visit
+
+    def test_deliver_without_source_visit(self):
+        order = self._make_order_with_item()
+        assert order.source_visit_id is None
+        order.start_assembly()
+        order.complete_assembly()
+        order.load()
+        delivery_visit = uuid4()
+        order.deliver(actual_visit_id=delivery_visit)
+        assert order.status == OrderStatus.DELIVERED
+        assert order.source_visit_id is None
+        assert order.actual_visit_id == delivery_visit
+
     def test_plan_delivery(self):
         order = self._make_order_with_item()
         order.confirm()
@@ -399,12 +424,12 @@ class TestOrderLifecycle:
         order.cancel()
         assert order.status == OrderStatus.CANCELLED
 
-    def test_cancel_shipped_raises(self):
+    def test_cancel_shipped(self):
         order = self._make_order_with_item()
         order.confirm()
         order.ship()
-        with pytest.raises(ValueError, match="cannot be cancelled"):
-            order.cancel()
+        order.cancel()
+        assert order.status == OrderStatus.CANCELLED
 
     def test_cancel_delivered_raises(self):
         order = self._make_order_with_item()

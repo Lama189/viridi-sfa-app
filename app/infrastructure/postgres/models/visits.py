@@ -70,7 +70,18 @@ class Visit(BaseModel):
         cascade="all, delete-orphan",
     )
 
-    orders: Mapped[list[Order]] = relationship(
+    created_orders: Mapped[list[Order]] = relationship(
+        back_populates="source_visit",
+        foreign_keys="Order.source_visit_id",
+    )
+
+    delivered_orders: Mapped[list[Order]] = relationship(
         back_populates="actual_visit",
         foreign_keys="Order.actual_visit_id",
+    )
+
+    orders: Mapped[list[Order]] = relationship(
+        back_populates="source_visit",
+        foreign_keys="Order.source_visit_id",
+        overlaps="created_orders",
     )

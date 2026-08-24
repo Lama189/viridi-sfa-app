@@ -1,9 +1,8 @@
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
-
-from uuid import UUID
 
 from app.api.dependencies import (
     allow_all_staff,

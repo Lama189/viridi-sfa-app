@@ -40,7 +40,8 @@ class PostgresVisitRepository(IVisitRepository):
             .where(VisitModel.id == visit_id)
             .options(
                 joinedload(VisitModel.retail_point),
-                selectinload(VisitModel.orders),
+                selectinload(VisitModel.created_orders),
+                selectinload(VisitModel.delivered_orders),
                 selectinload(VisitModel.debts),
                 selectinload(VisitModel.media),
             )

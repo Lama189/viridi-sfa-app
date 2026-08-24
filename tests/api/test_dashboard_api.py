@@ -161,9 +161,7 @@ async def test_get_daily_report_success(
 
 
 @pytest.mark.asyncio
-async def test_get_daily_report_admin_all_agents(
-    client, mock_dashboard_service
-):
+async def test_get_daily_report_admin_all_agents(client, mock_dashboard_service):
     admin_employee = AuthenticatedEmployee(
         id=uuid4(),
         phone="+998909999999",
@@ -198,9 +196,7 @@ async def test_get_daily_report_admin_all_agents(
 
 
 @pytest.mark.asyncio
-async def test_get_daily_report_admin_specific_agent(
-    client, mock_dashboard_service
-):
+async def test_get_daily_report_admin_specific_agent(client, mock_dashboard_service):
     admin_employee = AuthenticatedEmployee(
         id=uuid4(),
         phone="+998909999999",

@@ -1,11 +1,14 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    DateTime,
     Enum,
     ForeignKey,
     Numeric,
+    func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -49,6 +52,12 @@ class Order(BaseModel):
         nullable=False,
     )
 
+    source_visit_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("visits.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     planned_visit_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("visit_plans.id", ondelete="SET NULL"),
@@ -79,6 +88,19 @@ class Order(BaseModel):
         default=Decimal("0.000"),
     )
 
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
     warehouse: Mapped[Warehouse] = relationship(
         back_populates="orders",
     )
@@ -91,13 +113,18 @@ class Order(BaseModel):
         back_populates="orders",
     )
 
+    source_visit: Mapped[Visit | None] = relationship(
+        back_populates="created_orders",
+        foreign_keys=[source_visit_id],
+    )
+
     planned_visit: Mapped[VisitPlan | None] = relationship(
         back_populates="orders",
         foreign_keys=[planned_visit_id],
     )
 
     actual_visit: Mapped[Visit | None] = relationship(
-        back_populates="orders",
+        back_populates="delivered_orders",
         foreign_keys=[actual_visit_id],
     )
 

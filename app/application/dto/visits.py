@@ -59,6 +59,9 @@ class VisitDetailsDTO:
     retail_point: RetailPointShortDTO
     started_at: datetime | None = None
     finished_at: datetime | None = None
-    orders: list[OrderShortDTO] = field(default_factory=list)
+    created_orders: list[OrderShortDTO] = field(default_factory=list)
+    delivery_orders: list[OrderShortDTO] = field(default_factory=list)
+    active_point_orders: list[OrderShortDTO] = field(default_factory=list)
     debts: list[VisitDebtDTO] = field(default_factory=list)
     media: list[VisitMediaDTO] = field(default_factory=list)
+    orders: list[OrderShortDTO] = field(default_factory=list)

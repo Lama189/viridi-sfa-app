@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -148,6 +148,40 @@ class PostgresOrderRepository(IOrderRepository):
 
         return [self._to_domain(m) for m in result.unique().scalars().all()]
 
+    async def list_by_source_visit(
+        self,
+        source_visit_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        stmt = (
+            select(OrderModel)
+            .options(*self._hydrated_options())
+            .where(OrderModel.source_visit_id == source_visit_id)
+        )
+        if statuses:
+            stmt = stmt.where(OrderModel.status.in_(statuses))
+
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(m) for m in result.unique().scalars().all()]
+
+    async def list_by_actual_visit(
+        self,
+        actual_visit_id: UUID,
+        statuses: list[OrderStatus] | None = None,
+    ) -> list[Order]:
+        stmt = (
+            select(OrderModel)
+            .options(*self._hydrated_options())
+            .where(OrderModel.actual_visit_id == actual_visit_id)
+        )
+        if statuses:
+            stmt = stmt.where(OrderModel.status.in_(statuses))
+
+        result = await self._session.execute(stmt)
+
+        return [self._to_domain(m) for m in result.unique().scalars().all()]
+
     async def update(self, order: Order) -> None:
         await self._session.execute(
             update(OrderModel)
@@ -156,6 +190,7 @@ class PostgresOrderRepository(IOrderRepository):
                 status=order.status,
                 total_amount=order.total_amount,
                 total_volume=order.total_volume,
+                source_visit_id=order.source_visit_id,
                 planned_visit_id=order.planned_visit_id,
                 actual_visit_id=order.actual_visit_id,
             )
@@ -278,6 +313,7 @@ class PostgresOrderRepository(IOrderRepository):
             created_by_id=model.created_by_id,
             retail_point_id=model.retail_point_id,
             id=model.id,
+            source_visit_id=getattr(model, "source_visit_id", None),
             planned_visit_id=model.planned_visit_id,
             planned_delivery_date=planned_delivery_date,
             delivery_agent_name=delivery_agent_name,
@@ -285,8 +321,8 @@ class PostgresOrderRepository(IOrderRepository):
             status=model.status,
             total_amount=model.total_amount,
             total_volume=model.total_volume,
-            created_at=getattr(model, "created_at", None),
-            updated_at=getattr(model, "updated_at", None),
+            created_at=getattr(model, "created_at", None) or datetime.now(UTC),
+            updated_at=getattr(model, "updated_at", None) or datetime.now(UTC),
             items=items,
             retail_point=retail_point_short,
             warehouse=warehouse_short,
@@ -299,9 +335,12 @@ class PostgresOrderRepository(IOrderRepository):
             warehouse_id=order.warehouse_id,
             created_by_id=order.created_by_id,
             retail_point_id=order.retail_point_id,
+            source_visit_id=order.source_visit_id,
             planned_visit_id=order.planned_visit_id,
             actual_visit_id=order.actual_visit_id,
             status=order.status,
             total_amount=order.total_amount,
             total_volume=order.total_volume,
+            created_at=order.created_at,
+            updated_at=order.updated_at,
         )

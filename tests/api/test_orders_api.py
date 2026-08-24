@@ -199,6 +199,90 @@ class TestOrdersClientEndpoints:
         mock_service.create.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_create_order_with_source_visit_id(
+        self, client, mock_service, mock_admin_employee
+    ):
+        app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
+        client_id = uuid4()
+        rpid = uuid4()
+        visit_id = uuid4()
+        from app.domain.entities.retail_point_members import RetailPointMember
+        from app.domain.entities.visits import Visit
+
+        mock_service._uow.visits.get_by_id = AsyncMock(
+            return_value=Visit(
+                id=visit_id,
+                employee_id=mock_admin_employee.id,
+                retail_point_id=rpid,
+            )
+        )
+        mock_service._uow.retail_point_members.get_by_retail_point = AsyncMock(
+            return_value=[RetailPointMember(retail_point_id=rpid, client_id=client_id)]
+        )
+        order = _order_response(client_id=client_id)
+        mock_service.create.return_value = order
+
+        resp = await client.post(
+            "/api/v1/orders",
+            json={
+                "warehouse_id": str(uuid4()),
+                "retail_point_id": str(rpid),
+                "source_visit_id": str(visit_id),
+                "items": [{"product_id": str(uuid4()), "quantity": 5}],
+            },
+        )
+        assert resp.status_code == 201
+        called_dto = mock_service.create.call_args[0][1]
+        assert called_dto.source_visit_id == visit_id
+
+    @pytest.mark.asyncio
+    async def test_create_order_client_forbidden_source_visit(
+        self, client, mock_service, mock_client_entity
+    ):
+        app.dependency_overrides[get_current_user] = lambda: mock_client_entity
+        resp = await client.post(
+            "/api/v1/orders",
+            json={
+                "warehouse_id": str(uuid4()),
+                "retail_point_id": str(uuid4()),
+                "source_visit_id": str(uuid4()),
+                "items": [{"product_id": str(uuid4()), "quantity": 5}],
+            },
+        )
+        assert resp.status_code == 403
+        assert "Clients cannot set source_visit_id" in resp.json()["detail"]
+
+    @pytest.mark.asyncio
+    async def test_create_order_with_actual_visit_id(
+        self, client, mock_service, mock_admin_employee
+    ):
+        app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
+        client_id = uuid4()
+        visit_id = uuid4()
+        from app.domain.entities.retail_point_members import RetailPointMember
+
+        mock_service._uow.retail_point_members.get_by_retail_point = AsyncMock(
+            return_value=[
+                RetailPointMember(retail_point_id=uuid4(), client_id=client_id)
+            ]
+        )
+        order = _order_response(client_id=client_id)
+        mock_service.create.return_value = order
+
+        resp = await client.post(
+            "/api/v1/orders",
+            json={
+                "warehouse_id": str(uuid4()),
+                "retail_point_id": str(uuid4()),
+                "actual_visit_id": str(visit_id),
+                "items": [{"product_id": str(uuid4()), "quantity": 5}],
+            },
+        )
+        assert resp.status_code == 201
+        called_dto = mock_service.create.call_args[0][1]
+        assert called_dto.actual_visit_id == visit_id
+
+    @pytest.mark.asyncio
     async def test_create_order_client_not_found(self, client, mock_service):
         from app.core.exceptions import UserNotFoundError
 

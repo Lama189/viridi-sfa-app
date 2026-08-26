@@ -11,44 +11,14 @@ from app.api.dependencies import (
 )
 from app.api.v1.schemas.visit_plans import (
     GenerateVisitPlanRequest,
-    VisitPlanItemResponse,
-    VisitPlanItemRetailPointResponse,
     VisitPlanResponse,
 )
 from app.application.interfaces.services.routes_generator import IRouteGenerationService
 from app.application.services.visit_plans import VisitPlanService
 from app.domain.entities.auth import AuthenticatedEmployee
-from app.domain.entities.visit_plans import VisitPlan
 from app.domain.enums import RouteGenerationStart
 
 router = APIRouter(prefix="/api/v1/visit-plans", tags=["Visit Plans"])
-
-
-async def _to_response(service: VisitPlanService, plan: VisitPlan) -> VisitPlanResponse:
-    items: list[VisitPlanItemResponse] = []
-
-    for item in plan.items:
-        retail_point = await service._uow.retail_points.get_by_id(item.retail_point_id)
-
-        items.append(
-            VisitPlanItemResponse(
-                order=item.order,
-                status=item.status,
-                retail_point_id=item.retail_point_id,
-                retail_point=VisitPlanItemRetailPointResponse.model_validate(
-                    retail_point
-                ),
-            )
-        )
-
-    return VisitPlanResponse(
-        id=plan.id,
-        employee_id=plan.employee_id,
-        date=plan.plan_date,
-        weekday=plan.weekday,
-        status=plan.status,
-        items=items,
-    )
 
 
 @router.get(
@@ -59,8 +29,7 @@ async def get_today_plan(
     employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
     service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
 ):
-    plan = await service.get_today_plan(employee.id)
-    return await _to_response(service, plan)
+    return await service.get_today_plan_dto(employee.id)
 
 
 @router.get(
@@ -72,8 +41,7 @@ async def get_plan_by_date(
     employee: Annotated[AuthenticatedEmployee, Depends(get_current_employee)],
     service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
 ):
-    plan = await service.get_by_employee_and_date(employee.id, plan_date)
-    return await _to_response(service, plan)
+    return await service.get_plan_by_date_dto(employee.id, plan_date)
 
 
 @router.post(
@@ -86,8 +54,7 @@ async def generate_visit_plan(
     dto: GenerateVisitPlanRequest,
     service: Annotated[VisitPlanService, Depends(get_visit_plans_service)],
 ):
-    plan = await service.generate_for_employee(dto.employee_id, dto.plan_date)
-    return await _to_response(service, plan)
+    return await service.generate_for_employee_dto(dto.employee_id, dto.plan_date)
 
 
 @router.post(

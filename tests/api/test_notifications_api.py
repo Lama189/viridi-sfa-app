@@ -103,34 +103,31 @@ async def test_mark_notification_as_read_success(
         body="Собран заказ",
         is_read=True,
     )
-    mock_notifications_service.get_by_id.return_value = notif
     mock_notifications_service.mark_as_read.return_value = notif
 
     resp = await client.post(f"/api/v1/notifications/{notif.id}/read")
     assert resp.status_code == 200
     assert resp.json()["is_read"] is True
-    mock_notifications_service.mark_as_read.assert_awaited_once_with(notif.id)
+    mock_notifications_service.mark_as_read.assert_awaited_once_with(
+        notification_id=notif.id, employee_id=mock_agent_employee.id
+    )
 
 
 @pytest.mark.asyncio
 async def test_mark_notification_as_read_forbidden_for_other_employee(
     client, mock_notifications_service
 ):
-    notif = Notification(
-        id=uuid4(),
-        employee_id=uuid4(),  # Different employee
-        title="Новый заказ",
-        body="Собран заказ",
+    mock_notifications_service.mark_as_read.side_effect = PermissionError(
+        "Not authorized to access this notification"
     )
-    mock_notifications_service.get_by_id.return_value = notif
 
-    resp = await client.post(f"/api/v1/notifications/{notif.id}/read")
+    resp = await client.post(f"/api/v1/notifications/{uuid4()}/read")
     assert resp.status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_mark_notification_as_read_not_found(client, mock_notifications_service):
-    mock_notifications_service.get_by_id.side_effect = NotificationNotFoundError()
+    mock_notifications_service.mark_as_read.side_effect = NotificationNotFoundError()
 
     resp = await client.post(f"/api/v1/notifications/{uuid4()}/read")
     assert resp.status_code == 404
@@ -151,14 +148,9 @@ async def test_mark_all_as_read(
 async def test_delete_notification_success(
     client, mock_notifications_service, mock_agent_employee
 ):
-    notif = Notification(
-        id=uuid4(),
-        employee_id=mock_agent_employee.id,
-        title="Тест",
-        body="Тест",
-    )
-    mock_notifications_service.get_by_id.return_value = notif
-
-    resp = await client.delete(f"/api/v1/notifications/{notif.id}")
+    notif_id = uuid4()
+    resp = await client.delete(f"/api/v1/notifications/{notif_id}")
     assert resp.status_code == 204
-    mock_notifications_service.delete.assert_awaited_once_with(notif.id)
+    mock_notifications_service.delete.assert_awaited_once_with(
+        notification_id=notif_id, employee_id=mock_agent_employee.id
+    )

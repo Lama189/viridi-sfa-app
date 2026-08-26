@@ -94,6 +94,15 @@ class PostgresRetailPointRepository(IRetailPointRepository):
 
         return self._to_domain(model)
 
+    async def list_by_ids(self, ids: list[UUID]) -> list[RetailPoint]:
+        if not ids:
+            return []
+        stmt = self._with_debts(
+            select(RetailPointModel).where(RetailPointModel.id.in_(ids))
+        )
+        result = await self._session.execute(stmt)
+        return [self._to_domain(m) for m in result.unique().scalars().all()]
+
     async def get_details_by_id(
         self,
         retail_point_id: UUID,

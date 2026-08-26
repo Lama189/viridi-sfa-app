@@ -139,3 +139,103 @@ async def test_generate_routes_admin_start_tomorrow(
     mock_routes_generator_service.generate.assert_awaited_once_with(
         start=RouteGenerationStart.TOMORROW
     )
+
+
+@pytest.mark.asyncio
+async def test_get_today_plan_api(
+    client,
+    mock_visit_plans_service,
+    mock_agent_employee,
+):
+    from datetime import date
+    from app.application.dto.visit_plans import VisitPlanDTO
+    from app.domain.enums import VisitPlanStatus, Weekday
+
+    app.dependency_overrides[get_current_user] = lambda: mock_agent_employee
+    plan_dto = VisitPlanDTO(
+        id=uuid4(),
+        employee_id=mock_agent_employee.id,
+        date=date.today(),
+        weekday=Weekday.MONDAY,
+        status=VisitPlanStatus.PLANNED,
+        items=[],
+    )
+    mock_visit_plans_service.get_today_plan_dto.return_value = plan_dto
+
+    response = await client.get("/api/v1/visit-plans/today")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == str(plan_dto.id)
+    assert data["employee_id"] == str(mock_agent_employee.id)
+    mock_visit_plans_service.get_today_plan_dto.assert_awaited_once_with(
+        mock_agent_employee.id
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_plan_by_date_api(
+    client,
+    mock_visit_plans_service,
+    mock_agent_employee,
+):
+    from datetime import date
+    from app.application.dto.visit_plans import VisitPlanDTO
+    from app.domain.enums import VisitPlanStatus, Weekday
+
+    app.dependency_overrides[get_current_user] = lambda: mock_agent_employee
+    target_date = date(2026, 8, 26)
+    plan_dto = VisitPlanDTO(
+        id=uuid4(),
+        employee_id=mock_agent_employee.id,
+        date=target_date,
+        weekday=Weekday.WEDNESDAY,
+        status=VisitPlanStatus.PLANNED,
+        items=[],
+    )
+    mock_visit_plans_service.get_plan_by_date_dto.return_value = plan_dto
+
+    response = await client.get(f"/api/v1/visit-plans/{target_date}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == str(plan_dto.id)
+    mock_visit_plans_service.get_plan_by_date_dto.assert_awaited_once_with(
+        mock_agent_employee.id, target_date
+    )
+
+
+@pytest.mark.asyncio
+async def test_generate_visit_plan_api(
+    client,
+    mock_visit_plans_service,
+    mock_admin_employee,
+):
+    from datetime import date
+    from app.application.dto.visit_plans import VisitPlanDTO
+    from app.domain.enums import VisitPlanStatus, Weekday
+
+    app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
+    target_date = date(2026, 8, 27)
+    emp_id = uuid4()
+    plan_dto = VisitPlanDTO(
+        id=uuid4(),
+        employee_id=emp_id,
+        date=target_date,
+        weekday=Weekday.THURSDAY,
+        status=VisitPlanStatus.PLANNED,
+        items=[],
+    )
+    mock_visit_plans_service.generate_for_employee_dto.return_value = plan_dto
+
+    response = await client.post(
+        "/api/v1/visit-plans/generate",
+        json={"employee_id": str(emp_id), "plan_date": "2026-08-27"},
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["id"] == str(plan_dto.id)
+    mock_visit_plans_service.generate_for_employee_dto.assert_awaited_once_with(
+        emp_id, target_date
+    )

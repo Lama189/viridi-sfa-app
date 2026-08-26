@@ -14,7 +14,13 @@ from app.application.interfaces.services.delivery_assignments import (
 )
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.uow import IUnitOfWork
-from app.core.exceptions import UserNotActiveError, UserNotFoundError
+from app.core.exceptions import (
+    InvalidOrderStatusError,
+    UserNotActiveError,
+    UserNotFoundError,
+)
+from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
+from app.domain.entities.clients import Client
 from app.domain.entities.inventory import Product
 from app.domain.entities.orders import (
     Order,
@@ -25,6 +31,7 @@ from app.domain.entities.orders import (
     WarehouseShort,
 )
 from app.domain.entities.outbox_messages import OutboxMessage
+from app.domain.entities.retail_point_members import RetailPointMember
 from app.domain.enums import (
     AggregateType,
     OrderEventType,
@@ -32,6 +39,18 @@ from app.domain.enums import (
     StockReferenceType,
     TransactionActorType,
 )
+
+
+def parse_order_statuses(statuses: list[str] | None) -> list[OrderStatus] | None:
+    if not statuses:
+        return None
+    parsed: list[OrderStatus] = []
+    for st in statuses:
+        try:
+            parsed.append(OrderStatus(st))
+        except ValueError:
+            raise InvalidOrderStatusError()
+    return parsed
 
 
 class OrdersService:
@@ -621,3 +640,136 @@ class OrdersService:
         await self._uow.commit()
 
         return order
+
+    async def create_order(
+        self,
+        user: AuthenticatedClient | AuthenticatedEmployee,
+        dto: OrderCreateDTO,
+    ) -> Order:
+        warehouse_id = dto.warehouse_id
+        retail_point_id = dto.retail_point_id
+
+        if isinstance(user, AuthenticatedClient):
+            if retail_point_id is None and user.telegram_chat_id:
+                member = await self._uow.retail_point_members.get_by_telegram_id(
+                    user.telegram_chat_id
+                )
+                if member:
+                    retail_point_id = member.retail_point_id
+
+            if dto.source_visit_id is not None:
+                raise PermissionError("Clients cannot set source_visit_id")
+
+            if retail_point_id is None:
+                raise ValueError("Retail point ID is required")
+
+            is_member = await self._uow.retail_point_members.exists(
+                retail_point_id, user.id
+            )
+            if not is_member:
+                raise PermissionError("Not your retail point")
+            client_id = user.id
+        else:
+            if retail_point_id is None:
+                raise ValueError("Retail point ID is required")
+
+            if dto.source_visit_id:
+                source_visit = await self._uow.visits.get_by_id(dto.source_visit_id)
+                if source_visit is None:
+                    raise ValueError(f"Source visit {dto.source_visit_id} not found")
+                if source_visit.employee_id != user.id:
+                    raise PermissionError("Source visit does not belong to you")
+                if source_visit.retail_point_id != retail_point_id:
+                    raise ValueError("Source visit does not match retail point")
+
+            members = await self._uow.retail_point_members.get_by_retail_point(
+                retail_point_id
+            )
+            if members:
+                client_id = members[0].client_id
+            else:
+                rp = await self._uow.retail_points.get_by_id(retail_point_id)
+                if rp is None:
+                    raise ValueError(f"Retail point {retail_point_id} not found")
+                client = None
+                if rp.phone_number:
+                    client = await self._uow.clients.get_by_phone(rp.phone_number)
+                if client is None:
+                    phone = rp.phone_number or f"+99899{str(retail_point_id.int)[:7]}"
+                    client = Client(
+                        phone=phone,
+                        full_name=rp.contact_person or rp.name,
+                        is_active=True,
+                    )
+                    await self._uow.clients.add(client)
+                await self._uow.retail_point_members.add(
+                    RetailPointMember(
+                        retail_point_id=retail_point_id,
+                        client_id=client.id,
+                    )
+                )
+                client_id = client.id
+
+        if warehouse_id is None:
+            active_warehouses = await self._uow.warehouses.list(is_active=True)
+            if active_warehouses:
+                warehouse_id = active_warehouses[0].id
+
+        if warehouse_id is None:
+            raise ValueError("No active warehouse found for the order")
+
+        resolved_dto = OrderCreateDTO(
+            warehouse_id=warehouse_id,
+            retail_point_id=retail_point_id,
+            source_visit_id=dto.source_visit_id,
+            planned_visit_id=dto.planned_visit_id,
+            actual_visit_id=dto.actual_visit_id,
+            items=dto.items,
+        )
+        return await self.create(client_id, resolved_dto)
+
+    async def get_order_for_user(
+        self,
+        order_id: UUID,
+        user: AuthenticatedEmployee | AuthenticatedClient,
+    ) -> Order:
+        order = await self.get_by_id(order_id)
+        if isinstance(user, AuthenticatedClient) and order.created_by_id != user.id:
+            is_member = await self._uow.retail_point_members.exists(
+                order.retail_point_id, user.id
+            )
+            if not is_member:
+                raise PermissionError("Not your order")
+        return order
+
+    async def cancel_for_client(
+        self,
+        order_id: UUID,
+        client_id: UUID,
+    ) -> Order:
+        order = await self.get_by_id(order_id)
+        if order.created_by_id != client_id:
+            is_member = await self._uow.retail_point_members.exists(
+                order.retail_point_id, client_id
+            )
+            if not is_member:
+                raise PermissionError("Not your order")
+        return await self.cancel(order_id)
+
+    async def deliver_for_user(
+        self,
+        order_id: UUID,
+        user: AuthenticatedEmployee | AuthenticatedClient,
+        visit_id: UUID | None = None,
+    ) -> Order:
+        order = await self.get_by_id(order_id)
+        if isinstance(user, AuthenticatedClient) and order.created_by_id != user.id:
+            is_member = await self._uow.retail_point_members.exists(
+                order.retail_point_id, user.id
+            )
+            if not is_member:
+                raise PermissionError("Not your order")
+        employee_id = user.id if isinstance(user, AuthenticatedEmployee) else None
+        return await self.deliver(
+            order_id, employee_id=employee_id, visit_id=visit_id
+        )

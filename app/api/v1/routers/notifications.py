@@ -65,13 +65,14 @@ async def mark_notification_as_read(
     service: Annotated[NotificationsService, Depends(get_notifications_service)],
 ):
     try:
-        notification = await service.get_by_id(notification_id)
-        if notification.employee_id != employee.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to access this notification",
-            )
-        return await service.mark_as_read(notification_id)
+        return await service.mark_as_read(
+            notification_id=notification_id, employee_id=employee.id
+        )
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
     except NotificationNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -100,13 +101,12 @@ async def delete_notification(
     service: Annotated[NotificationsService, Depends(get_notifications_service)],
 ):
     try:
-        notification = await service.get_by_id(notification_id)
-        if notification.employee_id != employee.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to access this notification",
-            )
-        await service.delete(notification_id)
+        await service.delete(notification_id=notification_id, employee_id=employee.id)
+    except PermissionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        )
     except NotificationNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

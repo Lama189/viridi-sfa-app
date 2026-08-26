@@ -99,20 +99,36 @@ async def test_count_unread_by_employee(service, mock_uow):
 @pytest.mark.asyncio
 async def test_mark_as_read(service, mock_uow):
     notif_id = uuid4()
+    emp_id = uuid4()
     notification = Notification(
         id=notif_id,
-        employee_id=uuid4(),
+        employee_id=emp_id,
         title="Тест",
         body="Тело",
         is_read=False,
     )
     mock_uow.notifications.get_by_id.return_value = notification
 
-    result = await service.mark_as_read(notif_id)
+    result = await service.mark_as_read(notif_id, employee_id=emp_id)
     assert result.is_read is True
     assert result.read_at is not None
     mock_uow.notifications.update.assert_awaited_once_with(notification)
     mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_mark_as_read_forbidden_for_other_employee(service, mock_uow):
+    notif_id = uuid4()
+    notification = Notification(
+        id=notif_id,
+        employee_id=uuid4(),
+        title="Тест",
+        body="Тело",
+    )
+    mock_uow.notifications.get_by_id.return_value = notification
+
+    with pytest.raises(PermissionError, match="Not authorized"):
+        await service.mark_as_read(notif_id, employee_id=uuid4())
 
 
 @pytest.mark.asyncio
@@ -126,6 +142,23 @@ async def test_mark_all_as_read(service, mock_uow):
 @pytest.mark.asyncio
 async def test_delete(service, mock_uow):
     notif_id = uuid4()
+    emp_id = uuid4()
+    notification = Notification(
+        id=notif_id,
+        employee_id=emp_id,
+        title="Тест",
+        body="Тело",
+    )
+    mock_uow.notifications.get_by_id.return_value = notification
+
+    await service.delete(notif_id, employee_id=emp_id)
+    mock_uow.notifications.delete.assert_awaited_once_with(notif_id)
+    mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_forbidden_for_other_employee(service, mock_uow):
+    notif_id = uuid4()
     notification = Notification(
         id=notif_id,
         employee_id=uuid4(),
@@ -134,6 +167,5 @@ async def test_delete(service, mock_uow):
     )
     mock_uow.notifications.get_by_id.return_value = notification
 
-    await service.delete(notif_id)
-    mock_uow.notifications.delete.assert_awaited_once_with(notif_id)
-    mock_uow.commit.assert_awaited_once()
+    with pytest.raises(PermissionError, match="Not authorized"):
+        await service.delete(notif_id, employee_id=uuid4())

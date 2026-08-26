@@ -29,7 +29,6 @@ from app.main import app
 @pytest.fixture
 def mock_service():
     service = AsyncMock()
-    service._uow.retail_point_members.exists = AsyncMock(return_value=True)
     return service
 
 
@@ -138,7 +137,7 @@ class TestOrdersClientEndpoints:
     @pytest.mark.asyncio
     async def test_create_order_success(self, client, mock_service, mock_client_entity):
         order = _order_response(client_id=mock_client_entity.id)
-        mock_service.create.return_value = order
+        mock_service.create_order.return_value = order
 
         resp = await client.post(
             "/api/v1/orders",
@@ -157,7 +156,7 @@ class TestOrdersClientEndpoints:
     async def test_create_order_client_forbidden_not_member(
         self, client, mock_service, mock_client_entity
     ):
-        mock_service._uow.retail_point_members.exists = AsyncMock(return_value=False)
+        mock_service.create_order.side_effect = PermissionError("Not your retail point")
 
         resp = await client.post(
             "/api/v1/orders",
@@ -176,15 +175,8 @@ class TestOrdersClientEndpoints:
     ):
         app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
         client_id = uuid4()
-        from app.domain.entities.retail_point_members import RetailPointMember
-
-        mock_service._uow.retail_point_members.get_by_retail_point = AsyncMock(
-            return_value=[
-                RetailPointMember(retail_point_id=uuid4(), client_id=client_id)
-            ]
-        )
         order = _order_response(client_id=client_id)
-        mock_service.create.return_value = order
+        mock_service.create_order.return_value = order
 
         resp = await client.post(
             "/api/v1/orders",
@@ -196,7 +188,7 @@ class TestOrdersClientEndpoints:
         )
         assert resp.status_code == 201
         assert resp.json()["status"] == OrderStatus.PENDING.value
-        mock_service.create.assert_awaited_once()
+        mock_service.create_order.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_create_order_with_source_visit_id(
@@ -206,21 +198,8 @@ class TestOrdersClientEndpoints:
         client_id = uuid4()
         rpid = uuid4()
         visit_id = uuid4()
-        from app.domain.entities.retail_point_members import RetailPointMember
-        from app.domain.entities.visits import Visit
-
-        mock_service._uow.visits.get_by_id = AsyncMock(
-            return_value=Visit(
-                id=visit_id,
-                employee_id=mock_admin_employee.id,
-                retail_point_id=rpid,
-            )
-        )
-        mock_service._uow.retail_point_members.get_by_retail_point = AsyncMock(
-            return_value=[RetailPointMember(retail_point_id=rpid, client_id=client_id)]
-        )
         order = _order_response(client_id=client_id)
-        mock_service.create.return_value = order
+        mock_service.create_order.return_value = order
 
         resp = await client.post(
             "/api/v1/orders",
@@ -232,7 +211,7 @@ class TestOrdersClientEndpoints:
             },
         )
         assert resp.status_code == 201
-        called_dto = mock_service.create.call_args[0][1]
+        called_dto = mock_service.create_order.call_args[0][1]
         assert called_dto.source_visit_id == visit_id
 
     @pytest.mark.asyncio
@@ -240,6 +219,9 @@ class TestOrdersClientEndpoints:
         self, client, mock_service, mock_client_entity
     ):
         app.dependency_overrides[get_current_user] = lambda: mock_client_entity
+        mock_service.create_order.side_effect = PermissionError(
+            "Clients cannot set source_visit_id"
+        )
         resp = await client.post(
             "/api/v1/orders",
             json={
@@ -259,15 +241,8 @@ class TestOrdersClientEndpoints:
         app.dependency_overrides[get_current_user] = lambda: mock_admin_employee
         client_id = uuid4()
         visit_id = uuid4()
-        from app.domain.entities.retail_point_members import RetailPointMember
-
-        mock_service._uow.retail_point_members.get_by_retail_point = AsyncMock(
-            return_value=[
-                RetailPointMember(retail_point_id=uuid4(), client_id=client_id)
-            ]
-        )
         order = _order_response(client_id=client_id)
-        mock_service.create.return_value = order
+        mock_service.create_order.return_value = order
 
         resp = await client.post(
             "/api/v1/orders",
@@ -279,14 +254,14 @@ class TestOrdersClientEndpoints:
             },
         )
         assert resp.status_code == 201
-        called_dto = mock_service.create.call_args[0][1]
+        called_dto = mock_service.create_order.call_args[0][1]
         assert called_dto.actual_visit_id == visit_id
 
     @pytest.mark.asyncio
     async def test_create_order_client_not_found(self, client, mock_service):
         from app.core.exceptions import UserNotFoundError
 
-        mock_service.create.side_effect = UserNotFoundError()
+        mock_service.create_order.side_effect = UserNotFoundError()
 
         resp = await client.post(
             "/api/v1/orders",
@@ -300,7 +275,7 @@ class TestOrdersClientEndpoints:
 
     @pytest.mark.asyncio
     async def test_create_order_validation_error(self, client, mock_service):
-        mock_service.create.side_effect = ValueError("Warehouse is inactive")
+        mock_service.create_order.side_effect = ValueError("Warehouse is inactive")
 
         resp = await client.post(
             "/api/v1/orders",
@@ -319,7 +294,7 @@ class TestOrdersClientEndpoints:
         order = _order_response(client_id=mock_client_entity.id)
         order.planned_delivery_date = date(2026, 8, 26)
         order.delivery_agent_name = "Жасур Каримов"
-        mock_service.get_by_id = AsyncMock(return_value=order)
+        mock_service.get_order_for_user = AsyncMock(return_value=order)
 
         resp = await client.get(f"/api/v1/orders/{order.id}")
         assert resp.status_code == 200
@@ -330,18 +305,20 @@ class TestOrdersClientEndpoints:
     @pytest.mark.asyncio
     async def test_get_order_not_found(self, client, mock_service):
 
-        mock_service.get_by_id = AsyncMock(side_effect=ValueError("Order not found"))
+        mock_service.get_order_for_user = AsyncMock(
+            side_effect=ValueError("Order not found")
+        )
 
         resp = await client.get(f"/api/v1/orders/{uuid4()}")
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
     async def test_get_order_forbidden(self, client, mock_service):
-        order = _order_response(client_id=uuid4())
-        mock_service.get_by_id = AsyncMock(return_value=order)
-        mock_service._uow.retail_point_members.exists = AsyncMock(return_value=False)
+        mock_service.get_order_for_user = AsyncMock(
+            side_effect=PermissionError("Not your order")
+        )
 
-        resp = await client.get(f"/api/v1/orders/{order.id}")
+        resp = await client.get(f"/api/v1/orders/{uuid4()}")
         assert resp.status_code == 403
 
     # --- DELETE /api/v1/orders/{order_id} ---
@@ -351,37 +328,38 @@ class TestOrdersClientEndpoints:
         self, client, mock_service, mock_client_entity
     ):
         order = _order_response(client_id=mock_client_entity.id)
-        mock_service.get_by_id = AsyncMock(return_value=order)
-        mock_service.cancel = AsyncMock()
+        mock_service.cancel_for_client = AsyncMock(return_value=order)
 
         resp = await client.delete(f"/api/v1/orders/{order.id}")
         assert resp.status_code == 204
 
     @pytest.mark.asyncio
     async def test_cancel_order_by_client_not_found(self, client, mock_service):
-        mock_service.get_by_id = AsyncMock(side_effect=ValueError("Order not found"))
+        mock_service.cancel_for_client = AsyncMock(
+            side_effect=ValueError("Order not found")
+        )
 
         resp = await client.delete(f"/api/v1/orders/{uuid4()}")
         assert resp.status_code == 404
 
     @pytest.mark.asyncio
     async def test_cancel_order_by_client_forbidden(self, client, mock_service):
-        order = _order_response(client_id=uuid4())
-        mock_service.get_by_id = AsyncMock(return_value=order)
-        mock_service._uow.retail_point_members.exists = AsyncMock(return_value=False)
+        mock_service.cancel_for_client = AsyncMock(
+            side_effect=PermissionError("Not your order")
+        )
 
-        resp = await client.delete(f"/api/v1/orders/{order.id}")
+        resp = await client.delete(f"/api/v1/orders/{uuid4()}")
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
     async def test_cancel_order_by_client_value_error(
         self, client, mock_service, mock_client_entity
     ):
-        order = _order_response(client_id=mock_client_entity.id)
-        mock_service.get_by_id = AsyncMock(return_value=order)
-        mock_service.cancel.side_effect = ValueError("Cannot confirm order")
+        mock_service.cancel_for_client = AsyncMock(
+            side_effect=ValueError("Cannot confirm order")
+        )
 
-        resp = await client.delete(f"/api/v1/orders/{order.id}")
+        resp = await client.delete(f"/api/v1/orders/{uuid4()}")
         assert resp.status_code == 400
 
     # --- POST /api/v1/orders/{order_id}/deliver (by client) ---
@@ -393,28 +371,29 @@ class TestOrdersClientEndpoints:
         order = _order_response(
             client_id=mock_client_entity.id, status=OrderStatus.DELIVERED
         )
-        mock_service.get_by_id = AsyncMock(return_value=order)
-        mock_service.deliver = AsyncMock(return_value=order)
+        mock_service.deliver_for_user = AsyncMock(return_value=order)
 
         resp = await client.post(f"/api/v1/orders/{order.id}/deliver")
         assert resp.status_code == 200
         assert resp.json()["status"] == OrderStatus.DELIVERED.value
-        mock_service.deliver.assert_awaited_once_with(
-            order.id, employee_id=None, visit_id=None
+        mock_service.deliver_for_user.assert_awaited_once_with(
+            order_id=order.id, user=mock_client_entity, visit_id=None
         )
 
     @pytest.mark.asyncio
     async def test_deliver_order_by_client_forbidden(self, client, mock_service):
-        order = _order_response(client_id=uuid4())
-        mock_service.get_by_id = AsyncMock(return_value=order)
-        mock_service._uow.retail_point_members.exists = AsyncMock(return_value=False)
+        mock_service.deliver_for_user = AsyncMock(
+            side_effect=PermissionError("Not your order")
+        )
 
-        resp = await client.post(f"/api/v1/orders/{order.id}/deliver")
+        resp = await client.post(f"/api/v1/orders/{uuid4()}/deliver")
         assert resp.status_code == 403
 
     @pytest.mark.asyncio
     async def test_deliver_order_by_client_not_found(self, client, mock_service):
-        mock_service.get_by_id = AsyncMock(side_effect=ValueError("Order not found"))
+        mock_service.deliver_for_user = AsyncMock(
+            side_effect=ValueError("Order not found")
+        )
 
         resp = await client.post(f"/api/v1/orders/{uuid4()}/deliver")
         assert resp.status_code == 404

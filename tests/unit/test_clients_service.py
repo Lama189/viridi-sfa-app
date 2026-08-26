@@ -202,3 +202,38 @@ async def test_delete_client_not_found(service, mock_uow):
         await service.delete_client(uuid4())
 
     mock_uow.clients.delete.assert_not_awaited()
+
+
+# --- get_by_telegram_chat_id_with_membership ---
+
+
+@pytest.mark.asyncio
+async def test_get_by_telegram_chat_id_with_membership_found(service, mock_uow):
+    from app.domain.entities.retail_point_members import RetailPointMember
+
+    uid = uuid4()
+    rpid = uuid4()
+    mock_uow.clients.get_by_telegram_chat_id.return_value = Client(
+        phone="+998901234567",
+        full_name="TG Client",
+        telegram_chat_id=123456,
+        id=uid,
+    )
+    mock_uow.retail_point_members.get_by_telegram_id.return_value = RetailPointMember(
+        retail_point_id=rpid,
+        client_id=uid,
+    )
+
+    result = await service.get_by_telegram_chat_id_with_membership(123456)
+    assert result is not None
+    client, retail_point_id = result
+    assert client.id == uid
+    assert retail_point_id == rpid
+
+
+@pytest.mark.asyncio
+async def test_get_by_telegram_chat_id_with_membership_not_found(service, mock_uow):
+    mock_uow.clients.get_by_telegram_chat_id.return_value = None
+
+    result = await service.get_by_telegram_chat_id_with_membership(999999)
+    assert result is None

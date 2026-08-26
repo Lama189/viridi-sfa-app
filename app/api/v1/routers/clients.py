@@ -1,7 +1,6 @@
 from typing import Annotated
 from uuid import UUID
 
-from aiohttp import ClientError, ClientSession, ClientTimeout
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
@@ -32,39 +31,13 @@ from app.application.services.clients import (
     ClientsService,
 )
 from app.application.services.members import RetailPointMembersService
-from app.application.services.orders import OrdersService
+from app.application.services.orders import OrdersService, parse_order_statuses
 from app.core.config import get_settings
-from app.core.exceptions import DomainError, InvalidOrderStatusError, UserNotFoundError
-from app.core.observability.logging import logger
+from app.core.exceptions import DomainError, UserNotFoundError
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
-from app.domain.enums import OrderStatus
+from app.infrastructure.telegram import send_telegram_notification
 
 router = APIRouter(prefix="/api/v1/clients", tags=["Clients"])
-
-
-async def _send_telegram_notification(
-    chat_id: int | None, text: str, token: str
-) -> None:
-    if not token or not chat_id or not isinstance(chat_id, int):
-        return
-    try:
-        async with (
-            ClientSession(timeout=ClientTimeout(total=5.0)) as session,
-            session.post(
-                f"https://api.telegram.org/bot{token}/sendMessage",
-                json={
-                    "chat_id": chat_id,
-                    "text": text,
-                },
-            ),
-        ):
-            pass
-    except (ClientError, OSError) as exc:
-        logger.warning(
-            "Failed to send telegram exit notification",
-            chat_id=chat_id,
-            error=str(exc),
-        )
 
 
 @router.post(
@@ -135,23 +108,22 @@ async def get_by_telegram_chat_id(
     telegram_chat_id: int,
     service: Annotated[ClientsService, Depends(get_clients_service)],
 ):
-    client = await service.get_by_telegram_chat_id(telegram_chat_id)
-    if client is None:
+    result = await service.get_by_telegram_chat_id_with_membership(telegram_chat_id)
+    if result is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Client not found",
         )
-    membership = await service._uow.retail_point_members.get_by_telegram_id(
-        telegram_chat_id
-    )
+    
+    client, retail_point_id = result
     return ClientResponse(
         id=client.id,
         phone=client.phone,
         full_name=client.full_name,
         telegram_chat_id=client.telegram_chat_id,
         is_active=client.is_active,
-        has_retail_point=membership is not None,
-        retail_point_id=membership.retail_point_id if membership else None,
+        has_retail_point=retail_point_id is not None,
+        retail_point_id=retail_point_id,
     )
 
 
@@ -181,7 +153,7 @@ async def leave_retail_point(
 
         if client and client.telegram_chat_id:
             settings = get_settings()
-            await _send_telegram_notification(
+            await send_telegram_notification(
                 chat_id=client.telegram_chat_id,
                 text=(
                     "🚪 Вы успешно вышли из торговой точки.\n\n"
@@ -261,16 +233,9 @@ async def list_client_orders(
             detail="Client not found",
         )
 
-    parsed_statuses: list[OrderStatus] | None = None
-    if statuses:
-        parsed_statuses = []
-        for st in statuses:
-            try:
-                parsed_statuses.append(OrderStatus(st))
-            except ValueError:
-                raise InvalidOrderStatusError()
-
-    return await service.list_by_client(client_id=client_id, statuses=parsed_statuses)
+    return await service.list_by_client(
+        client_id=client_id, statuses=parse_order_statuses(statuses)
+    )
 
 
 @router.get(
@@ -299,17 +264,8 @@ async def list_client_retail_point_orders(
             detail="Client not found",
         )
 
-    parsed_statuses: list[OrderStatus] | None = None
-    if statuses:
-        parsed_statuses = []
-        for st in statuses:
-            try:
-                parsed_statuses.append(OrderStatus(st))
-            except ValueError:
-                raise InvalidOrderStatusError()
-
     return await service.list_by_client_retail_point(
-        client_id=client_id, statuses=parsed_statuses
+        client_id=client_id, statuses=parse_order_statuses(statuses)
     )
 
 

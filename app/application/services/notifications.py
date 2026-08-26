@@ -50,8 +50,13 @@ class NotificationsService(INotificationsService):
     async def count_unread_by_employee(self, employee_id: UUID) -> int:
         return await self._uow.notifications.count_unread_by_employee(employee_id)
 
-    async def mark_as_read(self, notification_id: UUID) -> Notification:
+    async def mark_as_read(
+        self, notification_id: UUID, employee_id: UUID | None = None
+    ) -> Notification:
         notification = await self.get_by_id(notification_id)
+
+        if employee_id is not None and notification.employee_id != employee_id:
+            raise PermissionError("Not authorized to access this notification")
         notification.mark_as_read()
 
         await self._uow.notifications.update(notification)
@@ -64,7 +69,13 @@ class NotificationsService(INotificationsService):
         await self._uow.notifications.mark_all_as_read(employee_id)
         await self._uow.commit()
 
-    async def delete(self, notification_id: UUID) -> None:
+    async def delete(
+        self, notification_id: UUID, employee_id: UUID | None = None
+    ) -> None:
         notification = await self.get_by_id(notification_id)
+
+        if employee_id is not None and notification.employee_id != employee_id:
+            raise PermissionError("Not authorized to access this notification")
+        
         await self._uow.notifications.delete(notification.id)
         await self._uow.commit()

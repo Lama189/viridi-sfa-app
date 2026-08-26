@@ -91,3 +91,10 @@ class IRetailPointRepository(ABC):
         offset: int = 0,
     ) -> list[RetailPointDebtorDTO]:
         raise NotImplementedError
+
+    @abstractmethod
+    async def list_by_ids(
+        self,
+        ids: list[UUID],
+    ) -> list[RetailPoint]:
+        raise NotImplementedError

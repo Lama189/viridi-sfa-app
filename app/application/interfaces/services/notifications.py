@@ -29,7 +29,9 @@ class INotificationsService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def mark_as_read(self, notification_id: UUID) -> Notification:
+    async def mark_as_read(
+        self, notification_id: UUID, employee_id: UUID | None = None
+    ) -> Notification:
         raise NotImplementedError
 
     @abstractmethod
@@ -37,5 +39,7 @@ class INotificationsService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete(self, notification_id: UUID) -> None:
+    async def delete(
+        self, notification_id: UUID, employee_id: UUID | None = None
+    ) -> None:
         raise NotImplementedError

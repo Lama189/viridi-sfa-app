@@ -120,3 +120,30 @@ async def test_get_today_plan(service, mock_uow):
     result = await service.get_today_plan(emp_id)
 
     assert result == plan
+
+
+@pytest.mark.asyncio
+async def test_enrich_plan_and_get_today_plan_dto(service, mock_uow):
+    from app.domain.entities.visit_plan_items import VisitPlanItem
+
+    emp_id = uuid4()
+    today = date.today()
+    plan = VisitPlan(employee_id=emp_id, plan_date=today)
+    rp_id = uuid4()
+    item = VisitPlanItem(visit_plan_id=plan.id, retail_point_id=rp_id, order=1)
+    plan.items = [item]
+
+    mock_uow.visit_plans.get_by_employee_and_date.return_value = plan
+    mock_uow.visit_plan_items.list_by_plan.return_value = [item]
+    mock_uow.retail_points.list_by_ids.return_value = [
+        RetailPoint(id=rp_id, name="Test Point", address="Test Addr")
+    ]
+
+    dto = await service.get_today_plan_dto(emp_id)
+
+    assert dto.id == plan.id
+    assert dto.employee_id == emp_id
+    assert len(dto.items) == 1
+    assert dto.items[0].retail_point is not None
+    assert dto.items[0].retail_point.name == "Test Point"
+    assert dto.items[0].retail_point.address == "Test Addr"

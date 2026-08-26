@@ -369,3 +369,34 @@ async def test_join_by_invite_success(client, mock_auth_service):
     data = resp.json()
     assert data["access_token"] == "access"
     assert data["client"]["id"] == str(cid)
+
+
+@pytest.mark.asyncio
+async def test_get_by_telegram_chat_id_success(client, mock_service):
+    cid = uuid4()
+    rpid = uuid4()
+    mock_service.get_by_telegram_chat_id_with_membership.return_value = (
+        Client(
+            id=cid,
+            phone="+998901234567",
+            full_name="Telegram User",
+            telegram_chat_id=123456,
+            is_active=True,
+        ),
+        rpid,
+    )
+
+    resp = await client.get("/api/v1/clients/by-telegram/123456")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == str(cid)
+    assert data["has_retail_point"] is True
+    assert data["retail_point_id"] == str(rpid)
+
+
+@pytest.mark.asyncio
+async def test_get_by_telegram_chat_id_not_found(client, mock_service):
+    mock_service.get_by_telegram_chat_id_with_membership.return_value = None
+
+    resp = await client.get("/api/v1/clients/by-telegram/999999")
+    assert resp.status_code == 404

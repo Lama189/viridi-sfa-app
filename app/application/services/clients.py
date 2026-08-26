@@ -40,6 +40,18 @@ class ClientsService:
     async def get_by_telegram_chat_id(self, telegram_chat_id: int) -> Client | None:
         return await self._uow.clients.get_by_telegram_chat_id(telegram_chat_id)
 
+    async def get_by_telegram_chat_id_with_membership(
+        self, telegram_chat_id: int
+    ) -> tuple[Client, UUID | None] | None:
+        client = await self.get_by_telegram_chat_id(telegram_chat_id)
+        if client is None:
+            return None
+        membership = await self._uow.retail_point_members.get_by_telegram_id(
+            telegram_chat_id
+        )
+        retail_point_id = membership.retail_point_id if membership else None
+        return client, retail_point_id
+
     async def list_clients(self, only_active: bool = True) -> list[Client]:
         return await self._uow.clients.list_all(only_active)
 

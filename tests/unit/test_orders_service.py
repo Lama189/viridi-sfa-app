@@ -768,6 +768,107 @@ class TestOrdersServiceLoad:
         mock_uow.commit.assert_awaited_once()
 
 
+class TestOrdersServiceUserOperations:
+    @pytest.mark.asyncio
+    async def test_parse_order_statuses(self):
+        from app.application.services.orders import parse_order_statuses
+        from app.core.exceptions import InvalidOrderStatusError
+
+        assert parse_order_statuses(None) is None
+        assert parse_order_statuses([]) is None
+        assert parse_order_statuses(["pending", "confirmed"]) == [
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+        ]
+        with pytest.raises(InvalidOrderStatusError):
+            parse_order_statuses(["invalid_status"])
+
+    @pytest.mark.asyncio
+    async def test_get_order_for_user_client_own_order(self, service, mock_uow):
+        from app.domain.entities.auth import AuthenticatedClient
+
+        cid = uuid4()
+        user = AuthenticatedClient(
+            id=cid, phone="+998901111111", full_name="Client", is_active=True
+        )
+        order = _pending_order_with_item()
+        order.created_by_id = cid
+        mock_uow.orders.get_by_id.return_value = order
+
+        result = await service.get_order_for_user(order.id, user)
+        assert result == order
+
+    @pytest.mark.asyncio
+    async def test_get_order_for_user_client_member_success(self, service, mock_uow):
+        from app.domain.entities.auth import AuthenticatedClient
+
+        cid = uuid4()
+        user = AuthenticatedClient(
+            id=cid, phone="+998901111111", full_name="Client", is_active=True
+        )
+        order = _pending_order_with_item()
+        mock_uow.orders.get_by_id.return_value = order
+        mock_uow.retail_point_members.exists.return_value = True
+
+        result = await service.get_order_for_user(order.id, user)
+        assert result == order
+
+    @pytest.mark.asyncio
+    async def test_get_order_for_user_client_forbidden(self, service, mock_uow):
+        from app.domain.entities.auth import AuthenticatedClient
+
+        cid = uuid4()
+        user = AuthenticatedClient(
+            id=cid, phone="+998901111111", full_name="Client", is_active=True
+        )
+        order = _pending_order_with_item()
+        mock_uow.orders.get_by_id.return_value = order
+        mock_uow.retail_point_members.exists.return_value = False
+
+        with pytest.raises(PermissionError, match="Not your order"):
+            await service.get_order_for_user(order.id, user)
+
+    @pytest.mark.asyncio
+    async def test_cancel_for_client_success(self, service, mock_uow, mock_stocks):
+        cid = uuid4()
+        order = _pending_order_with_item()
+        order.created_by_id = cid
+        mock_uow.orders.get_by_id.return_value = order
+
+        result = await service.cancel_for_client(order.id, cid)
+        assert result.status == OrderStatus.CANCELLED
+
+    @pytest.mark.asyncio
+    async def test_cancel_for_client_forbidden(self, service, mock_uow):
+        cid = uuid4()
+        order = _pending_order_with_item()
+        mock_uow.orders.get_by_id.return_value = order
+        mock_uow.retail_point_members.exists.return_value = False
+
+        with pytest.raises(PermissionError, match="Not your order"):
+            await service.cancel_for_client(order.id, cid)
+
+    @pytest.mark.asyncio
+    async def test_deliver_for_user_employee(self, service, mock_uow, mock_stocks):
+        from app.domain.entities.auth import AuthenticatedEmployee
+        from app.domain.enums import EmployeeRole
+
+        emp_id = uuid4()
+        user = AuthenticatedEmployee(
+            id=emp_id,
+            phone="+998901111111",
+            full_name="Agent",
+            role=EmployeeRole.AGENT,
+            is_active=True,
+        )
+        order = _pending_order_with_item()
+        mock_uow.orders.get_by_id.return_value = order
+        mock_uow.visits.list_by_employee.return_value = []
+
+        result = await service.deliver_for_user(order.id, user)
+        assert result.status == OrderStatus.DELIVERED
+
+
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------

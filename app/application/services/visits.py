@@ -127,14 +127,15 @@ class VisitService:
         return visit
 
     async def get_visit_details(self, visit_id: UUID) -> VisitDetailsDTO:
-        visit = await self._uow.visits.get_details_by_id(visit_id)
-        if not visit:
+        details = await self._uow.visits.get_details_by_id(visit_id)
+        if not details:
             raise VisitNotFoundError()
 
-        # 1. Created orders in this visit
+        visit = details.visit
+        rp = details.retail_point
+
         created_orders = await self._uow.orders.list_by_source_visit(visit_id)
 
-        # 2. Delivery orders for this visit (planned for this employee & date for this point + delivered in this visit)
         delivery_orders = []
         if visit.started_at:
             plan = await self._uow.visit_plans.get_by_employee_and_date(
@@ -158,14 +159,12 @@ class VisitService:
             delivery_map[o.id] = o
         delivery_orders = list(delivery_map.values())
 
-        # 3. Active orders of this retail point (excluding delivery and created orders)
         all_active = await self._uow.orders.list_by_retail_point(
             visit.retail_point_id, statuses=ACTIVE_ORDER_STATUSES
         )
         excluded_ids = {o.id for o in created_orders} | {o.id for o in delivery_orders}
         active_point_orders = [o for o in all_active if o.id not in excluded_ids]
 
-        rp = visit.retail_point
         retail_point_dto = RetailPointShortDTO(
             id=rp.id,
             name=rp.name,
@@ -186,7 +185,7 @@ class VisitService:
                 comment=d.comment,
                 created_at=getattr(d, "created_at", None),
             )
-            for d in (getattr(visit, "debts", None) or [])
+            for d in details.debts
         ]
         media_dtos = [
             VisitMediaDTO(
@@ -195,7 +194,7 @@ class VisitService:
                 media_id=m.media_id,
                 created_at=getattr(m, "created_at", None),
             )
-            for m in (getattr(visit, "media", None) or [])
+            for m in details.media
         ]
 
         return VisitDetailsDTO(

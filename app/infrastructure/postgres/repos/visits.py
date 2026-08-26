@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import delete as sa_delete
@@ -6,7 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.application.interfaces.repos.visits import IVisitRepository
-from app.domain.entities.visits import Visit
+from app.domain.entities.retail_points import RetailPoint
+from app.domain.entities.visit_debts import VisitDebt
+from app.domain.entities.visit_media import VisitMedia
+from app.domain.entities.visits import Visit, VisitDetails
 from app.domain.enums import VisitStatus
 from app.infrastructure.postgres.models.visit_plan_items import (
     VisitPlanItem as VisitPlanItemModel,
@@ -34,7 +38,7 @@ class PostgresVisitRepository(IVisitRepository):
 
         return self._to_domain(model)
 
-    async def get_details_by_id(self, visit_id: UUID) -> VisitModel | None:
+    async def get_details_by_id(self, visit_id: UUID) -> VisitDetails | None:
         stmt = (
             select(VisitModel)
             .where(VisitModel.id == visit_id)
@@ -47,7 +51,10 @@ class PostgresVisitRepository(IVisitRepository):
             )
         )
         result = await self._session.execute(stmt)
-        return result.unique().scalar_one_or_none()
+        model = result.unique().scalar_one_or_none()
+        if model is None:
+            return None
+        return self._to_details_domain(model)
 
     async def list_by_employee(
         self, employee_id: UUID, active: bool = True, limit: int = 1
@@ -148,4 +155,54 @@ class PostgresVisitRepository(IVisitRepository):
             status=visit.status,
             started_at=visit.started_at,
             finished_at=visit.finished_at,
+        )
+
+    def _to_details_domain(self, model: VisitModel) -> VisitDetails:
+        visit = self._to_domain(model)
+        rp_model = model.retail_point
+        rp = RetailPoint(
+            id=rp_model.id,
+            name=rp_model.name,
+            legal_name=rp_model.legal_name,
+            client_type=rp_model.client_type,
+            address=rp_model.address,
+            landmark=rp_model.landmark,
+            contact_person=rp_model.contact_person,
+            phone_number=rp_model.phone_number,
+            inn=rp_model.inn,
+            checking_account=rp_model.checking_account,
+            bank_name=rp_model.bank_name,
+            mfo=rp_model.mfo,
+            oked=rp_model.oked,
+            latitude=rp_model.latitude,
+            longitude=rp_model.longitude,
+            photo_id=rp_model.photo_id,
+            created_by_employee_id=rp_model.created_by_employee_id,
+            is_active=rp_model.is_active,
+            total_debt=getattr(rp_model, "total_debt", None) or Decimal("0.00"),
+        )
+        debts = [
+            VisitDebt(
+                id=d.id,
+                visit_id=d.visit_id,
+                amount=d.amount,
+                comment=d.comment,
+                created_at=d.created_at,
+            )
+            for d in (model.debts or [])
+        ]
+        media = [
+            VisitMedia(
+                id=m.id,
+                visit_id=m.visit_id,
+                media_id=m.media_id,
+                created_at=m.created_at,
+            )
+            for m in (model.media or [])
+        ]
+        return VisitDetails(
+            visit=visit,
+            retail_point=rp,
+            debts=debts,
+            media=media,
         )

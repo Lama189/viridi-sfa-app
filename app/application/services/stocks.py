@@ -721,36 +721,4 @@ class StockService(IStockService):
     async def get_warehouse_inventory(
         self, warehouse_id: UUID
     ) -> list[ProductWithStockDTO]:
-        stocks = await self._uow.stocks.get_stocks_by_warehouse(warehouse_id)
-
-        result = []
-        for stock in stocks:
-            category_dto = CategoryDTO(
-                id=stock.product.category.id,
-                name=stock.product.category.name,
-                is_active=stock.product.category.is_active,
-            )
-            stock_summary_dto = StockSummaryDTO(
-                warehouse=WarehouseShortDTO(
-                    id=stock.warehouse.id,
-                    name=stock.warehouse.name,
-                ),
-                quantity=stock.quantity,
-                reserved_quantity=stock.reserved_quantity,
-                available_quantity=stock.quantity - stock.reserved_quantity,
-                updated_at=getattr(stock, "updated_at", None),
-            )
-            product_dto = ProductWithStockDTO(
-                id=stock.product.id,
-                name=stock.product.name,
-                price=stock.product.price,
-                volume=stock.product.volume,
-                weight=stock.product.weight,
-                items_in_box=stock.product.items_in_box,
-                category=category_dto,
-                photo_url=getattr(stock.product, "photo_url", None),
-                stock=stock_summary_dto,
-            )
-            result.append(product_dto)
-
-        return result
+        return await self._uow.stocks.get_stocks_by_warehouse(warehouse_id)

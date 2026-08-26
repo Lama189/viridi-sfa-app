@@ -395,30 +395,30 @@ class TestStockServiceAdjustAndList:
 
     @pytest.mark.asyncio
     async def test_get_warehouse_inventory(self, service, mock_uow):
-        from types import SimpleNamespace
+        from app.application.dto.categories import CategoryDTO
+        from app.application.dto.stocks import ProductWithStockDTO, StockSummaryDTO
+        from app.application.dto.warehouses import WarehouseShortDTO
 
         wid, pid, cid = uuid4(), uuid4(), uuid4()
-        wh = SimpleNamespace(id=wid, name="Central WH")
-        cat = SimpleNamespace(id=cid, name="Test Cat", is_active=True)
-        prod = SimpleNamespace(
+        dto = ProductWithStockDTO(
             id=pid,
             name="Test Prod",
             price=Decimal("100.00"),
             volume=Decimal("1.000"),
             weight=Decimal("2.000"),
             items_in_box=10,
-            category=cat,
+            category=CategoryDTO(id=cid, name="Test Cat", is_active=True),
             photo_url=None,
-        )
-        stock = SimpleNamespace(
-            warehouse=wh,
-            product=prod,
-            quantity=100,
-            reserved_quantity=20,
-            updated_at=None,
+            stock=StockSummaryDTO(
+                warehouse=WarehouseShortDTO(id=wid, name="Central WH"),
+                quantity=100,
+                reserved_quantity=20,
+                available_quantity=80,
+                updated_at=None,
+            ),
         )
 
-        mock_uow.stocks.get_stocks_by_warehouse.return_value = [stock]
+        mock_uow.stocks.get_stocks_by_warehouse.return_value = [dto]
         result = await service.get_warehouse_inventory(wid)
 
         assert len(result) == 1

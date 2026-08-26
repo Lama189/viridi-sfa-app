@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
+from app.application.dto.stocks import ProductWithStockDTO
 from app.domain.entities.stocks import Stock
 
 
@@ -36,7 +37,9 @@ class IStockRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_stocks_by_warehouse(self, warehouse_id: UUID) -> list:
+    async def get_stocks_by_warehouse(
+        self, warehouse_id: UUID
+    ) -> list[ProductWithStockDTO]:
         raise NotImplementedError
 
     @abstractmethod

@@ -1,8 +1,14 @@
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from app.domain.enums import VisitStatus
+
+if TYPE_CHECKING:
+    from app.domain.entities.retail_points import RetailPoint
+    from app.domain.entities.visit_debts import VisitDebt
+    from app.domain.entities.visit_media import VisitMedia
 
 
 @dataclass(slots=True)
@@ -61,3 +67,11 @@ class Visit:
 
     def can_add_debt(self) -> bool:
         return self.is_active
+
+
+@dataclass(slots=True)
+class VisitDetails:
+    visit: Visit
+    retail_point: "RetailPoint"
+    debts: list["VisitDebt"] = field(default_factory=list)
+    media: list["VisitMedia"] = field(default_factory=list)

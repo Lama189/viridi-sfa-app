@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any
 from uuid import UUID
 
-from app.domain.entities.visits import Visit
+from app.domain.entities.visits import Visit, VisitDetails
 from app.domain.enums import VisitStatus
 
 
@@ -16,7 +15,7 @@ class IVisitRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_details_by_id(self, visit_id: UUID) -> Any | None:
+    async def get_details_by_id(self, visit_id: UUID) -> VisitDetails | None:
         raise NotImplementedError
 
     @abstractmethod

@@ -5,6 +5,9 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.application.dto.categories import CategoryDTO
+from app.application.dto.stocks import ProductWithStockDTO, StockSummaryDTO
+from app.application.dto.warehouses import WarehouseShortDTO
 from app.application.interfaces.repos.stocks import IStockRepository
 from app.domain.entities.stocks import Stock
 from app.infrastructure.postgres.models.products import Product as ProductModel
@@ -57,13 +60,11 @@ class PostgresStocksRepository(IStockRepository):
         warehouse_id: UUID,
         product_ids: list[UUID],
     ) -> list[Stock]:
-        sorted_ids = sorted(product_ids)
-
         result = await self._session.execute(
             select(StockModel)
             .where(
                 StockModel.warehouse_id == warehouse_id,
-                StockModel.product_id.in_(sorted_ids),
+                StockModel.product_id.in_(product_ids),
             )
             .order_by(StockModel.product_id)
             .with_for_update()
@@ -83,7 +84,9 @@ class PostgresStocksRepository(IStockRepository):
 
         return [self._to_domain(m) for m in result.scalars().all()]
 
-    async def get_stocks_by_warehouse(self, warehouse_id: UUID) -> list[StockModel]:
+    async def get_stocks_by_warehouse(
+        self, warehouse_id: UUID
+    ) -> list[ProductWithStockDTO]:
         stmt = (
             select(StockModel)
             .where(StockModel.warehouse_id == warehouse_id)
@@ -93,7 +96,37 @@ class PostgresStocksRepository(IStockRepository):
             )
         )
         result = await self._session.execute(stmt)
-        return list(result.scalars().all())
+        models = result.scalars().all()
+        inventory: list[ProductWithStockDTO] = []
+        for stock in models:
+            category_dto = CategoryDTO(
+                id=stock.product.category.id,
+                name=stock.product.category.name,
+                is_active=stock.product.category.is_active,
+            )
+            stock_summary_dto = StockSummaryDTO(
+                warehouse=WarehouseShortDTO(
+                    id=stock.warehouse.id,
+                    name=stock.warehouse.name,
+                ),
+                quantity=stock.quantity,
+                reserved_quantity=stock.reserved_quantity,
+                available_quantity=stock.quantity - stock.reserved_quantity,
+                updated_at=getattr(stock, "updated_at", None),
+            )
+            product_dto = ProductWithStockDTO(
+                id=stock.product.id,
+                name=stock.product.name,
+                price=stock.product.price,
+                volume=stock.product.volume,
+                weight=stock.product.weight,
+                items_in_box=stock.product.items_in_box,
+                category=category_dto,
+                photo_url=getattr(stock.product, "photo_url", None),
+                stock=stock_summary_dto,
+            )
+            inventory.append(product_dto)
+        return inventory
 
     async def update(self, stock: Stock) -> None:
         await self._session.execute(

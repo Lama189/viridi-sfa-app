@@ -402,6 +402,8 @@ async def test_delete_debt_success(service, mock_uow, mock_visit_debts_service):
 @pytest.mark.asyncio
 async def test_get_visit_details_success(service, mock_uow):
     from app.domain.entities.orders import Order
+    from app.domain.entities.retail_points import RetailPoint
+    from app.domain.entities.visits import VisitDetails
     from app.domain.enums import OrderStatus
 
     visit_id = uuid4()
@@ -409,24 +411,29 @@ async def test_get_visit_details_success(service, mock_uow):
     retail_point_id = uuid4()
     now = datetime.now(UTC)
 
-    mock_visit = MagicMock()
-    mock_visit.id = visit_id
-    mock_visit.employee_id = employee_id
-    mock_visit.retail_point_id = retail_point_id
-    mock_visit.status = VisitStatus.IN_PROGRESS
-    mock_visit.started_at = now
-    mock_visit.finished_at = None
-    mock_visit.retail_point = MagicMock(
+    visit = Visit(
+        id=visit_id,
+        employee_id=employee_id,
+        retail_point_id=retail_point_id,
+        status=VisitStatus.IN_PROGRESS,
+        started_at=now,
+        finished_at=None,
+    )
+    rp = RetailPoint(
         id=retail_point_id,
         name="Магазин",
         address="ул. Навои",
         latitude=Decimal("41.31"),
         longitude=Decimal("69.24"),
     )
-    mock_visit.debts = []
-    mock_visit.media = []
+    details = VisitDetails(
+        visit=visit,
+        retail_point=rp,
+        debts=[],
+        media=[],
+    )
 
-    mock_uow.visits.get_details_by_id.return_value = mock_visit
+    mock_uow.visits.get_details_by_id.return_value = details
 
     # Created order in this visit
     created_order = Order(

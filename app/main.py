@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api.exceptions_handlers import register_exception_handlers
 from app.api.middlewares import (
@@ -86,6 +87,10 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         return {"status": "healthy"}
+
+    @app.get("/metrics", include_in_schema=False)
+    async def metrics():
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     app.include_router(categories_router)
     app.include_router(clients_router)

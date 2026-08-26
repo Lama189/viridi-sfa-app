@@ -42,8 +42,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=123
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -124,7 +124,7 @@ services:
       VIRIDI_API_URL: http://web:8000
       TELEGRAM_WEB_APP_URL: ${TELEGRAM_WEB_APP_URL}
       DATABASE_URL: postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
-      RABBITMQ_URL: amqp://guest:123@rabbitmq:5672/
+      RABBITMQ_URL: ${RABBITMQ_URL}
     depends_on:
       web:
         condition: service_healthy
@@ -146,7 +146,7 @@ services:
     command: python -m app.workers.outbox.runner
     environment:
       DATABASE_URL: postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
-      RABBITMQ_URL: amqp://guest:123@rabbitmq:5672/
+      RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: redis://redis:6379
     depends_on:
       migrations:
@@ -223,6 +223,66 @@ services:
     networks:
       - app_network
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: viridi_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - app_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: viridi_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - app_network
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: viridi_loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki.yml
+    networks:
+      - app_network
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: viridi_promtail
+    user: root
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - ./monitoring/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    depends_on:
+      - loki
+    networks:
+      - app_network
+
 volumes:
   pg_data:
   venv_data:
@@ -231,6 +291,9 @@ volumes:
   redis_data:
   certbot_etc:
   certbot_var:
+  prometheus_data:
+  grafana_data:
+  loki_data:
 
 networks:
   app_network:

@@ -77,6 +77,12 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
       - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_SECURE=${MINIO_SECURE:-false}
+      - SECRET_KEY=${SECRET_KEY}
+      - INVITE_CODE_SECRET_KEY=${INVITE_CODE_SECRET_KEY}
     depends_on:
       migrations:
         condition: service_completed_successfully

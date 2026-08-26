@@ -16,6 +16,7 @@ class VisitDebtService(IVisitDebtService):
     ) -> VisitDebt:
         debt = VisitDebt(visit_id, amount, comment)
         await self._uow.visit_debts.add(debt)
+        await self._uow.commit()
 
         return debt
 
@@ -30,6 +31,7 @@ class VisitDebtService(IVisitDebtService):
         visit_debt.change_comment(comment)
 
         await self._uow.visit_debts.update(visit_debt)
+        await self._uow.commit()
 
         return visit_debt
 
@@ -39,6 +41,7 @@ class VisitDebtService(IVisitDebtService):
             raise VisitDebtNotFoundError()
 
         await self._uow.visit_debts.delete(visit_debt)
+        await self._uow.commit()
 
     async def list_by_visit(self, visit_id: UUID) -> list[VisitDebt]:
         return await self._uow.visit_debts.list_by_visit(visit_id)

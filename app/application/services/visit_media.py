@@ -27,6 +27,7 @@ class VisitMediaService(IVisitMediaService):
 
         media = VisitMedia(visit_id, media_id)
         await self._uow.visit_media.add(media)
+        await self._uow.commit()
 
         return media
 
@@ -36,6 +37,7 @@ class VisitMediaService(IVisitMediaService):
             raise VisitMediaNotFoundError()
 
         await self._uow.visit_media.delete(media)
+        await self._uow.commit()
 
     async def list_media(self, visit_id: UUID) -> list[VisitMedia]:
         return await self._uow.visit_media.list_by_visit(visit_id)

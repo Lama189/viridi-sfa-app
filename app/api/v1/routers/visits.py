@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import (
     allow_all_staff,
+    get_visit_debts_service,
     get_visit_media_service,
     get_visits_service,
 )
@@ -17,7 +18,8 @@ from app.api.v1.schemas.visits import (
     VisitMediaResponse,
     VisitResponse,
 )
-from app.application.services.visit_media import VisitMediaService
+from app.application.interfaces.services.visit_debts import IVisitDebtService
+from app.application.interfaces.services.visit_media import IVisitMediaService
 from app.application.services.visits import VisitService
 from app.core.exceptions import VisitNotFoundError
 from app.domain.entities.auth import AuthenticatedEmployee
@@ -139,9 +141,9 @@ async def list_visits(
 async def attach_media(
     visit_id: UUID,
     dto: AttachMediaRequest,
-    service: Annotated[VisitService, Depends(get_visits_service)],
+    service: Annotated[IVisitMediaService, Depends(get_visit_media_service)],
 ):
-    media = await service.attach_media(visit_id, dto.media_id)
+    media = await service.attach(visit_id, dto.media_id)
     return VisitMediaResponse.model_validate(media)
 
 
@@ -153,9 +155,9 @@ async def attach_media(
 async def detach_media(
     visit_id: UUID,
     media_id: UUID,
-    service: Annotated[VisitService, Depends(get_visits_service)],
+    service: Annotated[IVisitMediaService, Depends(get_visit_media_service)],
 ):
-    await service.detach_media(visit_id, media_id)
+    await service.detach(visit_id, media_id)
 
 
 @router.get(
@@ -165,7 +167,7 @@ async def detach_media(
 )
 async def list_visit_media(
     visit_id: UUID,
-    service: Annotated[VisitMediaService, Depends(get_visit_media_service)],
+    service: Annotated[IVisitMediaService, Depends(get_visit_media_service)],
 ):
     media_list = await service.list_media(visit_id)
     return [VisitMediaResponse.model_validate(m) for m in media_list]
@@ -199,9 +201,9 @@ async def add_debt(
 async def update_debt(
     debt_id: UUID,
     dto: UpdateDebtRequest,
-    service: Annotated[VisitService, Depends(get_visits_service)],
+    service: Annotated[IVisitDebtService, Depends(get_visit_debts_service)],
 ):
-    debt = await service.update_debt(debt_id, dto.amount, dto.comment)
+    debt = await service.update(debt_id, dto.amount, dto.comment)
     return VisitDebtResponse.model_validate(debt)
 
 
@@ -212,6 +214,6 @@ async def update_debt(
 )
 async def delete_debt(
     debt_id: UUID,
-    service: Annotated[VisitService, Depends(get_visits_service)],
+    service: Annotated[IVisitDebtService, Depends(get_visit_debts_service)],
 ):
-    await service.delete_debt(debt_id)
+    await service.delete(debt_id)

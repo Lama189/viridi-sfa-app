@@ -148,6 +148,7 @@ async def test_get_today_plan_api(
     mock_agent_employee,
 ):
     from datetime import date
+
     from app.application.dto.visit_plans import VisitPlanDTO
     from app.domain.enums import VisitPlanStatus, Weekday
 
@@ -180,6 +181,7 @@ async def test_get_plan_by_date_api(
     mock_agent_employee,
 ):
     from datetime import date
+
     from app.application.dto.visit_plans import VisitPlanDTO
     from app.domain.enums import VisitPlanStatus, Weekday
 
@@ -212,6 +214,7 @@ async def test_generate_visit_plan_api(
     mock_admin_employee,
 ):
     from datetime import date
+
     from app.application.dto.visit_plans import VisitPlanDTO
     from app.domain.enums import VisitPlanStatus, Weekday
 

@@ -21,7 +21,7 @@ async def send_telegram_notification(
                     "chat_id": chat_id,
                     "text": text,
                 },
-            ) as response,
+            ),
         ):
             pass
     except (ClientError, OSError) as exc:

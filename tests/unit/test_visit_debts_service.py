@@ -35,6 +35,7 @@ async def test_add_success(service, mock_uow):
     assert result.amount == Decimal("50000.00")
     assert result.comment == "Test debt"
     mock_uow.visit_debts.add.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -47,6 +48,8 @@ async def test_add_without_comment(service, mock_uow):
     assert result.visit_id == visit_id
     assert result.amount == Decimal("10000.00")
     assert result.comment is None
+    mock_uow.visit_debts.add.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
 
 
 # --- update ---
@@ -71,6 +74,7 @@ async def test_update_success(service, mock_uow):
     assert result.amount == Decimal("75000.00")
     assert result.comment == "Updated"
     mock_uow.visit_debts.update.assert_awaited_once_with(debt)
+    mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -101,6 +105,7 @@ async def test_delete_success(service, mock_uow):
     await service.delete(debt_id)
 
     mock_uow.visit_debts.delete.assert_awaited_once_with(debt)
+    mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio

@@ -72,6 +72,6 @@ class Visit:
 @dataclass(slots=True)
 class VisitDetails:
     visit: Visit
-    retail_point: "RetailPoint"
-    debts: list["VisitDebt"] = field(default_factory=list)
-    media: list["VisitMedia"] = field(default_factory=list)
+    retail_point: RetailPoint
+    debts: list[VisitDebt] = field(default_factory=list)
+    media: list[VisitMedia] = field(default_factory=list)

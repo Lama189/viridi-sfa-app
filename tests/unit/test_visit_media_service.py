@@ -45,6 +45,7 @@ async def test_attach_success(service, mock_uow):
     assert result.visit_id == visit_id
     assert result.media_id == media_id
     mock_uow.visit_media.add.assert_awaited_once()
+    mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -91,6 +92,7 @@ async def test_detach_success(service, mock_uow):
     await service.detach(visit_id, media_id)
 
     mock_uow.visit_media.delete.assert_awaited_once_with(media)
+    mock_uow.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio

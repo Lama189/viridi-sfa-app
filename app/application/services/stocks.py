@@ -1,14 +1,11 @@
 from uuid import UUID
 
-from app.application.dto.categories import CategoryDTO
 from app.application.dto.stocks import (
     ProductWithStockDTO,
     StockBatchOperationDTO,
     StockCreateDTO,
     StockOperationDTO,
-    StockSummaryDTO,
 )
-from app.application.dto.warehouses import WarehouseShortDTO
 from app.application.interfaces.services.stocks import IStockService
 from app.application.interfaces.uow import IUnitOfWork
 from app.core.exceptions import (

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
+from app.application.dto.retail_points import RetailPointDebtorDTO
 from app.domain.entities.retail_points import (
     RetailPoint,
     RetailPointDetails,
@@ -80,4 +81,13 @@ class IRetailPointRepository(ABC):
         limit: int,
         offset: int,
     ) -> list[RetailPoint]:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def list_debtors(
+        self,
+        employee_id: UUID | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[RetailPointDebtorDTO]:
         raise NotImplementedError

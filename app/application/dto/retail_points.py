@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from uuid import UUID
 
+from app.domain.entities.visit_debts import VisitDebt
 from app.domain.enums import ClientType
 
 
@@ -85,8 +86,18 @@ class RetailPointShortDTO:
     id: UUID
     name: str
     address: str
+    contact_person: str | None = None
+    phone_number: str | None = None
     latitude: Decimal | None = None
     longitude: Decimal | None = None
+
+
+@dataclass(slots=True, frozen=True)
+class RetailPointDebtorDTO:
+    retail_point: RetailPointShortDTO
+    total_debt: Decimal
+    debts_count: int
+    debts: list[VisitDebt] = field(default_factory=list)
 
 
 @dataclass(slots=True, frozen=True)

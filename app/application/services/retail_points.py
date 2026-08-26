@@ -2,6 +2,7 @@ from uuid import UUID
 
 from app.application.dto.retail_points import (
     RetailPointCreateDTO,
+    RetailPointDebtorDTO,
     RetailPointUpdateDTO,
 )
 from app.application.interfaces.services.invite_codes import IClientInviteCodesService
@@ -31,7 +32,7 @@ from app.domain.entities.retail_points import (
     RetailPointDetails,
     RetailPointIdentity,
 )
-from app.domain.enums import Weekday
+from app.domain.enums import EmployeeRole, Weekday
 
 
 class RetailPointsService:
@@ -358,6 +359,26 @@ class RetailPointsService:
     ) -> list[RetailPoint]:
         return await self._uow.retail_points.list_paginated(
             employee_id=employee_id,
+            limit=limit,
+            offset=offset,
+        )
+
+    async def list_debtors(
+        self,
+        employee_id: UUID,
+        role: EmployeeRole,
+        filter_employee_id: UUID | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[RetailPointDebtorDTO]:
+        target_employee_id: UUID | None = None
+        if role == EmployeeRole.ADMIN:
+            target_employee_id = filter_employee_id
+        else:
+            target_employee_id = employee_id
+
+        return await self._uow.retail_points.list_debtors(
+            employee_id=target_employee_id,
             limit=limit,
             offset=offset,
         )

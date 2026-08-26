@@ -20,6 +20,7 @@ from app.api.v1.schemas.retail_points import (
     CreateRetailPointRequest,
     InviteCodeResponse,
     RetailPointAssignmentResponse,
+    RetailPointDebtorResponse,
     RetailPointDetailsResponse,
     RetailPointMemberResponse,
     RetailPointResponse,
@@ -159,6 +160,26 @@ async def bulk_create_retail_points(
 
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+
+
+@router.get(
+    "/debtors",
+    response_model=list[RetailPointDebtorResponse],
+)
+async def list_debtors(
+    service: Annotated[RetailPointsService, Depends(get_retail_points_service)],
+    employee: Annotated[AuthenticatedEmployee, Depends(allow_all_staff)],
+    employee_id: UUID | None = Query(default=None),
+    limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0, ge=0),
+):
+    return await service.list_debtors(
+        employee_id=employee.id,
+        role=employee.role,
+        filter_employee_id=employee_id,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{retail_point_id}", response_model=RetailPointResponse)

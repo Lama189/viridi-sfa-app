@@ -6,6 +6,10 @@ from sqlalchemy import func, select, tuple_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from app.application.dto.retail_points import (
+    RetailPointDebtorDTO,
+    RetailPointShortDTO,
+)
 from app.application.interfaces.repos.retail_points import IRetailPointRepository
 from app.domain.entities.orders import Order
 from app.domain.entities.retail_points import (
@@ -253,6 +257,70 @@ class PostgresRetailPointRepository(IRetailPointRepository):
         result = await self._session.execute(stmt)
 
         return [self._to_domain(model) for model in result.unique().scalars().all()]
+
+    async def list_debtors(
+        self,
+        employee_id: UUID | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[RetailPointDebtorDTO]:
+        if (
+            employee_id is not None
+            and hasattr(RetailPointAssignmentModel, "employee_id")
+            and hasattr(RetailPointAssignmentModel, "retail_point_id")
+        ):
+            stmt = (
+                select(RetailPointModel)
+                .join(
+                    RetailPointAssignmentModel,
+                    RetailPointAssignmentModel.retail_point_id == RetailPointModel.id,
+                )
+                .where(
+                    RetailPointAssignmentModel.employee_id == employee_id,
+                    RetailPointModel.is_active.is_(True),
+                )
+            )
+        else:
+            stmt = select(RetailPointModel).where(RetailPointModel.is_active.is_(True))
+
+        stmt = self._with_debts(stmt)
+        result = await self._session.execute(stmt)
+        models = result.unique().scalars().all()
+
+        debtors: list[RetailPointDebtorDTO] = []
+        for model in models:
+            debts = [
+                VisitDebt(
+                    id=debt.id,
+                    visit_id=debt.visit_id,
+                    amount=debt.amount,
+                    comment=debt.comment,
+                    created_at=debt.created_at,
+                )
+                for visit in (getattr(model, "visits", []) or [])
+                for debt in (getattr(visit, "debts", []) or [])
+            ]
+            total_debt = sum((d.amount for d in debts), Decimal("0.00"))
+            if total_debt > 0:
+                short_rp = RetailPointShortDTO(
+                    id=model.id,
+                    name=model.name,
+                    address=model.address,
+                    contact_person=model.contact_person,
+                    phone_number=model.phone_number,
+                    latitude=model.latitude,
+                    longitude=model.longitude,
+                )
+                debtors.append(
+                    RetailPointDebtorDTO(
+                        retail_point=short_rp,
+                        total_debt=total_debt,
+                        debts_count=len(debts),
+                        debts=debts,
+                    )
+                )
+
+        return debtors[offset : offset + limit]
 
     def _to_domain(self, model: RetailPointModel) -> RetailPoint:
         total_debt = Decimal("0.00")

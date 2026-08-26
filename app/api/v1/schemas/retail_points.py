@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.api.v1.schemas.common import RetailPointShortResponse
 from app.api.v1.schemas.visits import OrderShortResponse, VisitDebtResponse
 from app.domain.enums import ClientType
 
@@ -148,5 +149,14 @@ class RetailPointAssignmentResponse(BaseModel):
     id: UUID
     retail_point_id: UUID
     employee_id: UUID | None
+
+    model_config = {"from_attributes": True}
+
+
+class RetailPointDebtorResponse(BaseModel):
+    retail_point: RetailPointShortResponse
+    total_debt: Decimal
+    debts_count: int
+    debts: list[VisitDebtResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}

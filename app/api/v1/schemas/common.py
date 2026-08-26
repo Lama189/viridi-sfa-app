@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -14,6 +15,10 @@ class RetailPointShortResponse(BaseModel):
     id: UUID
     name: str
     address: str
+    contact_person: str | None = None
+    phone_number: str | None = None
+    latitude: Decimal | None = None
+    longitude: Decimal | None = None
 
     model_config = {"from_attributes": True}
 

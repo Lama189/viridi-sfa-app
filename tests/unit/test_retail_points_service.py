@@ -277,3 +277,65 @@ async def test_list_by_employee_and_weekday_success(service, mock_uow):
         weekday=Weekday.MONDAY,
         only_active=True,
     )
+
+
+@pytest.mark.asyncio
+async def test_list_debtors_as_agent(service, mock_uow):
+    from app.application.dto.retail_points import (
+        RetailPointDebtorDTO,
+        RetailPointShortDTO,
+    )
+    from app.domain.entities.visit_debts import VisitDebt
+    from app.domain.enums import EmployeeRole
+
+    agent_id = uuid4()
+    point_id = uuid4()
+    debt = VisitDebt(visit_id=uuid4(), amount=Decimal("50000.00"), comment="Unpaid")
+    debtor_dto = RetailPointDebtorDTO(
+        retail_point=RetailPointShortDTO(
+            id=point_id, name="Debtor 1", address="Addr 1"
+        ),
+        total_debt=Decimal("50000.00"),
+        debts_count=1,
+        debts=[debt],
+    )
+    mock_uow.retail_points.list_debtors.return_value = [debtor_dto]
+
+    result = await service.list_debtors(
+        employee_id=agent_id,
+        role=EmployeeRole.AGENT,
+        limit=50,
+        offset=0,
+    )
+
+    assert len(result) == 1
+    assert result[0].total_debt == Decimal("50000.00")
+    assert result[0].retail_point.name == "Debtor 1"
+    mock_uow.retail_points.list_debtors.assert_awaited_once_with(
+        employee_id=agent_id,
+        limit=50,
+        offset=0,
+    )
+
+
+@pytest.mark.asyncio
+async def test_list_debtors_as_admin(service, mock_uow):
+    from app.domain.enums import EmployeeRole
+
+    admin_id = uuid4()
+    mock_uow.retail_points.list_debtors.return_value = []
+
+    result = await service.list_debtors(
+        employee_id=admin_id,
+        role=EmployeeRole.ADMIN,
+        filter_employee_id=None,
+        limit=20,
+        offset=0,
+    )
+
+    assert result == []
+    mock_uow.retail_points.list_debtors.assert_awaited_once_with(
+        employee_id=None,
+        limit=20,
+        offset=0,
+    )

@@ -128,3 +128,16 @@ async def test_delete(
 
     found = await retail_point_repo.get_by_id(rp.id)
     assert found is None
+
+
+@pytest.mark.asyncio
+async def test_list_debtors_empty(
+    session: AsyncSession,
+    retail_point_repo: PostgresRetailPointRepository,
+):
+    rp = RetailPoint(name="Store Without Debt", address="Addr 1")
+    await retail_point_repo.add(rp)
+    await session.commit()
+
+    debtors = await retail_point_repo.list_debtors()
+    assert debtors == []

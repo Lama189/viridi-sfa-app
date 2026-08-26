@@ -247,6 +247,52 @@ async def test_list_retail_points_returns_total_debt(
 
 
 @pytest.mark.asyncio
+async def test_list_debtors_api(client, mock_service, mock_admin_employee):
+    from app.application.dto.retail_points import (
+        RetailPointDebtorDTO,
+        RetailPointShortDTO,
+    )
+    from app.domain.entities.visit_debts import VisitDebt
+
+    point_id = uuid4()
+    debt = VisitDebt(
+        visit_id=uuid4(), amount=Decimal("150000.00"), comment="Invoice #1"
+    )
+    debtor = RetailPointDebtorDTO(
+        retail_point=RetailPointShortDTO(
+            id=point_id,
+            name="Store Debtor",
+            address="Addr 123",
+            contact_person="John",
+            phone_number="+998901234567",
+        ),
+        total_debt=Decimal("150000.00"),
+        debts_count=1,
+        debts=[debt],
+    )
+    mock_service.list_debtors.return_value = [debtor]
+
+    resp = await client.get("/api/v1/retail_points/debtors")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["retail_point"]["name"] == "Store Debtor"
+    assert data[0]["retail_point"]["contact_person"] == "John"
+    assert data[0]["total_debt"] == "150000.00"
+    assert data[0]["debts_count"] == 1
+    assert len(data[0]["debts"]) == 1
+    assert data[0]["debts"][0]["amount"] == "150000.00"
+    assert data[0]["debts"][0]["comment"] == "Invoice #1"
+    mock_service.list_debtors.assert_called_once_with(
+        employee_id=mock_admin_employee.id,
+        role=mock_admin_employee.role,
+        filter_employee_id=None,
+        limit=50,
+        offset=0,
+    )
+
+
+@pytest.mark.asyncio
 async def test_list_retail_point_debts(client):
     from decimal import Decimal
 

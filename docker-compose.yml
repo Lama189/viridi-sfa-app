@@ -19,16 +19,11 @@ services:
       - app_network
 
   migrations:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/lama189/viridi-sfa-app:latest
     container_name: viridi_migrations
     environment:
       - DATABASE_URL=postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
     command: uv run alembic upgrade head
-    volumes:
-      - .:/app
-      - venv_data:/app/.venv
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,16 +70,10 @@ services:
       retries: 5
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/lama189/viridi-sfa-app:latest
     container_name: viridi_api
     expose:
       - "8000"
-    volumes:
-      - .:/app
-      - venv_data:/app/.venv
-      - ./models:/app/models
     environment:
       - DATABASE_URL=postgresql+asyncpg://${APP__DB__USER}:${APP__DB__PASSWORD}@postgres:5432/${APP__DB__NAME}
       - REDIS_URL=redis://redis:6379
@@ -113,9 +102,7 @@ services:
       - app_network
 
   telegram-bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/lama189/viridi-sfa-app:latest
     container_name: viridi_telegram_bot
     command: python telegram_bot/bot.py
     environment:
@@ -139,9 +126,7 @@ services:
       - app_network
 
   outbox-worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/lama189/viridi-sfa-app:latest
     container_name: viridi_outbox_worker
     command: python -m app.workers.outbox.runner
     environment:
@@ -162,9 +147,7 @@ services:
       - app_network
 
   route-scheduler-worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/lama189/viridi-sfa-app:latest
     container_name: viridi_route_scheduler_worker
     command: python -m app.workers.route_scheduler.runner
     environment:
@@ -285,7 +268,6 @@ services:
 
 volumes:
   pg_data:
-  venv_data:
   rabbitmq_data:
   minio_data:
   redis_data:

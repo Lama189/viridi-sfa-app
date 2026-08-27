@@ -26,6 +26,7 @@ from app.api.v1.routers.stocks import router as stocks_router
 from app.api.v1.routers.visit_plans import router as visit_plans_router
 from app.api.v1.routers.visits import router as visits_router
 from app.api.v1.routers.warehouses import router as inventory_router
+from app.core.config import get_settings
 from app.core.observability.logging import configure_logging
 from app.infrastructure.minio.bucket_initializer import ensure_buckets
 from app.infrastructure.minio.client import get_minio_client
@@ -44,6 +45,7 @@ configure_logging()
 
 
 def create_app() -> FastAPI:
+    settings = get_settings()
     app = FastAPI(title="Viridi SFA API", version="0.1.0", lifespan=lifespan)
 
     redis_client = create_redis_client()
@@ -69,7 +71,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestMiddleware)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

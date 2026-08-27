@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     firebase_credentials_path: str | None = None
     min_delivery_days_offset: int = 1
+    cors_origins: list[str] = ["*"]
 
     model_config = SettingsConfigDict(
         env_file=".env",

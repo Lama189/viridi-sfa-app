@@ -125,6 +125,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /var/www/viridi-sfa-app
-            docker compose pull
-            docker compose up -d --remove-orphans
+            docker compose pull web
+            docker compose up -d --force-recreate --no-deps web
+            docker compose restart nginx
             docker image prune -f

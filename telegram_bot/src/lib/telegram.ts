@@ -21,7 +21,8 @@ export function initializeTelegram(): TelegramLaunchData {
     try {
       init()
       mountTelegramComponents()
-    } catch {
+    } catch (err) {
+      console.warn('[Telegram SDK] init() warning:', err)
     }
 
     isInitialized = true
@@ -29,11 +30,35 @@ export function initializeTelegram(): TelegramLaunchData {
 
   try {
     const launchParams = retrieveLaunchParams()
+    const initData = retrieveRawInitData()
     return {
-      initData: retrieveRawInitData(),
+      initData,
       user: launchParams.tgWebAppData?.user,
     }
-  } catch {
+  } catch (err) {
+    console.error('[Telegram SDK] retrieveLaunchParams failed:', err)
+    console.error('[Telegram SDK] Current location.href:', window.location.href)
+    console.error('[Telegram SDK] Current location.hash:', window.location.hash)
+
+    const legacyWebApp = (
+      window as unknown as {
+        Telegram?: {
+          WebApp?: {
+            initData?: string
+            initDataUnsafe?: { user?: User }
+          }
+        }
+      }
+    )?.Telegram?.WebApp
+
+    if (legacyWebApp?.initData) {
+      console.log('[Telegram SDK] Recovered initData from legacy window.Telegram.WebApp')
+      return {
+        initData: legacyWebApp.initData,
+        user: legacyWebApp.initDataUnsafe?.user,
+      }
+    }
+
     return { initData: undefined, user: undefined }
   }
 }

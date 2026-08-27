@@ -78,6 +78,7 @@ class VisitPlanItemStatus(StrEnum):
 
 class MediaBucket(StrEnum):
     RETAIL_POINTS = "retail-point-images"
+    PRODUCTS = "product-images"
     VISITS = "visit-reports"
     DOCUMENTS = "documents"
     AVATARS = "avatars"

@@ -44,6 +44,7 @@ class _TestProduct(_TestBase):
     )
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     price: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    photo_id: Mapped[UUID | None] = mapped_column(nullable=True)
     volume: Mapped[Decimal] = mapped_column(
         Numeric(10, 3), nullable=False, default=Decimal("0.000")
     )

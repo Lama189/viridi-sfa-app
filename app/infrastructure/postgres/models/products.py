@@ -10,6 +10,7 @@ from app.infrastructure.postgres.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from app.infrastructure.postgres.models.categories import Category
+    from app.infrastructure.postgres.models.media_objects import MediaObject
     from app.infrastructure.postgres.models.order_items import OrderItem
     from app.infrastructure.postgres.models.stock_transactions import StockTransaction
     from app.infrastructure.postgres.models.stocks import Stock
@@ -40,6 +41,12 @@ class Product(BaseModel):
         nullable=False,
     )
 
+    photo_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("media_objects.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
     volume: Mapped[Decimal] = mapped_column(
         Numeric(10, 3),
         nullable=False,
@@ -66,6 +73,10 @@ class Product(BaseModel):
 
     category: Mapped[Category] = relationship(
         back_populates="products",
+    )
+
+    photo: Mapped[MediaObject | None] = relationship(
+        foreign_keys=[photo_id],
     )
 
     stocks: Mapped[list[Stock]] = relationship(

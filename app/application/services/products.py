@@ -25,6 +25,7 @@ class ProductsService:
             name=dto.name,
             price=dto.price,
             category_id=dto.category_id,
+            photo_id=dto.photo_id,
             volume=dto.volume,
             weight=dto.weight,
             items_in_box=dto.items_in_box,
@@ -58,6 +59,8 @@ class ProductsService:
             product.name = dto.name
         if dto.price is not None:
             product.price = dto.price
+        if dto.photo_id is not None:
+            product.photo_id = dto.photo_id
         if dto.volume is not None:
             product.volume = dto.volume
         if dto.weight is not None:

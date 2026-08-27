@@ -10,6 +10,7 @@ class ProductCreateDTO:
     name: str
     price: Decimal
     category_id: UUID
+    photo_id: UUID | None = None
     volume: Decimal = Decimal("0.000")
     weight: Decimal = Decimal("0.000")
     items_in_box: int = 1
@@ -20,6 +21,7 @@ class ProductUpdateDTO:
     name: str | None = None
     price: Decimal | None = None
     category_id: UUID | None = None
+    photo_id: UUID | None = None
     volume: Decimal | None = None
     weight: Decimal | None = None
     items_in_box: int | None = None
@@ -32,6 +34,7 @@ class ProductDTO:
     name: str
     price: Decimal
     category_id: UUID
+    photo_id: UUID | None = None
     volume: Decimal = Decimal("0.000")
     weight: Decimal = Decimal("0.000")
     items_in_box: int = 1

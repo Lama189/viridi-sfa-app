@@ -47,6 +47,9 @@ class ProductCreate(BaseModel):
         ..., gt=0, description="Цена товара в сумах (UZS)", examples=[53000.00]
     )
     category_id: UUID = Field(..., description="ID существующей категории")
+    photo_id: UUID | None = Field(
+        None, description="ID загруженного медиа-объекта фото товара"
+    )
     volume: Decimal = Field(default=Decimal("0.000"), description="Объем в м³")
     weight: Decimal = Field(default=Decimal("0.000"), description="Вес в кг")
     items_in_box: int = Field(default=1, gt=0)
@@ -56,6 +59,9 @@ class ProductUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=150)
     price: Decimal | None = Field(None, gt=0, description="Цена товара в сумах (UZS)")
     category_id: UUID | None = Field(None, description="ID существующей категории")
+    photo_id: UUID | None = Field(
+        None, description="ID загруженного медиа-объекта фото товара"
+    )
     volume: Decimal | None = Field(None, description="Объем в м³")
     weight: Decimal | None = Field(None, description="Вес в кг")
     items_in_box: int | None = Field(None, gt=0)
@@ -67,6 +73,9 @@ class ProductResponse(BaseModel):
     name: str
     price: Decimal
     category_id: UUID
+    photo_id: UUID | None = Field(
+        None, description="ID загруженного медиа-объекта фото товара"
+    )
     volume: Decimal
     weight: Decimal
     items_in_box: int

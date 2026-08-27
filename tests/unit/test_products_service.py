@@ -29,6 +29,7 @@ def service(mock_uow):
 @pytest.mark.asyncio
 async def test_create_product_success(service, mock_uow):
     cat = Category(name="Fertilizers", id=uuid4())
+    photo_uid = uuid4()
     mock_uow.categories.get_by_id.return_value = cat
     mock_uow.products.exists_by.return_value = False
 
@@ -36,12 +37,14 @@ async def test_create_product_success(service, mock_uow):
         name="NPK-10",
         price=Decimal("150.00"),
         category_id=cat.id,
+        photo_id=photo_uid,
         items_in_box=20,
     )
     result = await service.create_product(dto)
 
     assert result.name == "NPK-10"
     assert result.category_id == cat.id
+    assert result.photo_id == photo_uid
     assert result.price == Decimal("150.00")
     assert result.items_in_box == 20
     mock_uow.products.add.assert_awaited_once()

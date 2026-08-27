@@ -51,10 +51,12 @@ async def client():
 async def test_create_product_success(client, mock_service):
     cat_id = uuid4()
     prod_id = uuid4()
+    photo_id = uuid4()
     mock_service.create_product.return_value = Product(
         category_id=cat_id,
         name="NPK-10",
         price=Decimal("150.00"),
+        photo_id=photo_id,
         items_in_box=20,
         id=prod_id,
     )
@@ -65,6 +67,7 @@ async def test_create_product_success(client, mock_service):
             "name": "NPK-10",
             "price": 150.00,
             "category_id": str(cat_id),
+            "photo_id": str(photo_id),
             "items_in_box": 20,
         },
     )
@@ -72,6 +75,7 @@ async def test_create_product_success(client, mock_service):
     data = resp.json()
     assert data["name"] == "NPK-10"
     assert data["price"] == "150.00"
+    assert data["photo_id"] == str(photo_id)
     assert data["items_in_box"] == 20
 
 

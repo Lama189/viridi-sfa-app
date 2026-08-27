@@ -289,3 +289,56 @@ async def test_list_my_devices_success(
     assert resp.status_code == 200
     assert len(resp.json()) == 1
     assert resp.json()[0]["fcm_token"] == "token_sample_12345"
+
+
+# --- GET /api/v1/employees ---
+
+
+@pytest.mark.asyncio
+async def test_list_employees_success(client, mock_service):
+    uid = uuid4()
+    mock_service.list_employees.return_value = [
+        Employee(
+            phone="+998901234567",
+            password_hash="h",
+            full_name="Agent 1",
+            id=uid,
+            role=EmployeeRole.AGENT,
+            is_active=True,
+        )
+    ]
+
+    resp = await client.get("/api/v1/employees", params={"role": "agent"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["full_name"] == "Agent 1"
+    assert data[0]["role"] == "agent"
+
+
+# --- GET /api/v1/employees/{id} ---
+
+
+@pytest.mark.asyncio
+async def test_get_employee_success(client, mock_service):
+    uid = uuid4()
+    mock_service.get_employee.return_value = Employee(
+        phone="+998901234567",
+        password_hash="h",
+        full_name="Agent 1",
+        id=uid,
+        role=EmployeeRole.AGENT,
+        is_active=True,
+    )
+
+    resp = await client.get(f"/api/v1/employees/{uid}")
+    assert resp.status_code == 200
+    assert resp.json()["id"] == str(uid)
+
+
+@pytest.mark.asyncio
+async def test_get_employee_not_found(client, mock_service):
+    mock_service.get_employee.return_value = None
+
+    resp = await client.get(f"/api/v1/employees/{uuid4()}")
+    assert resp.status_code == 404

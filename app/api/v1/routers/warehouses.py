@@ -3,7 +3,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.api.dependencies import allow_all_staff, get_warehouses_service
+from app.api.dependencies import (
+    allow_admin,
+    allow_all_staff,
+    get_warehouses_service,
+)
 from app.api.v1.schemas.inventory import (
     WarehouseCreate,
     WarehouseResponse,
@@ -19,6 +23,7 @@ router = APIRouter(prefix="/api/v1/warehouses", tags=["Warehouses"])
     path="",
     response_model=WarehouseResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(allow_admin)],
 )
 async def create_warehouse(
     dto: WarehouseCreate,
@@ -62,6 +67,7 @@ async def get_warehouse(
 @router.patch(
     path="/{warehouse_id}",
     response_model=WarehouseResponse,
+    dependencies=[Depends(allow_admin)],
 )
 async def update_warehouse(
     warehouse_id: UUID,

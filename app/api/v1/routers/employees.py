@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -33,6 +33,7 @@ from app.application.dto.employees import (
 from app.application.services.employee_devices import EmployeeDeviceService
 from app.application.services.employees import EmployeesAuthService, EmployeesService
 from app.domain.entities.auth import AuthenticatedEmployee
+from app.domain.enums import EmployeeRole
 
 router = APIRouter(prefix="/api/v1/employees", tags=["Employees"])
 
@@ -41,6 +42,7 @@ router = APIRouter(prefix="/api/v1/employees", tags=["Employees"])
     path="/register",
     status_code=status.HTTP_201_CREATED,
     response_model=EmployeeResponse,
+    dependencies=[Depends(allow_admin)],
 )
 async def register(
     dto: EmployeeCreate,
@@ -56,6 +58,29 @@ async def register(
         return await service.create_employee(app_dto)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get(
+    path="",
+    status_code=status.HTTP_200_OK,
+    response_model=list[EmployeeResponse],
+    dependencies=[Depends(allow_admin)],
+)
+async def list_employees(
+    service: Annotated[EmployeesService, Depends(get_employees_service)],
+    role: EmployeeRole | None = Query(
+        None, description="Фильтр по роли сотрудника (agent, admin, warehouse_worker)"
+    ),
+    is_active: bool | None = Query(None, description="Фильтр по активности"),
+):
+    filters: dict[str, Any] = {}
+    if role is not None:
+        filters["role"] = role
+    if is_active is not None:
+        filters["is_active"] = is_active
+    return await service.list_employees(**filters)
+
+
 
 
 @router.post(
@@ -137,6 +162,25 @@ async def list_my_devices(
     ],
 ):
     return await device_service.list_by_employee(employee.id)
+
+
+@router.get(
+    path="/{employee_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=EmployeeResponse,
+    dependencies=[Depends(allow_admin)],
+)
+async def get_employee(
+    employee_id: UUID,
+    service: Annotated[EmployeesService, Depends(get_employees_service)],
+):
+    employee = await service.get_employee(employee_id)
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Employee {employee_id} not found",
+        )
+    return employee
 
 
 @router.patch(

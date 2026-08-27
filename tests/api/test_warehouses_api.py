@@ -5,7 +5,11 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
-from app.api.dependencies import allow_all_staff, get_warehouses_service
+from app.api.dependencies import (
+    allow_admin,
+    allow_all_staff,
+    get_warehouses_service,
+)
 from app.domain.entities.auth import AuthenticatedEmployee
 from app.domain.entities.inventory import Warehouse
 from app.domain.enums import EmployeeRole
@@ -19,14 +23,16 @@ def mock_service():
 
 @pytest.fixture(autouse=True)
 def override_deps(mock_service):
-    app.dependency_overrides[get_warehouses_service] = lambda: mock_service
-    app.dependency_overrides[allow_all_staff] = lambda: AuthenticatedEmployee(
+    admin_user = AuthenticatedEmployee(
         id=uuid4(),
         phone="+998900000000",
         role=EmployeeRole.ADMIN,
         full_name="Admin",
         is_active=True,
     )
+    app.dependency_overrides[get_warehouses_service] = lambda: mock_service
+    app.dependency_overrides[allow_all_staff] = lambda: admin_user
+    app.dependency_overrides[allow_admin] = lambda: admin_user
     yield
     app.dependency_overrides.clear()
 

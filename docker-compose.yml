@@ -83,6 +83,8 @@ services:
       - MINIO_SECURE=${MINIO_SECURE:-false}
       - SECRET_KEY=${SECRET_KEY}
       - INVITE_CODE_SECRET_KEY=${INVITE_CODE_SECRET_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - CORS_ORIGINS=${CORS_ORIGINS}
     depends_on:
       migrations:
         condition: service_completed_successfully

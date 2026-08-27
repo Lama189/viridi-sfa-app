@@ -33,7 +33,7 @@ from app.application.services.clients import (
 from app.application.services.members import RetailPointMembersService
 from app.application.services.orders import OrdersService, parse_order_statuses
 from app.core.config import get_settings
-from app.core.exceptions import DomainError, UserNotFoundError
+from app.core.exceptions import DomainError, UserNotActiveError, UserNotFoundError
 from app.domain.entities.auth import AuthenticatedClient, AuthenticatedEmployee
 from app.infrastructure.telegram import send_telegram_notification
 
@@ -70,10 +70,10 @@ async def telegram_login(
     try:
         app_dto = ClientTelegramLoginDTO(init_data=dto.init_data)
         return await service.telegram_login(app_dto)
-    except ValueError as e:
+    except (ValueError, UserNotFoundError, UserNotActiveError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
+            detail=str(e) if str(e) else e.__class__.__name__,
         )
 
 

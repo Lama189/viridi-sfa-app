@@ -260,6 +260,9 @@ class ClientsAuthService:
 
         telegram_chat_id = int(user_data["id"])
 
+        logger.error(
+            f"LOGIN TRY: parsed_tg_id={telegram_chat_id} (type: {type(telegram_chat_id)})"
+        )
         client = await self._uow.clients.get_by_telegram_chat_id(telegram_chat_id)
         if client is None:
             raise UserNotFoundError()

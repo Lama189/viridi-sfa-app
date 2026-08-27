@@ -13,6 +13,16 @@ export interface AuthTokens {
   refreshToken: string
 }
 
+export function getMediaThumbnailUrl(photoId: string | null | undefined): string | null {
+  if (!photoId) return null
+  return `${apiBaseUrl}/media/${photoId}/thumbnail`
+}
+
+export function getMediaContentUrl(photoId: string | null | undefined): string | null {
+  if (!photoId) return null
+  return `${apiBaseUrl}/media/${photoId}/content`
+}
+
 interface RetriableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
 }

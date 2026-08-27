@@ -1,6 +1,7 @@
 import { Box, Minus, Package, Plus, ShoppingBag, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 
+import { getMediaContentUrl } from '../api/client'
 import { useCart } from '../hooks/useCart'
 import { formatPrice } from '../lib/format'
 import type { Product } from '../types/api'
@@ -13,6 +14,7 @@ interface ProductSheetProps {
 export function ProductSheet({ product, onClose }: ProductSheetProps) {
   const { getItemQuantity, updateQuantity, addItem, removeItem } = useCart()
   const inCartQty = getItemQuantity(product.id)
+  const photoUrl = getMediaContentUrl(product.photo_id)
 
   const [quantity, setQuantity] = useState<number>(() => (inCartQty > 0 ? inCartQty : 1))
 
@@ -62,7 +64,15 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
           <X size={22} aria-hidden="true" />
         </button>
         <span className="product-sheet__visual" aria-hidden="true">
-          <Box size={44} strokeWidth={1.4} />
+          {photoUrl ? (
+            <img
+              src={photoUrl}
+              alt={product.name}
+              className="product-sheet__image"
+            />
+          ) : (
+            <Box size={44} strokeWidth={1.4} />
+          )}
         </span>
         <h2>{product.name}</h2>
         <p className="product-sheet__price">{formatPrice(product.price)}</p>

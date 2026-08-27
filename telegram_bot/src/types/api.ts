@@ -23,6 +23,7 @@ export interface Product {
   name: string
   price: string
   category_id: string
+  photo_id?: string | null
   volume: string
   weight: string
   items_in_box: number

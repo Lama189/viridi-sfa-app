@@ -122,6 +122,7 @@ class PostgresStocksRepository(IStockRepository):
                 weight=stock.product.weight,
                 items_in_box=stock.product.items_in_box,
                 category=category_dto,
+                photo_id=stock.product.photo_id,
                 photo_url=getattr(stock.product, "photo_url", None),
                 stock=stock_summary_dto,
             )

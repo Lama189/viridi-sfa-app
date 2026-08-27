@@ -60,7 +60,6 @@ async def upload_media(
 
 @router.get(
     path="/{media_id}/content",
-    dependencies=[Depends(allow_all_staff)],
 )
 async def get_media_content(
     media_id: UUID,
@@ -75,7 +74,6 @@ async def get_media_content(
 
 @router.get(
     path="/{media_id}/thumbnail",
-    dependencies=[Depends(allow_all_staff)],
 )
 async def get_media_thumbnail(
     media_id: UUID,

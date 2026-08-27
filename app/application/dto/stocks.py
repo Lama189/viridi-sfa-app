@@ -95,5 +95,6 @@ class ProductWithStockDTO:
     weight: Decimal
     items_in_box: int
     category: CategoryDTO
+    photo_id: UUID | None = None
     photo_url: str | None = None
     stock: StockSummaryDTO | None = None

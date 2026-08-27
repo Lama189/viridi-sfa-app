@@ -1,5 +1,6 @@
 import { Box, ChevronRight, Package, Plus, Check } from 'lucide-react'
 
+import { getMediaThumbnailUrl } from '../api/client'
 import { useCart } from '../hooks/useCart'
 import { formatPrice } from '../lib/format'
 import type { Product } from '../types/api'
@@ -12,6 +13,7 @@ interface ProductCardProps {
 export function ProductCard({ product, onClick }: ProductCardProps) {
   const { getItemQuantity, addItem } = useCart()
   const inCartQuantity = getItemQuantity(product.id)
+  const thumbnailUrl = getMediaThumbnailUrl(product.photo_id)
 
   const productDetails = [
     product.weight !== '0.000' && product.weight ? `${product.weight} кг` : null,
@@ -26,7 +28,16 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
   return (
     <div className="product-card" role="button" tabIndex={0} onClick={() => onClick(product)}>
       <span className="product-card__visual" aria-hidden="true">
-        <Box size={28} strokeWidth={1.5} />
+        {thumbnailUrl ? (
+          <img
+            src={thumbnailUrl}
+            alt={product.name}
+            className="product-card__image"
+            loading="lazy"
+          />
+        ) : (
+          <Box size={28} strokeWidth={1.5} />
+        )}
       </span>
       <span className="product-card__content">
         <span className="product-card__name">{product.name}</span>

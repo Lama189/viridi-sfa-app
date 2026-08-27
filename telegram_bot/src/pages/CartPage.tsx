@@ -10,6 +10,7 @@ import {
 import { useState } from 'react'
 
 import { OrderConfirmationModal } from '../components/OrderConfirmationModal'
+import { getMediaThumbnailUrl } from '../api/client'
 import { useCart } from '../hooks/useCart'
 import { formatPrice, formatVolume, formatWeight } from '../lib/format'
 import type { Client, Product } from '../types/api'
@@ -101,7 +102,16 @@ export function CartPage({ client, onNavigateToCatalog, onProductSelect }: CartP
                 onClick={() => onProductSelect?.(product)}
               >
                 <span className="cart-item-card__visual" aria-hidden="true">
-                  <Box size={24} strokeWidth={1.5} />
+                  {product.photo_id ? (
+                    <img
+                      src={getMediaThumbnailUrl(product.photo_id) || ''}
+                      alt={product.name}
+                      className="cart-item-card__image"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <Box size={24} strokeWidth={1.5} />
+                  )}
                 </span>
                 <div className="cart-item-card__info">
                   <strong className="cart-item-card__name">{product.name}</strong>

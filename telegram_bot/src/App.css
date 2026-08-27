@@ -155,6 +155,16 @@
   place-items: center;
   color: #e7e7e8;
   background: linear-gradient(135deg, #282828, #111);
+  overflow: hidden;
+}
+
+.product-card__image,
+.product-sheet__image,
+.cart-item-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .product-card__visual {

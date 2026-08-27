@@ -121,6 +121,7 @@ class ProductWithStockResponse(BaseModel):
     volume: Decimal
     weight: Decimal
     items_in_box: int
+    photo_id: UUID | None = None
     photo_url: str | None = None
     category: CategoryResponse
     stock: StockSummaryResponse | None = None

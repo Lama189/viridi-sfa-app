@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: e4a317e84b6e
+Revision ID: 13f32943b9f2
 Revises: 
-Create Date: 2026-08-20 09:28:25.201637
+Create Date: 2026-08-27 08:03:55.312778
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'e4a317e84b6e'
+revision: str = '13f32943b9f2'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -258,15 +258,19 @@ def upgrade() -> None:
     sa.Column('warehouse_id', sa.UUID(), nullable=False),
     sa.Column('created_by_id', sa.UUID(), nullable=False),
     sa.Column('retail_point_id', sa.UUID(), nullable=False),
+    sa.Column('source_visit_id', sa.UUID(), nullable=True),
     sa.Column('planned_visit_id', sa.UUID(), nullable=True),
     sa.Column('actual_visit_id', sa.UUID(), nullable=True),
     sa.Column('status', sa.Enum('PENDING', 'CONFIRMED', 'ASSEMBLY_STARTED', 'ASSEMBLED', 'LOADED', 'SHIPPED', 'DELIVERED', 'CANCELLED', name='order_status'), nullable=False),
     sa.Column('total_amount', sa.Numeric(precision=15, scale=2), nullable=False),
     sa.Column('total_volume', sa.Numeric(precision=10, scale=3), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['actual_visit_id'], ['visits.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['created_by_id'], ['clients.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['planned_visit_id'], ['visit_plans.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['retail_point_id'], ['retail_points.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['source_visit_id'], ['visits.id'], ondelete='SET NULL'),
     sa.ForeignKeyConstraint(['warehouse_id'], ['warehouses.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )

@@ -91,6 +91,32 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: telegram_bot/package-lock.json
+
+      - name: Build Telegram Mini App Frontend
+        working-directory: ./telegram_bot
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy dist to server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "telegram_bot/dist/*"
+          target: "/var/www/viridi-sfa-app/telegram_bot/dist"
+          strip_prefix: "telegram_bot/dist"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -102,9 +128,3 @@ jobs:
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
-
-      - name: Build Telegram Mini App Frontend
-        run: |
-          cd telegram_bot
-          npm ci
-          npm run build

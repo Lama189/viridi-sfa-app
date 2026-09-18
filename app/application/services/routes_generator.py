@@ -72,14 +72,14 @@ class RouteGenerationService(IRouteGenerationService):
 
         await self._uow.commit()
 
-    async def clear_all(self) -> None:
+    async def clear_all(self, from_date: date | None = None) -> None:
         retail_points = await self._uow.retail_points.list_all()
         if retail_points:
             await self._assignments_service.clear_employee_assignments(
                 [point.id for point in retail_points]
             )
 
-        await self._uow.visit_plans.delete_all()
+        await self._uow.visit_plans.delete_all(from_date=from_date)
 
         unloaded_statuses = [
             OrderStatus.PENDING,
@@ -102,7 +102,13 @@ class RouteGenerationService(IRouteGenerationService):
     ) -> list[Employee]:
         assigned_agents: list[Employee] = []
 
-        for cluster, agent in zip(clusters, agents):
+        sorted_clusters = sorted(
+            clusters,
+            key=lambda c: (float(c.center_latitude), float(c.center_longitude)),
+        )
+        sorted_agents = sorted(agents, key=lambda a: a.id)
+
+        for cluster, agent in zip(sorted_clusters, sorted_agents):
             assigned_agents.append(agent)
 
             for retail_point in cluster.retail_points:
@@ -134,30 +140,43 @@ class RouteGenerationService(IRouteGenerationService):
             OrderStatus.ASSEMBLY_STARTED,
             OrderStatus.ASSEMBLED,
         ]
-        orders = await self._uow.orders.list(statuses=unloaded_statuses, limit=1000)
-
-        for order in orders:
-            assignment = (
-                await self._uow.retail_point_assignments.get_by_retail_point_id(
-                    order.retail_point_id
-                )
+        batch_size = 500
+        offset = 0
+        while True:
+            orders = await self._uow.orders.list(
+                statuses=unloaded_statuses, limit=batch_size, offset=offset
             )
-            new_planned_visit_id = None
-            if assignment and assignment.employee_id:
-                from_date = date.today() + timedelta(
-                    days=self._min_delivery_days_offset
-                )
-                next_plan = await self._uow.visit_plans.find_next_plan_for_retail_point(
-                    employee_id=assignment.employee_id,
-                    retail_point_id=order.retail_point_id,
-                    from_date=from_date,
-                )
-                if next_plan:
-                    new_planned_visit_id = next_plan.id
+            if not orders:
+                break
 
-            if order.planned_visit_id != new_planned_visit_id:
-                order.planned_visit_id = new_planned_visit_id
-                await self._uow.orders.update(order)
+            for order in orders:
+                assignment = (
+                    await self._uow.retail_point_assignments.get_by_retail_point_id(
+                        order.retail_point_id
+                    )
+                )
+                new_planned_visit_id = None
+                if assignment and assignment.employee_id:
+                    from_date = date.today() + timedelta(
+                        days=self._min_delivery_days_offset
+                    )
+                    next_plan = (
+                        await self._uow.visit_plans.find_next_plan_for_retail_point(
+                            employee_id=assignment.employee_id,
+                            retail_point_id=order.retail_point_id,
+                            from_date=from_date,
+                        )
+                    )
+                    if next_plan:
+                        new_planned_visit_id = next_plan.id
+
+                if order.planned_visit_id != new_planned_visit_id:
+                    order.planned_visit_id = new_planned_visit_id
+                    await self._uow.orders.update(order)
+
+            offset += len(orders)
+            if len(orders) < batch_size:
+                break
 
     def _get_dates_range(self, start: RouteGenerationStart) -> list[date]:
         today = date.today()

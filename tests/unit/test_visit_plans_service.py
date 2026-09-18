@@ -147,3 +147,50 @@ async def test_enrich_plan_and_get_today_plan_dto(service, mock_uow):
     assert dto.items[0].retail_point is not None
     assert dto.items[0].retail_point.name == "Test Point"
     assert dto.items[0].retail_point.address == "Test Addr"
+
+
+@pytest.mark.asyncio
+async def test_generate_for_employee_route_ordered_by_coordinates(service, mock_uow):
+    from decimal import Decimal
+
+    emp_id = uuid4()
+    plan_date = date(2026, 8, 3)
+
+    # Alphabetical order: p_apple, p_middle, p_zebra
+    # Geographical path from north (41.33): p_zebra (41.33) -> p_middle (41.32) -> p_apple (41.31)
+    p_zebra = RetailPoint(
+        name="Zebra",
+        address="Zebra st",
+        latitude=Decimal("41.33"),
+        longitude=Decimal("69.25"),
+    )
+    p_apple = RetailPoint(
+        name="Apple",
+        address="Apple st",
+        latitude=Decimal("41.31"),
+        longitude=Decimal("69.25"),
+    )
+    p_middle = RetailPoint(
+        name="Middle",
+        address="Middle st",
+        latitude=Decimal("41.32"),
+        longitude=Decimal("69.25"),
+    )
+
+    mock_uow.visit_plans.get_by_employee_and_date.return_value = None
+    mock_uow.retail_points.list_by_employee_and_weekday.return_value = [
+        p_apple,
+        p_zebra,
+        p_middle,
+    ]
+
+    plan = await service.generate_for_employee(emp_id, plan_date)
+
+    assert len(plan.items) == 3
+    # First should be Zebra (northernmost 41.33), then Middle (41.32), then Apple (41.31)
+    assert plan.items[0].retail_point_id == p_zebra.id
+    assert plan.items[0].order == 1
+    assert plan.items[1].retail_point_id == p_middle.id
+    assert plan.items[1].order == 2
+    assert plan.items[2].retail_point_id == p_apple.id
+    assert plan.items[2].order == 3

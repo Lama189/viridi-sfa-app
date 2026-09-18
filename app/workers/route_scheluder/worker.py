@@ -1,23 +1,37 @@
+from collections.abc import Callable
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from app.application.interfaces.services.routes_generator import IRouteGenerationService
+from app.application.interfaces.uow import IUnitOfWork
 from app.core.config import RouteScheluderWorkerConfig
 from app.core.observability.logging import logger
 
 
 class RouteScheluderWorker:
     def __init__(
-        self, config: RouteScheluderWorkerConfig, route_service: IRouteGenerationService
+        self,
+        config: RouteScheluderWorkerConfig,
+        route_service: IRouteGenerationService | None = None,
+        uow_factory: Callable[[], IUnitOfWork] | None = None,
+        service_factory: Callable[[IUnitOfWork], IRouteGenerationService] | None = None,
     ) -> None:
         self._config = config
         self._route_service = route_service
+        self._uow_factory = uow_factory
+        self._service_factory = service_factory
         self._scheluder = AsyncIOScheduler()
 
     async def _run_route_generation(self) -> None:
         logger.info("Starting scheduled route generation job...")
         try:
-            await self._route_service.generate()
+            if self._service_factory and self._uow_factory:
+                async with self._uow_factory() as uow:
+                    service = self._service_factory(uow)
+                    await service.generate()
+            elif self._route_service:
+                await self._route_service.generate()
             logger.info("Scheduled route generation completed successfully")
         except Exception as exc:
             logger.exception("Scheduled route generation failed", error=str(exc))

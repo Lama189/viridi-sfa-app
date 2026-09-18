@@ -1,6 +1,6 @@
 from decimal import Decimal
 from unittest.mock import AsyncMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -95,6 +95,7 @@ class TestStockServiceCreate:
         assert result.product_id == pid
         assert result.quantity == 0
         mock_uow.stocks.add.assert_awaited_once()
+        mock_uow.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_create_stock_already_exists(self, service, mock_uow):
@@ -160,6 +161,21 @@ class TestStockServiceAdd:
         mock_uow.stocks.update.assert_awaited_once()
         mock_uow.stock_transactions.add.assert_awaited_once()
         mock_uow.commit.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_add_stock_generates_reference_id_when_none(self, service, mock_uow):
+        wid, pid = uuid4(), uuid4()
+        stock = Stock(warehouse_id=wid, product_id=pid, quantity=10)
+        mock_uow.warehouses.get_by_id.return_value = _warehouse(uid=wid)
+        mock_uow.products.get_by_id.return_value = _product(uid=pid)
+        mock_uow.stocks.get_for_update.return_value = stock
+
+        dto = _op_dto(warehouse_id=wid, product_id=pid, quantity=5, reference_id=None)
+        await service.add_stock(dto)
+
+        tx_call = mock_uow.stock_transactions.add.call_args[0][0]
+        assert tx_call.reference_id is not None
+        assert isinstance(tx_call.reference_id, UUID)
 
     @pytest.mark.asyncio
     async def test_add_stock_warehouse_not_found(self, service, mock_uow):

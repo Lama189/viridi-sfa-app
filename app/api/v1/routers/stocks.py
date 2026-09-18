@@ -7,15 +7,39 @@ from app.api.dependencies import allow_admin, allow_all_staff, get_stocks_servic
 from app.api.v1.schemas.inventory import ProductWithStockResponse
 from app.api.v1.schemas.stocks import (
     StockAdjustRequest,
+    StockCreateRequest,
     StockOperationRequest,
     StockResponse,
     StockTransactionResponse,
 )
-from app.application.dto.stocks import StockOperationDTO
+from app.application.dto.stocks import StockCreateDTO, StockOperationDTO
 from app.application.interfaces.services.stocks import IStockService
 from app.domain.entities.auth import AuthenticatedEmployee
 
 router = APIRouter(prefix="/api/v1/stocks", tags=["Stocks"])
+
+
+@router.post(
+    path="",
+    response_model=StockResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(allow_admin)],
+)
+async def create_stock(
+    dto: StockCreateRequest,
+    service: Annotated[IStockService, Depends(get_stocks_service)],
+):
+    try:
+        app_dto = StockCreateDTO(
+            warehouse_id=dto.warehouse_id,
+            product_id=dto.product_id,
+        )
+        return await service.create_stock(app_dto)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.post(

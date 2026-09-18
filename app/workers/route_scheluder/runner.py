@@ -11,7 +11,9 @@ async def run() -> None:
     config = get_scheluder_worker_config()
 
     worker = RouteScheluderWorker(
-        config=config, route_service=container.route_generator_service(container.uow())
+        config=config,
+        uow_factory=container.uow,
+        service_factory=container.route_generator_service,
     )
     worker.start()
 

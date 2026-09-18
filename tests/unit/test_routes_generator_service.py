@@ -271,3 +271,22 @@ async def test_clear_all_without_retail_points(
     mock_assignments_service.clear_employee_assignments.assert_not_awaited()
     mock_uow.visit_plans.delete_all.assert_awaited_once()
     mock_uow.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_clear_all_with_from_date(
+    service,
+    mock_uow,
+    mock_assignments_service,
+):
+    point1 = RetailPoint(name="P1", address="A1")
+    mock_uow.retail_points.list_all.return_value = [point1]
+    from_date = date(2026, 9, 1)
+
+    await service.clear_all(from_date=from_date)
+
+    mock_assignments_service.clear_employee_assignments.assert_awaited_once_with(
+        [point1.id]
+    )
+    mock_uow.visit_plans.delete_all.assert_awaited_once_with(from_date=from_date)
+    mock_uow.commit.assert_awaited_once()

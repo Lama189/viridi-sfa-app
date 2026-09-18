@@ -87,8 +87,11 @@ class PostgresVisitPlanRepository(IVisitPlanRepository):
             return None
         return self._to_domain(model)
 
-    async def delete_all(self) -> None:
-        await self._session.execute(sa_delete(VisitPlanModel))
+    async def delete_all(self, from_date: date | None = None) -> None:
+        stmt = sa_delete(VisitPlanModel)
+        if from_date is not None:
+            stmt = stmt.where(VisitPlanModel.plan_date >= from_date)
+        await self._session.execute(stmt)
         await self._session.flush()
 
     def _to_domain(self, model: VisitPlanModel) -> VisitPlan:

@@ -61,3 +61,34 @@ async def test_build_clusters_multiple_agents_and_points(service):
     assert len(clusters) == 3
     total_clustered = sum(len(c.retail_points) for c in clusters)
     assert total_clustered == 10
+
+
+@pytest.mark.asyncio
+async def test_build_clusters_keeps_points_without_coordinates(service):
+    p_with_coords = [
+        RetailPoint(
+            name=f"P{i}",
+            address=f"A{i}",
+            latitude=Decimal(f"41.3{i}"),
+            longitude=Decimal(f"69.2{i}"),
+        )
+        for i in range(4)
+    ]
+    p_without_coords = [
+        RetailPoint(
+            name="P_no_coord_1", address="A_no_coord_1", latitude=None, longitude=None
+        ),
+        RetailPoint(
+            name="P_no_coord_2", address="A_no_coord_2", latitude=None, longitude=None
+        ),
+    ]
+
+    all_points = p_with_coords + p_without_coords
+    clusters = await service.build_clusters(all_points, agents_count=2)
+
+    assert len(clusters) == 2
+    total_clustered = sum(len(c.retail_points) for c in clusters)
+    assert total_clustered == 6
+    all_clustered_ids = [pt.id for c in clusters for pt in c.retail_points]
+    assert p_without_coords[0].id in all_clustered_ids
+    assert p_without_coords[1].id in all_clustered_ids

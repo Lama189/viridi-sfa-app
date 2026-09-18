@@ -30,53 +30,71 @@ class TerritoryClusteringService(ITerritoryClusteringService):
             if point.latitude is not None and point.longitude is not None
         ]
 
+        points_without_coords = [
+            point
+            for point in points
+            if point.latitude is None or point.longitude is None
+        ]
+
         if not valid_points:
             return []
 
         target_clusters_count = min(agents_count, len(valid_points))
         if target_clusters_count == 1:
-            return [self._create_cluster(valid_points)]
+            clusters = [self._create_cluster(valid_points)]
+        elif len(valid_points) == target_clusters_count:
+            clusters = [self._create_cluster([point]) for point in valid_points]
+        else:
+            coordinates = np.array(
+                [[float(p.latitude), float(p.longitude)] for p in valid_points],
+                dtype=np.float64,
+            )
 
-        if len(valid_points) == target_clusters_count:
-            return [self._create_cluster([point]) for point in valid_points]
+            average_size = len(valid_points) / target_clusters_count
+            min_size = max(1, int(average_size * 0.7))
+            max_size = max(min_size, int(np.ceil(average_size * 1.3)))
 
-        coordinates = np.array(
-            [[float(p.latitude), float(p.longitude)] for p in valid_points],
-            dtype=np.float64,
-        )
+            if min_size * target_clusters_count > len(valid_points):
+                min_size = max(1, len(valid_points) // target_clusters_count)
+            if max_size * target_clusters_count < len(valid_points):
+                max_size = int(np.ceil(len(valid_points) / target_clusters_count))
 
-        average_size = len(valid_points) / target_clusters_count
-        min_size = max(1, int(average_size * 0.7))
-        max_size = max(min_size, int(np.ceil(average_size * 1.3)))
+            clf = KMeansConstrained(
+                n_clusters=target_clusters_count,
+                size_min=min_size,
+                size_max=max_size,
+                random_state=42,
+            )
+            labels = clf.fit_predict(coordinates)
 
-        if min_size * target_clusters_count > len(valid_points):
-            min_size = max(1, len(valid_points) // target_clusters_count)
-        if max_size * target_clusters_count < len(valid_points):
-            max_size = int(np.ceil(len(valid_points) / target_clusters_count))
+            grouped_points: dict[int, list[RetailPoint]] = {
+                i: [] for i in range(target_clusters_count)
+            }
+            for point, label in zip(valid_points, labels):
+                grouped_points[label].append(point)
 
-        clf = KMeansConstrained(
-            n_clusters=target_clusters_count,
-            size_min=min_size,
-            size_max=max_size,
-            random_state=42,
-        )
-        labels = clf.fit_predict(coordinates)
+            clusters = [
+                self._create_cluster(cluster_points)
+                for cluster_points in grouped_points.values()
+                if cluster_points
+            ]
 
-        grouped_points: dict[int, list[RetailPoint]] = {
-            i: [] for i in range(target_clusters_count)
-        }
-        for point, label in zip(valid_points, labels):
-            grouped_points[label].append(point)
+        if points_without_coords and clusters:
+            for idx, pt in enumerate(points_without_coords):
+                clusters[idx % len(clusters)].retail_points.append(pt)
 
-        return [
-            self._create_cluster(cluster_points)
-            for cluster_points in grouped_points.values()
-            if cluster_points
-        ]
+        return clusters
 
     def _create_cluster(self, points: list[RetailPoint]) -> TerritoryCluster:
-        avg_lat = sum(Decimal(str(p.latitude)) for p in points) / len(points)
-        avg_lon = sum(Decimal(str(p.longitude)) for p in points) / len(points)
+        valid = [
+            p for p in points if p.latitude is not None and p.longitude is not None
+        ]
+        if valid:
+            avg_lat = sum(Decimal(str(p.latitude)) for p in valid) / len(valid)
+            avg_lon = sum(Decimal(str(p.longitude)) for p in valid) / len(valid)
+        else:
+            avg_lat = Decimal(0)
+            avg_lon = Decimal(0)
 
         return TerritoryCluster(
             id=uuid4(),

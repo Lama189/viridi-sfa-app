@@ -89,5 +89,13 @@ async def generate_routes(
 )
 async def clear_routes(
     service: Annotated[IRouteGenerationService, Depends(get_routes_generator_service)],
+    from_date: Annotated[
+        date | None,
+        Query(
+            alias="from_date",
+            description="Optional starting date to clear routes from (defaults to today)",
+        ),
+    ] = None,
 ) -> None:
-    await service.clear_all()
+    target_from_date = from_date or date.today()
+    await service.clear_all(from_date=target_from_date)

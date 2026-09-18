@@ -9,6 +9,7 @@ from app.core.exceptions import (
     VisitPlanAlreadyExistsError,
     VisitPlanNotFoundError,
 )
+from app.domain.entities.retail_points import RetailPoint
 from app.domain.entities.visit_plan_items import VisitPlanItem
 from app.domain.entities.visit_plans import VisitPlan
 from app.domain.enums import Weekday
@@ -57,8 +58,10 @@ class VisitPlanService(IVisitPlanService):
             employee_id, weekday
         )
 
+        ordered_points = self._order_retail_points_for_visit(retail_points)
+
         for position, retail_point in enumerate(
-            sorted(retail_points, key=lambda rp: rp.address),
+            ordered_points,
             start=1,
         ):
             plan.add_item(
@@ -161,3 +164,42 @@ class VisitPlanService(IVisitPlanService):
             employee_id, plan_date, overwrite=overwrite
         )
         return await self.enrich_plan(plan)
+
+    def _order_retail_points_for_visit(
+        self, points: list[RetailPoint]
+    ) -> list[RetailPoint]:
+        if len(points) <= 1:
+            return points
+
+        with_coords = [
+            p for p in points if p.latitude is not None and p.longitude is not None
+        ]
+        without_coords = [
+            p for p in points if p.latitude is None or p.longitude is None
+        ]
+
+        if not with_coords:
+            return sorted(points, key=lambda rp: rp.address)
+
+        remaining = list(with_coords)
+        remaining.sort(
+            key=lambda p: (float(p.latitude), float(p.longitude)), reverse=True
+        )
+
+        route = [remaining.pop(0)]
+        while remaining:
+            curr = route[-1]
+            c_lat, c_lon = float(curr.latitude), float(curr.longitude)
+
+            next_pt = min(
+                remaining,
+                key=lambda p: (
+                    (float(p.latitude) - c_lat) ** 2 + (float(p.longitude) - c_lon) ** 2
+                ),
+            )
+            remaining.remove(next_pt)
+            route.append(next_pt)
+
+        without_coords.sort(key=lambda rp: rp.address)
+        route.extend(without_coords)
+        return route

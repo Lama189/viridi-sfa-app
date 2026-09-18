@@ -92,3 +92,28 @@ def test_worker_stop_when_not_running(mock_config, mock_route_service):
     ):
         worker.stop()
         mock_shutdown.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_worker_run_with_uow_and_service_factory(mock_config):
+    mock_uow = AsyncMock()
+    mock_uow.__aenter__.return_value = mock_uow
+    mock_uow.__aexit__.return_value = None
+
+    mock_service = AsyncMock()
+    mock_uow_factory = MagicMock(return_value=mock_uow)
+    mock_service_factory = MagicMock(return_value=mock_service)
+
+    worker = RouteScheluderWorker(
+        config=mock_config,
+        uow_factory=mock_uow_factory,
+        service_factory=mock_service_factory,
+    )
+
+    await worker._run_route_generation()
+
+    mock_uow_factory.assert_called_once()
+    mock_uow.__aenter__.assert_awaited_once()
+    mock_service_factory.assert_called_once_with(mock_uow)
+    mock_service.generate.assert_awaited_once()
+    mock_uow.__aexit__.assert_awaited_once()

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 
 from app.domain.enums import RouteGenerationStart
 
@@ -11,5 +12,5 @@ class IRouteGenerationService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def clear_all(self) -> None:
+    async def clear_all(self, from_date: date | None = None) -> None:
         raise NotImplementedError

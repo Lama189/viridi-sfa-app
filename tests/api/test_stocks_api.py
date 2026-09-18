@@ -227,3 +227,54 @@ async def test_list_warehouse_stocks_with_data(client, mock_stocks_service):
     assert data[0]["stock"]["quantity"] == 1000
     assert data[0]["stock"]["reserved_quantity"] == 100
     assert data[0]["stock"]["available_quantity"] == 900
+
+
+@pytest.mark.asyncio
+async def test_create_stock_success(client, mock_stocks_service):
+    wh_id = uuid4()
+    p_id = uuid4()
+    stock = Stock(warehouse_id=wh_id, product_id=p_id, quantity=0, reserved_quantity=0)
+    mock_stocks_service.create_stock.return_value = stock
+
+    resp = await client.post(
+        "/api/v1/stocks",
+        json={
+            "warehouse_id": str(wh_id),
+            "product_id": str(p_id),
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.json()
+    assert data["warehouse_id"] == str(wh_id)
+    assert data["product_id"] == str(p_id)
+    assert data["quantity"] == 0
+    assert data["reserved_quantity"] == 0
+    assert data["available_quantity"] == 0
+    mock_stocks_service.create_stock.assert_called_once()
+    dto = mock_stocks_service.create_stock.call_args[0][0]
+    assert dto.warehouse_id == wh_id
+    assert dto.product_id == p_id
+
+
+@pytest.mark.asyncio
+async def test_create_stock_forbidden_for_agent(client, mock_stocks_service):
+    app.dependency_overrides[get_current_user] = lambda: AuthenticatedEmployee(
+        id=uuid4(),
+        phone="+998901234567",
+        role=EmployeeRole.AGENT,
+        full_name="Agent",
+        is_active=True,
+    )
+    wh_id = uuid4()
+    p_id = uuid4()
+
+    resp = await client.post(
+        "/api/v1/stocks",
+        json={
+            "warehouse_id": str(wh_id),
+            "product_id": str(p_id),
+        },
+    )
+    assert resp.status_code == 403
+    mock_stocks_service.create_stock.assert_not_called()
+

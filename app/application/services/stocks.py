@@ -1,4 +1,4 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from app.application.dto.stocks import (
     ProductWithStockDTO,
@@ -132,7 +132,7 @@ class StockService(IStockService):
             actor_type=actor_type,
             created_by_id=created_by_id,
             reference_type=reference_type,
-            reference_id=reference_id,
+            reference_id=reference_id or uuid4(),
         )
 
         await self._uow.stock_transactions.add(transaction)
@@ -159,6 +159,7 @@ class StockService(IStockService):
             )
 
             await self._uow.stocks.add(stock)
+            await self._uow.commit()
 
             logger.info(
                 "Stock record successfully created",

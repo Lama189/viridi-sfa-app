@@ -36,5 +36,5 @@ class IVisitPlanRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_all(self) -> None:
+    async def delete_all(self, from_date: date | None = None) -> None:
         raise NotImplementedError
